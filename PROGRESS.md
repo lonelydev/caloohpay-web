@@ -190,45 +190,90 @@ caloohpay-web/
 
 ---
 
-## 🎯 Next Steps: Phase 2 - Core Features
+## ✅ Completed: Phase 2 Core Infrastructure (Partial)
 
-### Immediate Next Steps (Session 2)
+### Session 2 - November 6, 2025
 
-1. **Update Root Layout** (`src/app/layout.tsx`)
-   - Add ThemeProvider wrapper
-   - Configure Material UI
-   - Set up proper HTML structure
+### What's Been Built
 
-2. **Create Home Page** (`src/app/page.tsx`)
-   - Landing page design
-   - Feature highlights
-   - Call-to-action to login
+1. **Root Layout Updated** ✅ (`src/app/layout.tsx`)
+   - ThemeProvider wrapper integrated
+   - Material UI configured
+   - Proper HTML structure with metadata
 
-3. **Authentication Implementation**
-   - Create login page UI
-   - PagerDuty OAuth integration
-   - Session management with NextAuth
+2. **Home Page Created** ✅ (`src/app/page.tsx`)
+   - Landing page with hero section
+   - Feature cards highlighting key capabilities
+   - Header and Footer integration
+   - Responsive design
+
+3. **Common UI Components** ✅
+   - ✅ **Loading** - Spinner with fullScreen mode
+   - ✅ **ErrorDisplay** - Error display with retry
+   - ✅ **ErrorBoundary** - React error boundary
+   - ✅ **Header** - Navigation with dark mode toggle
+   - ✅ **Footer** - Links and metadata
+   - ✅ **Card** - Reusable Material UI Card wrapper
+
+4. **Payment Calculation Engine** ✅
+   - ✅ **OnCallPeriod** - On-call period class with OOH detection
+   - ✅ **OnCallUser** - User with multiple periods
+   - ✅ **PaymentCalculator** - Batch calculation support
+   - ✅ Auditable record generation
+   - ✅ Timezone-aware calculations with Luxon
+
+5. **Utility Functions** ✅
+   - ✅ **scheduleUtils** - PagerDuty data transformation
+   - ✅ **csvExport** - RFC 4180 compliant CSV generation
+   - ✅ Browser download functionality
+
+6. **API Integration** ✅
+   - ✅ **PagerDutyClient** - API client with Axios
+   - ✅ Authentication and token management
+   - ✅ Schedule fetching and searching
+   - ✅ Timezone parameter support
+
+### Recent Commits (Session 2)
+
+- `b0aa2a8` - feat(app): integrate Header and Footer components
+- `a7c63e1` - feat(api): add PagerDuty API client
+- `17368cd` - feat(utils): add schedule processing and CSV export utilities
+- `53ae292` - feat(calculations): port payment calculation logic from CalOohPay CLI
+- `5477fc6` - feat(components): add common UI components
+- `8bcda8c` - feat: initialize project with Next.js, Material UI, and complete dev tooling
+
+---
+
+## 🎯 Next Steps: Phase 2 Continued
+
+### Immediate Next Steps (Session 3)
+
+1. **Authentication Implementation**
+   - Install and configure NextAuth.js
+   - Create login page UI (`/login`)
+   - PagerDuty OAuth provider setup
+   - Session management
    - Protected route middleware
+   - Auth state management with Zustand
 
-4. **Payment Calculation Engine**
-   - Port CalOohPay calculation logic
-   - On-call period detection
-   - Weekend/weekday categorization
-   - Compensation calculation
+2. **Schedule Features**
+   - Create schedule listing page (`/schedules`)
+   - Build schedule search component
+   - Implement monthly calendar view
+   - Integrate PagerDuty API client
 
-5. **Basic UI Components**
-   - Navigation header with dark mode toggle
-   - Loading states
-   - Error boundaries
-   - Toast notifications
+3. **Payment Display**
+   - Build payment table component
+   - Display calculation results
+   - Add export button with CSV functionality
 
 ### Phase 2 Priorities (Week 1-2)
 
 - [ ] Complete authentication flow
-- [ ] Implement PagerDuty API integration
+- [x] Implement PagerDuty API client
 - [ ] Build schedule listing page
-- [ ] Create payment calculation service
-- [ ] Add basic unit tests
+- [x] Create payment calculation service
+- [ ] Add basic unit tests for calculation logic
 
 ---
 
@@ -280,12 +325,18 @@ git push origin feature/your-feature
 
 ## 📊 Project Status
 
-### Overall Progress: 15% Complete
+### Overall Progress: 30% Complete
 
 - ✅ **Phase 1: Foundation** - 100% Complete
-- 🔄 **Phase 2: Authentication** - 0% Complete
+- 🔄 **Phase 2: Authentication & Core Features** - 50% Complete
+  - ✅ Payment calculation engine
+  - ✅ Common UI components
+  - ✅ API client
+  - ✅ Utilities (CSV, schedule processing)
+  - ⏳ Authentication (pending)
+  - ⏳ Schedule pages (pending)
 - 🔄 **Phase 3: Schedule Features** - 0% Complete
-- 🔄 **Phase 4: Payment Calculation** - 0% Complete
+- 🔄 **Phase 4: Payment Display** - 0% Complete
 - 🔄 **Phase 5: Data Grid & Export** - 0% Complete
 - 🔄 **Phase 6: Testing** - 0% Complete
 - 🔄 **Phase 7: Deployment** - 0% Complete
@@ -296,27 +347,36 @@ git push origin feature/your-feature
 
 ### Critical Path Items
 
-1. **Authentication is Priority #1**
+1. **Authentication is Priority #1** ⏳
    - Required for all other features
-   - PagerDuty OAuth setup needed
-   - Consider NextAuth.js vs custom solution
+   - NextAuth.js recommended for PagerDuty OAuth
+   - Need to configure OAuth app in PagerDuty
+   - Session management with NextAuth + Zustand
 
-2. **Payment Calculation Engine**
-   - Core business logic
-   - Can be developed in parallel with UI
-   - Port from original CalOohPay repo
+2. **Payment Calculation Engine** ✅
+   - ✅ Core business logic complete
+   - ✅ OnCallPeriod, OnCallUser, PaymentCalculator classes
+   - ✅ Auditable calculations
+   - Ready for integration with UI
 
-3. **Schedule Display**
-   - Monthly calendar view
-   - Search functionality
-   - Timezone handling
+3. **Schedule Display** ⏳
+   - Monthly calendar view needed
+   - Search functionality needed
+   - Timezone handling in place
+   - PagerDuty API client ready
+
+### Technical Decisions Made
+
+- ✅ NextAuth.js for authentication (recommended)
+- ✅ Zustand + SWR for state management
+- ✅ Axios for API requests
+- ✅ Material UI components throughout
+- ✅ Luxon for date handling
 
 ### Technical Decisions Pending
 
-- [ ] NextAuth.js vs custom auth implementation
-- [ ] State management strategy (Zustand + SWR already chosen)
-- [ ] API route structure
-- [ ] Database for session storage (if needed)
+- [ ] Database for session storage (may not be needed with NextAuth JWT)
+- [ ] Calendar library selection for monthly view
 
 ### Environment Variables Needed
 
