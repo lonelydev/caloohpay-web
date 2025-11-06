@@ -1,36 +1,211 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CalOohPay Web
 
-## Getting Started
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Material UI](https://img.shields.io/badge/Material%20UI-007FFF?style=flat&logo=mui&logoColor=white)](https://mui.com/)
+[![PagerDuty](https://img.shields.io/badge/PagerDuty-06AC38?style=flat&logo=pagerduty&logoColor=white)](https://www.pagerduty.com/)
 
-First, run the development server:
+A modern web application that automates the calculation of out-of-hours (OOH) on-call compensation for engineering teams using PagerDuty schedules. Built with Next.js, TypeScript, and Material UI.
+
+## 🚀 Features
+
+- **🔐 Secure Authentication**: Work email login with PagerDuty OAuth integration
+- **📅 Schedule Management**: Search and view PagerDuty schedules in a monthly calendar view
+- **💰 Automated Calculations**: Calculate OOH compensation based on weekday/weekend rates
+- **📊 Data Export**: Export payment data to CSV for payroll processing
+- **🌓 Dark Mode**: Full dark mode support for comfortable viewing
+- **📱 Responsive Design**: Works seamlessly across desktop, tablet, and mobile devices
+- **♿ Accessible**: WCAG 2.1 Level AA compliant
+- **⚡ Performance**: Optimized for fast loading and smooth interactions
+
+## 📋 Prerequisites
+
+- **Node.js** v18 or higher
+- **npm** v9 or higher
+- **PagerDuty Account** with API access
+- **Work Email Address** for authentication
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js 14](https://nextjs.org/) with App Router
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **UI Library**: [Material UI v5](https://mui.com/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Forms**: [React Hook Form](https://react-hook-form.com/) with [Zod](https://zod.dev/)
+- **Date Handling**: [Luxon](https://moment.github.io/luxon/)
+- **API Client**: [Axios](https://axios-http.com/)
+- **Data Fetching**: [SWR](https://swr.vercel.app/)
+- **Testing**: [Jest](https://jestjs.io/), [React Testing Library](https://testing-library.com/), [Playwright](https://playwright.dev/)
+- **Code Quality**: [ESLint](https://eslint.org/), [Prettier](https://prettier.io/)
+- **Git Hooks**: [Husky](https://typicode.github.io/husky/)
+- **Deployment**: [AWS Amplify](https://aws.amazon.com/amplify/)
+
+## 🚀 Quick Start
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/caloohpay-web.git
+cd caloohpay-web
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Environment Setup
+
+Create a `.env.local` file in the root directory:
+
+```bash
+# PagerDuty Configuration
+NEXT_PUBLIC_PAGERDUTY_CLIENT_ID=your_client_id
+PAGERDUTY_CLIENT_SECRET=your_client_secret
+PAGERDUTY_REDIRECT_URI=http://localhost:3000/api/auth/callback
+
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_generated_secret
+
+# Application Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 4. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📖 Documentation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- [Project Plan](./PROJECT_PLAN.md) - Detailed project roadmap and architecture
+- [Contributing Guide](./CONTRIBUTING.md) - How to contribute to this project
+- [API Documentation](./docs/api.md) - API endpoints and usage
+- [Architecture Guide](./docs/architecture.md) - System architecture and design decisions
+- [Deployment Guide](./docs/deployment.md) - Deployment instructions and CI/CD setup
 
-## Learn More
+## 🧪 Testing
 
-To learn more about Next.js, take a look at the following resources:
+### Run Unit Tests
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm test
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Run E2E Tests
 
-## Deploy on Vercel
+```bash
+npm run test:e2e
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Run Tests with Coverage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run test:coverage
+```
+
+## 🏗️ Project Structure
+
+```
+caloohpay-web/
+├── src/
+│   ├── app/              # Next.js App Router pages
+│   ├── components/       # React components
+│   ├── lib/             # Utilities and helpers
+│   ├── hooks/           # Custom React hooks
+│   ├── context/         # React context providers
+│   └── styles/          # Global styles and themes
+├── tests/
+│   ├── unit/            # Unit tests
+│   ├── integration/     # Integration tests
+│   └── e2e/             # End-to-end tests
+├── public/              # Static assets
+└── docs/                # Documentation
+```
+
+## 💰 Payment Calculation
+
+The application uses the same calculation logic as the [CalOohPay CLI tool](https://github.com/lonelydev/caloohpay):
+
+- **Weekdays (Mon-Thu)**: £50 per OOH day
+- **Weekends (Fri-Sun)**: £75 per OOH day
+
+A day counts as out-of-hours (OOH) if:
+
+1. The shift spans multiple days
+2. The shift extends past 17:30 (5:30 PM)
+3. The shift is longer than 6 hours
+
+## 🔧 Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run format       # Format code with Prettier
+npm test             # Run unit tests
+npm run test:e2e     # Run E2E tests
+npm run test:coverage # Run tests with coverage
+```
+
+## 🚀 Deployment
+
+This application is designed to be deployed on AWS Amplify with automatic CI/CD from GitHub.
+
+See the [Deployment Guide](./docs/deployment.md) for detailed instructions.
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
+
+### Development Workflow
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Write or update tests
+5. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Based on the [CalOohPay CLI tool](https://github.com/lonelydev/caloohpay) by [@lonelydev](https://github.com/lonelydev)
+- Built with [Next.js](https://nextjs.org/)
+- UI components from [Material UI](https://mui.com/)
+- Powered by [PagerDuty API](https://developer.pagerduty.com/)
+
+## 📧 Support
+
+If you encounter any issues or have questions:
+
+1. Check the [documentation](./docs/)
+2. Search [existing issues](https://github.com/yourusername/caloohpay-web/issues)
+3. Create a [new issue](https://github.com/yourusername/caloohpay-web/issues/new)
+
+## 🗺️ Roadmap
+
+- [ ] Multi-currency support
+- [ ] Configurable payment rates
+- [ ] Historical payment tracking
+- [ ] Team analytics dashboard
+- [ ] Slack/Teams notifications
+- [ ] Mobile app
+- [ ] Incident response bonus calculations
+
+---
+
+**Made with ❤️ for engineering teams who deserve fair compensation for their on-call dedication.**
+
+**Version**: 0.1.0  
+**Last Updated**: November 6, 2025
