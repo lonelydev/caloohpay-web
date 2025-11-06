@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Container,
@@ -38,6 +39,7 @@ async function fetchSchedules(url: string, token: string): Promise<SchedulesResp
 
 export default function SchedulesPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data, error, isLoading } = useSWR(
@@ -144,6 +146,8 @@ export default function SchedulesPage() {
                       boxShadow: 8,
                     },
                   }}
+                  onClick={() => router.push(`/schedules/${schedule.id}`)}
+                  role="article"
                 >
                   <CardContent>
                     <Stack spacing={2}>
