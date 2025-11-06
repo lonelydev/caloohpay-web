@@ -1,65 +1,137 @@
-import Image from "next/image";
+'use client';
+
+import { Box, Container, Typography, Button, Stack, Paper } from '@mui/material';
+import {
+  Schedule as ScheduleIcon,
+  AccountBalance as PaymentIcon,
+  TableChart as ExportIcon,
+} from '@mui/icons-material';
+import Link from 'next/link';
+import { Header, Footer } from '@/components/common';
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Header />
+
+      {/* Hero Section */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          py: { xs: 6, md: 10 },
+        }}
+      >
+        <Container maxWidth="lg">
+          <Stack spacing={6} alignItems="center" textAlign="center">
+            <Stack spacing={3} maxWidth="800px">
+              <Typography
+                variant="h2"
+                component="h2"
+                fontWeight={700}
+                sx={{ fontSize: { xs: '2.5rem', md: '3.5rem' } }}
+              >
+                Automate On-Call Payment Calculations
+              </Typography>
+              <Typography
+                variant="h5"
+                color="text.secondary"
+                sx={{ fontSize: { xs: '1.1rem', md: '1.3rem' } }}
+              >
+                Calculate out-of-hours compensation for engineering teams using PagerDuty schedules.
+                Save time, eliminate errors, and ensure fair payment.
+              </Typography>
+            </Stack>
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Button
+                component={Link}
+                href="/login"
+                variant="contained"
+                size="large"
+                sx={{ px: 4, py: 1.5 }}
+              >
+                Get Started
+              </Button>
+              <Button
+                component={Link}
+                href="https://github.com/lonelydev/caloohpay"
+                target="_blank"
+                variant="outlined"
+                size="large"
+                sx={{ px: 4, py: 1.5 }}
+              >
+                View CLI Tool
+              </Button>
+            </Stack>
+
+            {/* Features Grid */}
+            <Box sx={{ pt: 6, width: '100%' }}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} justifyContent="center">
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 4,
+                    flex: 1,
+                    maxWidth: { md: '280px' },
+                    textAlign: 'center',
+                  }}
+                >
+                  <ScheduleIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+                  <Typography variant="h6" gutterBottom fontWeight={600}>
+                    PagerDuty Integration
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Direct integration with PagerDuty API. View schedules in monthly calendar format
+                    with timezone support.
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 4,
+                    flex: 1,
+                    maxWidth: { md: '280px' },
+                    textAlign: 'center',
+                  }}
+                >
+                  <PaymentIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+                  <Typography variant="h6" gutterBottom fontWeight={600}>
+                    Smart Calculations
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Automatic calculation of OOH compensation. £50 per weekday, £75 per weekend.
+                    Auditable and transparent.
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 4,
+                    flex: 1,
+                    maxWidth: { md: '280px' },
+                    textAlign: 'center',
+                  }}
+                >
+                  <ExportIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+                  <Typography variant="h6" gutterBottom fontWeight={600}>
+                    Easy Export
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Export payment data to CSV for payroll. Google Sheets compatible format with
+                    detailed breakdowns.
+                  </Typography>
+                </Paper>
+              </Stack>
+            </Box>
+          </Stack>
+        </Container>
+      </Box>
+
+      <Footer />
+    </Box>
   );
 }
