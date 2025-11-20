@@ -51,6 +51,8 @@ This project and everyone participating in it is governed by our Code of Conduct
    npm install
    ```
 
+   This will automatically install Playwright browsers via the postinstall script.
+
 5. **Set up environment variables**
 
    ```bash

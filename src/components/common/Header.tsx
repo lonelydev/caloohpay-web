@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AppBar,
   Avatar,
@@ -47,7 +47,7 @@ function ElevationScroll({ children }: ElevationScrollProps) {
 export function Header({ elevation }: HeaderProps) {
   const { mode, toggleTheme } = useThemeMode();
   const { data: session, status } = useSession();
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -96,7 +96,12 @@ export function Header({ elevation }: HeaderProps) {
               )}
 
               {/* Dark Mode Toggle */}
-              <IconButton onClick={toggleTheme} color="inherit" aria-label="toggle theme">
+              <IconButton
+                onClick={toggleTheme}
+                color="inherit"
+                aria-label="toggle theme"
+                suppressHydrationWarning
+              >
                 {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
               </IconButton>
 

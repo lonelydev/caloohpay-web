@@ -169,6 +169,7 @@ export const authOptions: AuthOptions = {
         session.user = token.user;
       }
       session.accessToken = token.accessToken as string;
+      session.authMethod = token.authMethod as 'oauth' | 'api-token' | undefined;
       session.error = token.error as string | undefined;
 
       return session;

@@ -27,24 +27,29 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  // Initialize theme from localStorage or system preference
-  const [mode, setMode] = useState<ThemeMode>(() => {
-    if (typeof window !== 'undefined') {
-      const savedMode = localStorage.getItem('theme-mode') as ThemeMode;
-      if (savedMode) {
-        return savedMode;
-      }
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      return prefersDark ? 'dark' : 'light';
-    }
-    return 'light';
-  });
+  // Always start with light theme to match server-side rendering
+  const [mode, setMode] = useState<ThemeMode>('light');
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Save theme preference to localStorage when it changes
+  // After hydration, load the user's preference
   useEffect(() => {
-    localStorage.setItem('theme-mode', mode);
-  }, [mode]);
+    const savedMode = localStorage.getItem('theme-mode') as ThemeMode;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialMode = savedMode || (prefersDark ? 'dark' : 'light');
+
+    if (initialMode !== mode) {
+      setMode(initialMode);
+    }
+    setIsHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save theme preference to localStorage when it changes (but not on first render)
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem('theme-mode', mode);
+    }
+  }, [mode, isHydrated]);
 
   const toggleTheme = () => {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
