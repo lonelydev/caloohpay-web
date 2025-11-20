@@ -1,5 +1,6 @@
 import { authOptions } from '../options';
-import type { AdapterUser, Session } from 'next-auth';
+import type { Session } from 'next-auth';
+import type { AdapterUser } from 'next-auth/adapters';
 
 describe('Authentication Options', () => {
   describe('Provider Configuration', () => {

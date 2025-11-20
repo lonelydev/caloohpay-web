@@ -18,7 +18,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "type-check": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "playwright install --with-deps chromium"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

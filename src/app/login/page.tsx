@@ -83,14 +83,13 @@ function LoginForm() {
       const result = await signIn('pagerduty-token', {
         apiToken: apiToken.trim(),
         callbackUrl: '/schedules',
-        redirect: false,
+        redirect: true,
       });
 
+      // If redirect is true, this code only runs if sign-in failed
       if (result?.error) {
         setTokenError('Invalid API token. Please check and try again.');
         setIsLoading(false);
-      } else if (result?.ok) {
-        router.push('/schedules');
       }
     } catch (err) {
       console.error('Token sign in error:', err);

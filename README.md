@@ -53,6 +53,8 @@ cd caloohpay-web
 npm install
 ```
 
+**Note**: This will automatically install Playwright browsers needed for E2E testing via the postinstall script.
+
 ### 3. Authentication Setup
 
 CalOohPay supports **two authentication methods**:
