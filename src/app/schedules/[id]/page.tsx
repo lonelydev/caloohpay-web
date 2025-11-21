@@ -338,10 +338,8 @@ export default function ScheduleDetailPage() {
                           >
                             <Box>
                               <Typography variant="body2" fontWeight="medium">
-                                {start.toFormat('EEE, MMM d, yyyy')}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {start.toFormat('h:mm a')} - {end.toFormat('h:mm a')}
+                                {start.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ ZZZZ')} -{' '}
+                                {end.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ ZZZZ')}
                               </Typography>
                             </Box>
                             <Chip
