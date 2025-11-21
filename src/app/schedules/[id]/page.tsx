@@ -17,9 +17,22 @@ import {
   Divider,
   Stack,
 } from '@mui/material';
-import { ArrowBack, CalendarMonth, Schedule, AccessTime, Person } from '@mui/icons-material';
+import {
+  ArrowBack,
+  CalendarMonth,
+  Schedule,
+  AccessTime,
+  Person,
+  EventBusy,
+  EventAvailable,
+  AttachMoney,
+} from '@mui/icons-material';
 import { useState, useMemo } from 'react';
 import { DateTime } from 'luxon';
+
+// Caloohpay default rates
+const WEEKDAY_RATE = 50; // £50 per weekday (Mon-Thu)
+const WEEKEND_RATE = 75; // £75 per weekend day (Fri-Sun)
 
 interface User {
   id: string;
@@ -32,6 +45,90 @@ interface ScheduleEntry {
   start: string;
   end: string;
   user: User;
+}
+
+// OnCallPeriod class for calculating out-of-hours days
+class OnCallPeriod {
+  private static readonly WEEKDAY_START = 1; // Monday
+  private static readonly WEEKDAY_END = 4; // Thursday
+  private static readonly END_OF_WORK_HOUR = 17;
+  private static readonly END_OF_WORK_MINUTE = 30;
+  private static readonly MIN_SHIFT_HOURS = 6;
+
+  readonly since: Date;
+  readonly until: Date;
+  readonly timeZone: string;
+  private _numberOfOohWeekDays = 0;
+  private _numberOfOohWeekends = 0;
+
+  constructor(s: Date, u: Date, timeZone = 'UTC') {
+    this.since = s;
+    this.until = u;
+    this.timeZone = timeZone;
+    this.initializeOohWeekDayAndWeekendDayCount();
+  }
+
+  private initializeOohWeekDayAndWeekendDayCount() {
+    const oohDays = this.getOohDaysInPeriod();
+    this._numberOfOohWeekDays = oohDays.filter((dt) => OnCallPeriod.isWeekDay(dt.weekday)).length;
+    this._numberOfOohWeekends = oohDays.filter((dt) => !OnCallPeriod.isWeekDay(dt.weekday)).length;
+  }
+
+  private getOohDaysInPeriod() {
+    const oohDays = [];
+    let current = DateTime.fromJSDate(this.since, { zone: this.timeZone }).startOf('day');
+    const end = DateTime.fromJSDate(this.until, { zone: this.timeZone });
+
+    while (current <= end) {
+      const dayStart = current;
+      const dayEnd = current.endOf('day');
+      const shiftStart = DateTime.max(
+        dayStart,
+        DateTime.fromJSDate(this.since, { zone: this.timeZone })
+      );
+      const shiftEnd = DateTime.min(dayEnd, end);
+
+      if (OnCallPeriod.wasPersonOnCallOOH(shiftStart, shiftEnd)) {
+        oohDays.push(current);
+      }
+      current = current.plus({ days: 1 });
+    }
+    return oohDays;
+  }
+
+  get numberOfOohWeekDays() {
+    return this._numberOfOohWeekDays;
+  }
+  get numberOfOohWeekends() {
+    return this._numberOfOohWeekends;
+  }
+
+  private static isWeekDay(dayNum: number) {
+    return dayNum >= OnCallPeriod.WEEKDAY_START && dayNum <= OnCallPeriod.WEEKDAY_END;
+  }
+
+  private static wasPersonOnCallOOH(since: DateTime, until: DateTime) {
+    return (
+      OnCallPeriod.doesShiftSpanEveningTillNextDay(since, until) &&
+      OnCallPeriod.isShiftLongerThan6Hours(since, until)
+    );
+  }
+
+  private static doesShiftSpanEveningTillNextDay(since: DateTime, until: DateTime) {
+    const endOfWork = since.set({
+      hour: OnCallPeriod.END_OF_WORK_HOUR,
+      minute: OnCallPeriod.END_OF_WORK_MINUTE,
+    });
+    return until > endOfWork && OnCallPeriod.doesShiftSpanDays(since, until);
+  }
+
+  private static isShiftLongerThan6Hours(since: DateTime, until: DateTime) {
+    return until.diff(since, 'hours').hours >= OnCallPeriod.MIN_SHIFT_HOURS;
+  }
+
+  private static doesShiftSpanDays(since: DateTime, until: DateTime) {
+    return since.day !== until.day || since.month !== until.month || since.year !== until.year;
+  }
 }
 
 interface Schedule {
@@ -139,17 +236,53 @@ export default function ScheduleDetailPage() {
       userMap.get(userId)!.entries.push(entry);
     });
 
-    return Array.from(userMap.values()).map((item) => ({
-      user: item.user,
-      entries: item.entries.sort(
+    return Array.from(userMap.values()).map((item) => {
+      const sortedEntries = item.entries.sort(
         (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
-      ),
-      totalHours: item.entries.reduce((sum, entry) => {
+      );
+
+      // Create OnCallPeriod instances for all entries
+      const onCallPeriods = sortedEntries.map(
+        (entry) =>
+          new OnCallPeriod(new Date(entry.start), new Date(entry.end), data.schedule.time_zone)
+      );
+
+      // Calculate details for each entry
+      const entriesWithCompensation = sortedEntries.map((entry, index) => {
         const start = DateTime.fromISO(entry.start);
         const end = DateTime.fromISO(entry.end);
-        return sum + end.diff(start, 'hours').hours;
-      }, 0),
-    }));
+        const duration = end.diff(start, 'hours').hours;
+
+        const period = onCallPeriods[index];
+        const weekdayDays = period.numberOfOohWeekDays;
+        const weekendDays = period.numberOfOohWeekends;
+
+        // Calculate compensation for this single period
+        const compensation = weekdayDays * WEEKDAY_RATE + weekendDays * WEEKEND_RATE;
+
+        return {
+          ...entry,
+          duration,
+          weekdayDays,
+          weekendDays,
+          compensation,
+        };
+      });
+
+      const totalHours = entriesWithCompensation.reduce((sum, e) => sum + e.duration, 0);
+      const totalWeekdays = entriesWithCompensation.reduce((sum, e) => sum + e.weekdayDays, 0);
+      const totalWeekends = entriesWithCompensation.reduce((sum, e) => sum + e.weekendDays, 0);
+      const totalCompensation = entriesWithCompensation.reduce((sum, e) => sum + e.compensation, 0);
+
+      return {
+        user: item.user,
+        entries: entriesWithCompensation,
+        totalHours,
+        totalWeekdays,
+        totalWeekends,
+        totalCompensation,
+      };
+    });
   }, [data]);
 
   // Loading state
@@ -283,78 +416,148 @@ export default function ScheduleDetailPage() {
           </Typography>
 
           <Stack spacing={3}>
-            {userSchedules.map(({ user, entries, totalHours }) => (
-              <Card key={user.id} variant="outlined">
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mb: 2,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Person />
-                      <Box>
-                        <Typography variant="h6">{user.name || user.summary}</Typography>
-                        {user.email && (
-                          <Typography variant="body2" color="text.secondary">
-                            {user.email}
-                          </Typography>
-                        )}
+            {userSchedules.map(
+              ({ user, entries, totalHours, totalWeekdays, totalWeekends, totalCompensation }) => (
+                <Card key={user.id} variant="outlined">
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        mb: 2,
+                        flexWrap: 'wrap',
+                        gap: 2,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Person />
+                        <Box>
+                          <Typography variant="h6">{user.name || user.summary}</Typography>
+                          {user.email && (
+                            <Typography variant="body2" color="text.secondary">
+                              {user.email}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Chip
+                          label={`${totalHours.toFixed(1)} hours`}
+                          color="primary"
+                          variant="outlined"
+                        />
+                        <Chip
+                          icon={<EventBusy />}
+                          label={`${totalWeekdays} weekdays`}
+                          color="default"
+                          variant="outlined"
+                        />
+                        <Chip
+                          icon={<EventAvailable />}
+                          label={`${totalWeekends} weekends`}
+                          color="secondary"
+                          variant="outlined"
+                        />
+                        <Chip
+                          icon={<AttachMoney />}
+                          label={`£${totalCompensation.toFixed(2)}`}
+                          color="success"
+                          variant="filled"
+                        />
                       </Box>
                     </Box>
-                    <Chip label={`${totalHours.toFixed(1)} hours`} color="primary" />
-                  </Box>
 
-                  <Divider sx={{ my: 2 }} />
+                    <Divider sx={{ my: 2 }} />
 
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      On-Call Periods ({entries.length})
-                    </Typography>
-                    <Stack spacing={1}>
-                      {entries.map((entry, index) => {
-                        const start = DateTime.fromISO(entry.start, {
-                          zone: schedule.time_zone,
-                        });
-                        const end = DateTime.fromISO(entry.end, {
-                          zone: schedule.time_zone,
-                        });
-                        const duration = end.diff(start, 'hours').hours;
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        On-Call Periods ({entries.length})
+                      </Typography>
+                      <Stack spacing={1}>
+                        {entries.map((entry, index) => {
+                          const start = DateTime.fromISO(entry.start, {
+                            zone: schedule.time_zone,
+                          });
+                          const end = DateTime.fromISO(entry.end, {
+                            zone: schedule.time_zone,
+                          });
 
-                        return (
-                          <Box
-                            key={index}
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              p: 1.5,
-                              bgcolor: 'action.hover',
-                              borderRadius: 1,
-                            }}
-                          >
-                            <Box>
-                              <Typography variant="body2" fontWeight="medium">
-                                {start.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ ZZZZ')} -{' '}
-                                {end.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ ZZZZ')}
-                              </Typography>
+                          return (
+                            <Box
+                              key={index}
+                              sx={{
+                                p: 1.5,
+                                bgcolor: 'action.hover',
+                                borderRadius: 1,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'flex-start',
+                                  flexWrap: 'wrap',
+                                  gap: 1,
+                                }}
+                              >
+                                <Box sx={{ flex: 1, minWidth: '200px' }}>
+                                  <Typography variant="body2" fontWeight="medium">
+                                    {start.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ')}
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {end.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ')}
+                                  </Typography>
+                                </Box>
+
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    gap: 0.5,
+                                    flexWrap: 'wrap',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  <Chip
+                                    label={`${entry.duration.toFixed(1)}h`}
+                                    size="small"
+                                    variant="outlined"
+                                  />
+                                  {entry.weekdayDays > 0 && (
+                                    <Chip
+                                      label={`${entry.weekdayDays} WD`}
+                                      size="small"
+                                      color="default"
+                                      title={`${entry.weekdayDays} weekday${entry.weekdayDays > 1 ? 's' : ''} × £${WEEKDAY_RATE}`}
+                                    />
+                                  )}
+                                  {entry.weekendDays > 0 && (
+                                    <Chip
+                                      label={`${entry.weekendDays} WE`}
+                                      size="small"
+                                      color="secondary"
+                                      title={`${entry.weekendDays} weekend${entry.weekendDays > 1 ? 's' : ''} × £${WEEKEND_RATE}`}
+                                    />
+                                  )}
+                                  <Chip
+                                    icon={<AttachMoney sx={{ fontSize: '16px !important' }} />}
+                                    label={`£${entry.compensation.toFixed(2)}`}
+                                    size="small"
+                                    color="success"
+                                    sx={{ fontWeight: 'medium' }}
+                                  />
+                                </Box>
+                              </Box>
                             </Box>
-                            <Chip
-                              label={`${duration.toFixed(1)}h`}
-                              size="small"
-                              variant="outlined"
-                            />
-                          </Box>
-                        );
-                      })}
-                    </Stack>
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
+                          );
+                        })}
+                      </Stack>
+                    </Box>
+                  </CardContent>
+                </Card>
+              )
+            )}
           </Stack>
         </Box>
       )}
