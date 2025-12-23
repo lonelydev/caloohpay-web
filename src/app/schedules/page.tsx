@@ -112,12 +112,13 @@ export default function SchedulesPage() {
   // Determine if we should use client-side filtering or API search
   useEffect(() => {
     if (!searchQuery) {
+      // No search query - use API pagination
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (!useClientSideFiltering) setUseClientSideFiltering(true);
 
       if (apiSearchQuery) setApiSearchQuery('');
 
-      if (page !== 1) setPage(1);
+      // Don't reset page here - allow API pagination to work
       return;
     }
 
@@ -327,41 +328,53 @@ export default function SchedulesPage() {
                       onClick={() => router.push(`/schedules/${schedule.id}`)}
                       role="article"
                     >
-                      <CardContent>
-                        <Stack spacing={2}>
-                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                            <CalendarIcon color="primary" />
-                            <Box sx={{ flex: 1 }}>
-                              <Typography variant="h6" component="h3" fontWeight={600} noWrap>
-                                {schedule.name}
+                      <CardContent
+                        sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2 }}>
+                          <CalendarIcon color="primary" />
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant="h6"
+                              component="h3"
+                              fontWeight={600}
+                              sx={{
+                                wordWrap: 'break-word',
+                                overflowWrap: 'break-word',
+                                hyphens: 'auto',
+                              }}
+                            >
+                              {schedule.name}
+                            </Typography>
+                            {schedule.description && (
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                }}
+                              >
+                                {schedule.description}
                               </Typography>
-                              {schedule.description && (
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                  sx={{
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    display: '-webkit-box',
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: 'vertical',
-                                  }}
-                                >
-                                  {schedule.description}
-                                </Typography>
-                              )}
-                            </Box>
+                            )}
                           </Box>
+                        </Box>
 
-                          {schedule.time_zone && (
-                            <Chip
-                              label={schedule.time_zone}
-                              size="small"
-                              variant="outlined"
-                              sx={{ alignSelf: 'flex-start' }}
-                            />
-                          )}
-                        </Stack>
+                        {/* Spacer to push timezone chip to bottom */}
+                        <Box sx={{ flex: 1 }} />
+
+                        {schedule.time_zone && (
+                          <Chip
+                            label={schedule.time_zone}
+                            size="small"
+                            variant="outlined"
+                            sx={{ alignSelf: 'flex-start' }}
+                          />
+                        )}
                       </CardContent>
                     </MUICard>
                   ))}
@@ -369,7 +382,7 @@ export default function SchedulesPage() {
 
                 {/* Pagination Controls */}
                 {showPagination && (
-                  <Stack spacing={3} alignItems="center">
+                  <Stack spacing={3} alignItems="center" sx={{ mt: 6 }}>
                     {/* Navigation Buttons */}
                     <ButtonGroup variant="outlined" size="large">
                       <Button

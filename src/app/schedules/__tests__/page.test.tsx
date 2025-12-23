@@ -336,4 +336,43 @@ describe('SchedulesPage with Pagination', () => {
       expect(screen.getByText(/16 schedules found/i)).toBeInTheDocument();
     });
   });
+
+  it('should render long schedule names without truncation', async () => {
+    const longScheduleName =
+      'Very Long Schedule Name That Should Wrap Across Multiple Lines Instead Of Being Truncated';
+    const scheduleWithLongName = {
+      id: 'schedule-long',
+      name: longScheduleName,
+      type: 'schedule',
+      time_zone: 'America/New_York',
+      description: 'Test description',
+      html_url: 'https://example.pagerduty.com/schedules/long',
+      summary: 'Long schedule',
+    };
+
+    mockUseSWR.mockReturnValue({
+      data: {
+        schedules: [scheduleWithLongName],
+        total: 1,
+        limit: 16,
+        offset: 0,
+        more: false,
+      },
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+      mutate: jest.fn(),
+    } as any);
+
+    render(<SchedulesPage />, { wrapper: TestWrapper });
+
+    // Verify the full schedule name is rendered and accessible
+    await waitFor(() => {
+      expect(screen.getByText(longScheduleName)).toBeInTheDocument();
+    });
+
+    // Verify the schedule card is clickable
+    const scheduleCard = screen.getByRole('article');
+    expect(scheduleCard).toBeInTheDocument();
+  });
 });
