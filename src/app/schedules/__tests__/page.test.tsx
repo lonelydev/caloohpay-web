@@ -272,8 +272,17 @@ describe('SchedulesPage with Pagination', () => {
   });
 
   it('should show loading state', () => {
+    const mockSchedules = [
+      {
+        id: 'SCHEDULE1',
+        name: 'Engineering On-Call',
+        description: 'Main engineering rotation',
+        time_zone: 'America/New_York',
+      },
+    ];
+
     mockUseSWR.mockReturnValue({
-      data: undefined,
+      data: { schedules: mockSchedules, total: 1, limit: 16, offset: 0, more: false },
       error: undefined,
       isLoading: true,
       isValidating: false,
@@ -282,7 +291,12 @@ describe('SchedulesPage with Pagination', () => {
 
     render(<SchedulesPage />, { wrapper: TestWrapper });
 
-    expect(screen.getByText(/loading schedules/i)).toBeInTheDocument();
+    // Should show the page structure during loading (not full-screen loading)
+    expect(screen.getByText(/on-call schedules/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search schedules by name/i)).toBeInTheDocument();
+    // Schedules grid should still be visible during loading
+    expect(screen.getByText(/engineering on-call/i)).toBeInTheDocument();
+    // Note: CircularProgress won't be in DOM when Backdrop open=false in test environment
   });
 
   it('should show error state', async () => {

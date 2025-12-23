@@ -15,6 +15,8 @@ import {
   Pagination,
   Button,
   ButtonGroup,
+  CircularProgress,
+  Backdrop,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -203,7 +205,9 @@ export default function SchedulesPage() {
     }
   };
 
-  if (status === 'loading' || isLoading) {
+  // Only show full-screen loading on initial page load (auth check)
+  // For data fetching, we'll show a loading overlay instead to prevent page re-render
+  if (status === 'loading') {
     return <Loading message="Loading schedules..." fullScreen />;
   }
 
@@ -277,141 +281,157 @@ export default function SchedulesPage() {
             </Stack>
           )}
 
-          {/* Schedules Grid */}
-          {displaySchedules && displaySchedules.length > 0 ? (
-            <>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: 'repeat(2, 1fr)',
-                    md: 'repeat(4, 1fr)',
-                  },
-                  gap: 3,
-                }}
-              >
-                {displaySchedules.map((schedule) => (
-                  <MUICard
-                    key={schedule.id}
-                    elevation={2}
-                    sx={{
-                      height: '100%',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        elevation: 4,
-                        transform: 'translateY(-4px)',
-                        boxShadow: 8,
-                      },
-                    }}
-                    onClick={() => router.push(`/schedules/${schedule.id}`)}
-                    role="article"
-                  >
-                    <CardContent>
-                      <Stack spacing={2}>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                          <CalendarIcon color="primary" />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="h6" component="h3" fontWeight={600} noWrap>
-                              {schedule.name}
-                            </Typography>
-                            {schedule.description && (
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                }}
-                              >
-                                {schedule.description}
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-
-                        {schedule.time_zone && (
-                          <Chip
-                            label={schedule.time_zone}
-                            size="small"
-                            variant="outlined"
-                            sx={{ alignSelf: 'flex-start' }}
-                          />
-                        )}
-                      </Stack>
-                    </CardContent>
-                  </MUICard>
-                ))}
-              </Box>
-
-              {/* Pagination Controls */}
-              {showPagination && (
-                <Stack spacing={3} alignItems="center">
-                  {/* Navigation Buttons */}
-                  <ButtonGroup variant="outlined" size="large">
-                    <Button
-                      onClick={handleFirstPage}
-                      disabled={isFirstPage}
-                      startIcon={<FirstPageIcon />}
-                    >
-                      First
-                    </Button>
-                    <Button
-                      onClick={handlePrevPage}
-                      disabled={isFirstPage}
-                      startIcon={<PrevIcon />}
-                    >
-                      Previous
-                    </Button>
-                    <Button onClick={handleNextPage} disabled={isLastPage} endIcon={<NextIcon />}>
-                      Next
-                    </Button>
-                    <Button
-                      onClick={handleLastPage}
-                      disabled={isLastPage}
-                      endIcon={<LastPageIcon />}
-                    >
-                      Last
-                    </Button>
-                  </ButtonGroup>
-
-                  {/* Page Number Pagination */}
-                  <Pagination
-                    count={totalPages}
-                    page={page}
-                    onChange={handlePageChange}
-                    color="primary"
-                    size="large"
-                    showFirstButton
-                    showLastButton
-                    siblingCount={1}
-                    boundaryCount={1}
-                  />
-                </Stack>
-              )}
-            </>
-          ) : (
-            <Box
+          {/* Schedules Grid with Loading Overlay */}
+          <Box sx={{ position: 'relative', minHeight: 400 }}>
+            {/* Loading Overlay - Always render, visibility controlled by 'open' */}
+            <Backdrop
+              open={isLoading}
               sx={{
-                textAlign: 'center',
-                py: 8,
+                position: 'absolute',
+                zIndex: (theme) => theme.zIndex.drawer + 1,
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(3px)',
               }}
             >
-              <CalendarIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                {searchQuery ? 'No schedules found' : 'No schedules available'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {searchQuery
-                  ? 'Try adjusting your search query'
-                  : 'Create schedules in PagerDuty to get started'}
-              </Typography>
-            </Box>
-          )}
+              <CircularProgress size={60} thickness={4} />
+            </Backdrop>
+
+            {/* Content below loading overlay */}
+            {displaySchedules && displaySchedules.length > 0 ? (
+              <>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                      xs: '1fr',
+                      sm: 'repeat(2, 1fr)',
+                      md: 'repeat(4, 1fr)',
+                    },
+                    gap: 3,
+                  }}
+                >
+                  {displaySchedules.map((schedule) => (
+                    <MUICard
+                      key={schedule.id}
+                      elevation={2}
+                      sx={{
+                        height: '100%',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          elevation: 4,
+                          transform: 'translateY(-4px)',
+                          boxShadow: 8,
+                        },
+                      }}
+                      onClick={() => router.push(`/schedules/${schedule.id}`)}
+                      role="article"
+                    >
+                      <CardContent>
+                        <Stack spacing={2}>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                            <CalendarIcon color="primary" />
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="h6" component="h3" fontWeight={600} noWrap>
+                                {schedule.name}
+                              </Typography>
+                              {schedule.description && (
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                  }}
+                                >
+                                  {schedule.description}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+
+                          {schedule.time_zone && (
+                            <Chip
+                              label={schedule.time_zone}
+                              size="small"
+                              variant="outlined"
+                              sx={{ alignSelf: 'flex-start' }}
+                            />
+                          )}
+                        </Stack>
+                      </CardContent>
+                    </MUICard>
+                  ))}
+                </Box>
+
+                {/* Pagination Controls */}
+                {showPagination && (
+                  <Stack spacing={3} alignItems="center">
+                    {/* Navigation Buttons */}
+                    <ButtonGroup variant="outlined" size="large">
+                      <Button
+                        onClick={handleFirstPage}
+                        disabled={isFirstPage}
+                        startIcon={<FirstPageIcon />}
+                      >
+                        First
+                      </Button>
+                      <Button
+                        onClick={handlePrevPage}
+                        disabled={isFirstPage}
+                        startIcon={<PrevIcon />}
+                      >
+                        Previous
+                      </Button>
+                      <Button onClick={handleNextPage} disabled={isLastPage} endIcon={<NextIcon />}>
+                        Next
+                      </Button>
+                      <Button
+                        onClick={handleLastPage}
+                        disabled={isLastPage}
+                        endIcon={<LastPageIcon />}
+                      >
+                        Last
+                      </Button>
+                    </ButtonGroup>
+
+                    {/* Page Number Pagination */}
+                    <Pagination
+                      count={totalPages}
+                      page={page}
+                      onChange={handlePageChange}
+                      color="primary"
+                      size="large"
+                      showFirstButton
+                      showLastButton
+                      siblingCount={1}
+                      boundaryCount={1}
+                    />
+                  </Stack>
+                )}
+              </>
+            ) : (
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 8,
+                }}
+              >
+                <CalendarIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {searchQuery ? 'No schedules found' : 'No schedules available'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {searchQuery
+                    ? 'Try adjusting your search query'
+                    : 'Create schedules in PagerDuty to get started'}
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </Stack>
       </Container>
 
