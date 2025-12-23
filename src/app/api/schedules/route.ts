@@ -17,11 +17,15 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query') || '';
+    const limit = searchParams.get('limit') || '16';
+    const offset = searchParams.get('offset') || '0';
 
     // Build PagerDuty API URL
     const baseUrl = 'https://api.pagerduty.com/schedules';
     const params = new URLSearchParams({
-      limit: '100',
+      limit,
+      offset,
+      total: 'true', // Request total count from PagerDuty
       ...(query && { query }),
     });
 
@@ -51,9 +55,16 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
+    // PagerDuty returns actual total count when total=true is passed
+    const actualTotal = data.total ?? 0;
+    const hasMore = data.more || false;
+
     return NextResponse.json({
       schedules: data.schedules || [],
-      total: data.schedules?.length || 0,
+      total: actualTotal,
+      limit: parseInt(limit, 10),
+      offset: parseInt(offset, 10),
+      more: hasMore,
     });
   } catch (error) {
     console.error('Error fetching schedules:', error);
