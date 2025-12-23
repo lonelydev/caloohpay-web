@@ -160,13 +160,17 @@ export default function SchedulesPage() {
     : data?.schedules || [];
 
   // Total count and pages
+  // When not searching, use estimated total from API (based on 'more' flag)
   const totalCount = useClientSideFiltering
     ? searchQuery
       ? clientFilteredSchedules.length
-      : allSchedules.length
+      : data?.total || allSchedules.length
     : data?.total || 0;
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  // Show pagination if we have more than one page OR if API says there's more
+  const showPagination = totalPages > 1 || data?.more;
 
   // Pagination handlers
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
@@ -344,7 +348,7 @@ export default function SchedulesPage() {
               </Box>
 
               {/* Pagination Controls */}
-              {totalPages > 1 && (
+              {showPagination && (
                 <Stack spacing={3} alignItems="center">
                   {/* Navigation Buttons */}
                   <ButtonGroup variant="outlined" size="large">

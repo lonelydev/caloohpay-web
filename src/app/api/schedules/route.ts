@@ -54,12 +54,20 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
+    // PagerDuty doesn't return total count, so we estimate based on 'more' flag
+    // If there are more pages, total is at least offset + current page + 1 more page
+    const currentPageCount = data.schedules?.length || 0;
+    const hasMore = data.more || false;
+    const estimatedTotal = hasMore
+      ? parseInt(offset, 10) + currentPageCount + 1 // At least one more page
+      : parseInt(offset, 10) + currentPageCount; // This is the last page
+
     return NextResponse.json({
       schedules: data.schedules || [],
-      total: data.schedules?.length || 0,
+      total: estimatedTotal,
       limit: parseInt(limit, 10),
       offset: parseInt(offset, 10),
-      more: data.more || false,
+      more: hasMore,
     });
   } catch (error) {
     console.error('Error fetching schedules:', error);
