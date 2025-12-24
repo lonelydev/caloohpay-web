@@ -27,10 +27,12 @@ CaloohPay is a web application that calculates on-call payments for PagerDuty sc
 ### Key Features
 
 - **PagerDuty OAuth Integration**: Secure authentication using PagerDuty as identity provider
+- **Progressive Search**: Instant local filtering with parallel API search for comprehensive results
 - **Schedule Management**: Browse and view PagerDuty schedules with detailed monthly views
 - **Payment Calculation**: Calculate on-call compensation based on weekday/weekend rates
 - **Data Export**: Export payment calculations to CSV format
 - **Responsive Design**: Mobile-first design with dark mode support
+- **Performance Optimizations**: Memoized components, stable handlers, fixed layouts
 
 ### User Workflow
 
@@ -295,6 +297,43 @@ async function refreshAccessToken(token: JWT) {
 ```
 
 ## Data Flow
+
+### Progressive Search Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant Cache
+    participant API
+    participant PagerDuty
+
+    User->>UI: Types search query
+    UI->>Cache: Filter cached schedules
+    Cache-->>UI: Return local matches (0ms)
+    UI->>User: Display local results immediately
+
+    par Parallel API Search
+        UI->>API: Trigger API search
+        API->>PagerDuty: GET /schedules?query=...
+        PagerDuty-->>API: Return all matching schedules
+        API-->>UI: Return API results
+        UI->>UI: Merge & deduplicate results
+        UI->>User: Update with complete results
+    end
+
+    Note over UI,User: Local: instant feedback<br/>API: comprehensive results
+```
+
+**Progressive Search Strategy**:
+
+1. **Instant Local Results**: Client-side filter of cached schedules (0ms latency)
+2. **Parallel API Search**: Simultaneously query PagerDuty API for all matches
+3. **Smart Merging**: Deduplicate by schedule ID, combine local + API results
+4. **Visual Feedback**: Show "Searching API..." chip during API call
+5. **Result Summary**: Display "X local, Y from API" when complete
+
+See [Search Architecture](./search-architecture.md) for complete implementation details.
 
 ### Schedule Listing Flow
 

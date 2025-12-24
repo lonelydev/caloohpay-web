@@ -34,10 +34,28 @@ CalOohPay automates out-of-hours (OOH) on-call compensation calculations for Pag
 src/components/
 ├── auth/       # Authentication UI (login forms, OAuth buttons)
 ├── schedules/  # Schedule browsing and calendar views
+│   ├── PaginationControls.tsx    # Memoized pagination buttons
+│   ├── MonthNavigation.tsx       # Memoized month navigation
+│   ├── ScheduleCard.tsx          # Reusable schedule card
+│   └── ScheduleCard.styles.ts    # Styled components
 ├── payments/   # Payment calculation and export UI
 ├── ui/         # Reusable UI primitives
 └── common/     # Shared layouts (Header, Footer, ErrorBoundary)
 ```
+
+### Progressive Search Pattern
+
+- **Instant local results**: Filter cached schedules client-side (0ms)
+- **Parallel API search**: Query PagerDuty API simultaneously for comprehensive results
+- **Smart merging**: Deduplicate by ID, combine local + API results
+- **Visual feedback**: Show search state with chips ("Searching API...", "X local, Y from API")
+- **State management**:
+  - `searchQuery` - User input
+  - `apiSearchQuery` - Triggers SWR API call
+  - `allSchedules` - Accumulated cache for local filtering
+  - `showingLocalResults` - True when local matches exist
+  - `apiSearchComplete` - True when API returns
+- See [docs/search-architecture.md](docs/search-architecture.md) for complete details
 
 ## Development Workflows
 
@@ -121,6 +139,22 @@ npm run type-check       # TypeScript validation (no emit)
 - Located in [src/lib/utils/csvExport.ts](src/lib/utils/csvExport.ts)
 - Format: Date, User, Schedule, Weekday Hours, Weekend Hours, Total Payment
 - Compatible with Google Sheets and Excel
+
+## Performance Patterns
+
+### Memoization Strategy
+
+- **Components**: Use `React.memo` for components with stable props (PaginationControls, MonthNavigation)
+- **Callbacks**: Wrap handlers in `useCallback` with proper dependencies to prevent re-renders
+- **Computed values**: Use `useMemo` for expensive calculations (filtering, sorting)
+- **Grid layouts**: Use fixed heights to prevent layout shifts during state changes
+
+### Search Optimization
+
+- **Progressive loading**: Show cached results immediately, fetch API results in parallel
+- **Deduplication**: Merge results by ID to avoid duplicates
+- **State separation**: Keep `searchQuery` and `apiSearchQuery` separate for independent control
+- **Cache accumulation**: Store all fetched schedules in `allSchedules` for instant local filtering
 
 ## Testing Gotchas
 

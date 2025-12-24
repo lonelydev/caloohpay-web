@@ -43,6 +43,7 @@ const commonThemeOptions: ThemeOptions = {
   shape: {
     borderRadius: 8,
   },
+  spacing: 8, // Base spacing unit (8px) - used in layout.constants.ts
   components: {
     MuiButton: {
       styleOverrides: {

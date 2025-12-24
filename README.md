@@ -10,7 +10,8 @@ A modern web application that automates the calculation of out-of-hours (OOH) on
 ## Features
 
 - 🔐 **Secure Authentication** - PagerDuty OAuth integration with NextAuth.js
-- 📅 **Schedule Visualization** - Interactive monthly calendar view of on-call schedules
+- � **Progressive Search** - Instant local results with seamless API search in background
+- �📅 **Schedule Visualization** - Interactive monthly calendar view of on-call schedules
 - 💰 **Payment Calculation** - Uses the official [caloohpay](https://www.npmjs.com/package/caloohpay) package for accurate out-of-hours compensation
 - 📊 **Export Capabilities** - Generate CSV reports for payroll processing
 - 🎨 **Modern UI** - Built with Material-UI and Tailwind CSS
@@ -130,6 +131,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - [Contributing Guide](./CONTRIBUTING.md) - How to contribute to this project
 - [API Documentation](./docs/api.md) - API endpoints and usage
 - [Architecture Guide](./docs/architecture.md) - System architecture and design decisions
+- [Search Architecture](./docs/search-architecture.md) - Progressive search implementation details
+- [Styling Architecture](./docs/styling-architecture.md) - MUI styling patterns and best practices
 - [Deployment Guide](./docs/deployment.md) - Deployment instructions and CI/CD setup
 
 ## 🧪 Testing

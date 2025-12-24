@@ -18,20 +18,19 @@ import {
 } from '@mui/material';
 import {
   ArrowBack,
-  CalendarMonth,
-  Schedule,
   AccessTime,
   Person,
   EventBusy,
   EventAvailable,
   AttachMoney,
 } from '@mui/icons-material';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { DateTime } from 'luxon';
 import { OnCallPeriod } from 'caloohpay/core';
 import { PAYMENT_RATES } from '@/lib/constants';
 import { getPagerDutyHeaders } from '@/lib/utils/pagerdutyAuth';
 import { Header, Footer, Loading } from '@/components/common';
+import MonthNavigation from '@/components/schedules/MonthNavigation';
 import type { PagerDutySchedule, ScheduleEntry, User } from '@/lib/types';
 
 interface ScheduleResponse {
@@ -79,25 +78,25 @@ export default function ScheduleDetailPage() {
     fetcher
   );
 
-  // Navigate to previous month
-  const handlePreviousMonth = () => {
+  // Navigate to previous month - wrapped in useCallback for stable reference
+  const handlePreviousMonth = useCallback(() => {
     const since = DateTime.fromISO(dateRange.since);
     const newSince = since.minus({ months: 1 });
     setDateRange({
       since: newSince.startOf('month').toISO() || '',
       until: newSince.endOf('month').toISO() || '',
     });
-  };
+  }, [dateRange.since]);
 
-  // Navigate to next month
-  const handleNextMonth = () => {
+  // Navigate to next month - wrapped in useCallback for stable reference
+  const handleNextMonth = useCallback(() => {
     const since = DateTime.fromISO(dateRange.since);
     const newSince = since.plus({ months: 1 });
     setDateRange({
       since: newSince.startOf('month').toISO() || '',
       until: newSince.endOf('month').toISO() || '',
     });
-  };
+  }, [dateRange.since]);
 
   // Get current month display
   const currentMonthDisplay = useMemo(() => {
@@ -265,24 +264,12 @@ export default function ScheduleDetailPage() {
 
         {/* Month Navigation */}
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Button startIcon={<ArrowBack />} onClick={handlePreviousMonth} variant="outlined">
-              Previous Month
-            </Button>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CalendarMonth />
-              <Typography variant="h5">{currentMonthDisplay}</Typography>
-            </Box>
-            <Button endIcon={<Schedule />} onClick={handleNextMonth} variant="outlined">
-              Next Month
-            </Button>
-          </Box>
+          <MonthNavigation
+            currentMonth={currentMonthDisplay}
+            isLoading={isLoading}
+            onPreviousMonth={handlePreviousMonth}
+            onNextMonth={handleNextMonth}
+          />
         </Paper>
 
         {/* On-Call Summary */}
