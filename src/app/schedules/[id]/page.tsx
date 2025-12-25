@@ -16,14 +16,7 @@ import {
   Divider,
   Stack,
 } from '@mui/material';
-import {
-  ArrowBack,
-  AccessTime,
-  Person,
-  EventBusy,
-  EventAvailable,
-  AttachMoney,
-} from '@mui/icons-material';
+import { ArrowBack, AccessTime, Person, Wallet, Work, WorkOff } from '@mui/icons-material';
 import { useState, useMemo, useCallback, memo } from 'react';
 import { DateTime } from 'luxon';
 import { OnCallPeriod } from 'caloohpay/core';
@@ -170,19 +163,19 @@ const OnCallSchedule = memo<{
                       variant="outlined"
                     />
                     <Chip
-                      icon={<EventBusy />}
+                      icon={<Work />}
                       label={`${totalWeekdays} weekdays`}
                       color="default"
                       variant="outlined"
                     />
                     <Chip
-                      icon={<EventAvailable />}
+                      icon={<WorkOff />}
                       label={`${totalWeekends} weekends`}
                       color="secondary"
                       variant="outlined"
                     />
                     <Chip
-                      icon={<AttachMoney />}
+                      icon={<Wallet />}
                       label={`${PAYMENT_RATES.CURRENCY_SYMBOL}${totalCompensation.toFixed(2)}`}
                       color="success"
                       variant="filled"
@@ -268,7 +261,7 @@ const OnCallSchedule = memo<{
                                 />
                               )}
                               <Chip
-                                icon={<AttachMoney sx={{ fontSize: '16px !important' }} />}
+                                icon={<Wallet sx={{ fontSize: '16px !important' }} />}
                                 label={`${PAYMENT_RATES.CURRENCY_SYMBOL}${entry.compensation.toFixed(2)}`}
                                 size="small"
                                 color="success"
