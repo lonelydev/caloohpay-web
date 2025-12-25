@@ -370,6 +370,9 @@ graph TD
     K --> L[Render monthly view]
     L --> M[User navigates months]
     M --> F
+
+    Note: Header, navigation, and actions remain stable during month changes
+    Note: Loading indicator only covers schedule data section
 ```
 
 ## Component Architecture
@@ -387,9 +390,10 @@ App Layout
 │   │   │   │   ├── SearchBar (Client)
 │   │   │   │   └── ScheduleCard[]
 │   │   │   └── Schedule Detail
-│   │   │       ├── MonthNavigation (Client)
-│   │   │       ├── OnCallPeriodList
-│   │   │       └── PaymentCalculator (Client)
+│   │   │       ├── ScheduleHeader (Memoized)
+│   │   │       ├── MonthNavigation (Memoized)
+│   │   │       ├── OnCallSchedule (Memoized, scoped loading)
+│   │   │       └── ScheduleActions (Memoized)
 │   │   └── Footer (Common)
 └── ErrorBoundary
 ```

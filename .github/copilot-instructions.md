@@ -144,10 +144,13 @@ npm run type-check       # TypeScript validation (no emit)
 
 ### Memoization Strategy
 
-- **Components**: Use `React.memo` for components with stable props (PaginationControls, MonthNavigation)
+- **Components**: Use `React.memo` for components with stable props
+  - Schedule list page: PaginationControls, MonthNavigation
+  - Schedule detail page: ScheduleHeader, ScheduleActions, OnCallSchedule
 - **Callbacks**: Wrap handlers in `useCallback` with proper dependencies to prevent re-renders
 - **Computed values**: Use `useMemo` for expensive calculations (filtering, sorting)
 - **Grid layouts**: Use fixed heights to prevent layout shifts during state changes
+- **Loading states**: Scope loading indicators to data sections only, keep UI chrome stable
 
 ### Search Optimization
 
