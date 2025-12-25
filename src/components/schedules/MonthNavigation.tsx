@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Button, Typography } from '@mui/material';
-import { ArrowBack, CalendarMonth, Schedule } from '@mui/icons-material';
+import { ArrowBack, CalendarMonth, ArrowForward } from '@mui/icons-material';
 
 export interface MonthNavigationProps {
   /** Current month display text (e.g., "January 2025") */
@@ -41,7 +41,7 @@ const MonthNavigation: React.FC<MonthNavigationProps> = React.memo(
           <Typography variant="h5">{currentMonth}</Typography>
         </Box>
         <Button
-          endIcon={<Schedule />}
+          endIcon={<ArrowForward />}
           onClick={onNextMonth}
           variant="outlined"
           disabled={isLoading}

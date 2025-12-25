@@ -106,7 +106,17 @@ const OnCallSchedule = memo<{
   }>;
   currentMonthDisplay: string;
   timeZone: string;
-}>(({ userSchedules, currentMonthDisplay, timeZone }) => {
+  isLoading: boolean;
+}>(({ userSchedules, currentMonthDisplay, timeZone, isLoading }) => {
+  // Show loading state only in this section
+  if (isLoading) {
+    return (
+      <Box sx={{ position: 'relative', minHeight: 300 }}>
+        <Loading message="Loading schedule..." />
+      </Box>
+    );
+  }
+
   if (userSchedules.length === 0) {
     return (
       <Alert severity="info">
@@ -426,11 +436,6 @@ export default function ScheduleDetailPage() {
     });
   }, [data]);
 
-  // Loading state
-  if (isLoading) {
-    return <Loading message="Loading schedule..." fullScreen />;
-  }
-
   // Error state
   if (error) {
     return (
@@ -460,7 +465,8 @@ export default function ScheduleDetailPage() {
 
   const schedule = data?.schedule;
 
-  if (!schedule) {
+  // Show "not found" only if not loading and no schedule exists
+  if (!schedule && !isLoading) {
     return (
       <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Header />
@@ -488,9 +494,9 @@ export default function ScheduleDetailPage() {
       <Box sx={{ maxWidth: 1200, mx: 'auto', py: 4, flex: 1 }}>
         {/* Header - Memoized to prevent re-renders */}
         <ScheduleHeader
-          scheduleName={schedule.name}
-          scheduleDescription={schedule.description}
-          timeZone={schedule.time_zone}
+          scheduleName={schedule?.name || ''}
+          scheduleDescription={schedule?.description}
+          timeZone={schedule?.time_zone || ''}
           onBack={handleBack}
         />
 
@@ -508,11 +514,15 @@ export default function ScheduleDetailPage() {
         <OnCallSchedule
           userSchedules={userSchedules}
           currentMonthDisplay={currentMonthDisplay}
-          timeZone={schedule.time_zone}
+          timeZone={schedule?.time_zone || 'UTC'}
+          isLoading={isLoading}
         />
 
         {/* Actions - Memoized to prevent re-renders */}
-        <ScheduleActions htmlUrl={schedule.html_url} hasSchedules={userSchedules.length > 0} />
+        <ScheduleActions
+          htmlUrl={schedule?.html_url || '#'}
+          hasSchedules={userSchedules.length > 0}
+        />
       </Box>
       <Footer />
     </Box>

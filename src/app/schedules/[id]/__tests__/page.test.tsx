@@ -20,6 +20,7 @@ jest.mock('swr', () => {
     if (!key) {
       return { data: undefined, error: undefined, isLoading: false };
     }
+    // When loading, don't return data or error
     return { data: undefined, error: undefined, isLoading: true };
   });
 });
@@ -46,7 +47,7 @@ describe('ScheduleDetailPage', () => {
     (useParams as jest.Mock).mockReturnValue({ id: 'test-schedule-id' });
   });
 
-  it('should render full screen loading without header/footer when loading', () => {
+  it('should render page structure with loading in schedule section when loading', () => {
     (useSession as jest.Mock).mockReturnValue({
       data: {
         user: { name: 'Test User' },
@@ -57,14 +58,15 @@ describe('ScheduleDetailPage', () => {
 
     render(<ScheduleDetailPage />);
 
+    // Verify header and footer ARE rendered during loading
+    expect(screen.getByTestId('header')).toBeInTheDocument();
+    expect(screen.getByTestId('footer')).toBeInTheDocument();
+
+    // Verify loading indicator is shown (without fullScreen)
     const loadingElement = screen.getByTestId('loading');
     expect(loadingElement).toBeInTheDocument();
-    expect(loadingElement).toHaveAttribute('data-fullscreen', 'true');
+    expect(loadingElement).not.toHaveAttribute('data-fullscreen', 'true');
     expect(screen.getByText('Loading schedule...')).toBeInTheDocument();
-
-    // Verify header and footer are NOT rendered during loading
-    expect(screen.queryByTestId('header')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('footer')).not.toBeInTheDocument();
   });
 
   it('should not fetch data when not authenticated', () => {
@@ -107,7 +109,9 @@ describe('ScheduleDetailPage', () => {
 
     render(<ScheduleDetailPage />);
 
-    // Component should render without errors
+    // Component should render with header/footer and loading indicator
+    expect(screen.getByTestId('header')).toBeInTheDocument();
+    expect(screen.getByTestId('footer')).toBeInTheDocument();
     expect(screen.getByTestId('loading')).toBeInTheDocument();
   });
 });
