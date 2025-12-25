@@ -77,14 +77,18 @@ describe('ScheduleCard', () => {
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
 
-    it('should not call onClick multiple times for single click', async () => {
+    it('should call onClick for each click (not debounced)', async () => {
       const user = userEvent.setup();
       render(<ScheduleCard schedule={mockSchedule} onClick={mockOnClick} />);
 
       const card = screen.getByRole('article');
+
+      // Click multiple times to verify no debouncing
+      await user.click(card);
+      await user.click(card);
       await user.click(card);
 
-      expect(mockOnClick).toHaveBeenCalledTimes(1);
+      expect(mockOnClick).toHaveBeenCalledTimes(3);
     });
   });
 

@@ -85,7 +85,42 @@ describe('/api/schedules', () => {
       expect(data.error).toBe('Unauthorized');
     });
 
-    it('should fetch schedules from PagerDuty successfully with OAuth and pagination', async () => {
+    describe('Authentication Methods', () => {
+      it.each([
+        ['OAuth', 'mock_oauth_token', 'Bearer mock_oauth_token', 'oauth'],
+        ['API Token', 'mock_api_token', 'Token token=mock_api_token', 'api-token'],
+      ])(
+        'should use correct Authorization header format for %s',
+        async (_name, token, expectedAuthHeader, authMethod) => {
+          getServerSession.mockResolvedValue({
+            user: { id: '123' },
+            accessToken: token,
+            authMethod,
+          });
+
+          (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
+            ok: true,
+            json: async () => ({ schedules: [], more: false, total: 0 }),
+          } as Response);
+
+          const request = createMockRequest('http://localhost:3000/api/schedules');
+          await GET(request);
+
+          // Verify correct Authorization header format is used
+          expect(global.fetch).toHaveBeenCalledWith(
+            expect.stringContaining('https://api.pagerduty.com/schedules'),
+            expect.objectContaining({
+              headers: expect.objectContaining({
+                Authorization: expectedAuthHeader,
+                Accept: 'application/vnd.pagerduty+json;version=2',
+              }),
+            })
+          );
+        }
+      );
+    });
+
+    it('should fetch schedules with pagination and return proper response structure', async () => {
       const mockSchedules = [
         {
           id: 'SCHEDULE1',
@@ -103,8 +138,7 @@ describe('/api/schedules', () => {
 
       getServerSession.mockResolvedValue({
         user: { id: '123' },
-        accessToken: 'mock_oauth_token',
-        authMethod: 'oauth',
+        accessToken: 'mock_token',
       });
 
       (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
@@ -122,91 +156,12 @@ describe('/api/schedules', () => {
       expect(data.limit).toBe(16);
       expect(data.offset).toBe(0);
       expect(data.more).toBe(false);
-
-      // Verify PagerDuty API was called with Bearer token for OAuth
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('https://api.pagerduty.com/schedules'),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer mock_oauth_token',
-            Accept: 'application/vnd.pagerduty+json;version=2',
-          }),
-        })
-      );
     });
 
-    it('should fetch schedules from PagerDuty successfully with API Token', async () => {
-      const mockSchedules = [
-        {
-          id: 'SCHEDULE1',
-          name: 'Engineering On-Call',
-          description: 'Main engineering rotation',
-          time_zone: 'America/New_York',
-        },
-      ];
-
-      getServerSession.mockResolvedValue({
-        user: { id: '456' },
-        accessToken: 'mock_api_token',
-        authMethod: 'api-token',
-      });
-
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
-        ok: true,
-        json: async () => ({ schedules: mockSchedules, more: false, total: 1 }),
-      } as Response);
-
-      const request = createMockRequest('http://localhost:3000/api/schedules');
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.schedules).toEqual(mockSchedules);
-      expect(data.total).toBe(1);
-      expect(data.limit).toBe(16);
-      expect(data.offset).toBe(0);
-
-      // Verify PagerDuty API was called with Token format for API Token
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('https://api.pagerduty.com/schedules'),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Token token=mock_api_token',
-            Accept: 'application/vnd.pagerduty+json;version=2',
-          }),
-        })
-      );
-    });
-
-    it('should handle PagerDuty API errors with OAuth', async () => {
+    it('should handle PagerDuty API errors regardless of auth method', async () => {
       getServerSession.mockResolvedValue({
         user: { id: '123' },
-        accessToken: 'mock_oauth_token',
-        authMethod: 'oauth',
-      });
-
-      (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({
-        ok: false,
-        status: 500,
-        json: async () => ({
-          error: { message: 'PagerDuty service unavailable' },
-        }),
-      } as Response);
-
-      const request = createMockRequest('http://localhost:3000/api/schedules');
-      const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(500);
-      expect(data.error).toBe('Failed to fetch schedules');
-      expect(data.message).toBe('PagerDuty service unavailable');
-    });
-
-    it('should handle PagerDuty API errors with API Token', async () => {
-      getServerSession.mockResolvedValue({
-        user: { id: '123' },
-        accessToken: 'mock_api_token',
-        authMethod: 'api-token',
+        accessToken: 'mock_token',
       });
 
       (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValue({

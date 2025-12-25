@@ -61,6 +61,10 @@ describe('ScheduleDetailPage', () => {
     expect(loadingElement).toBeInTheDocument();
     expect(loadingElement).toHaveAttribute('data-fullscreen', 'true');
     expect(screen.getByText('Loading schedule...')).toBeInTheDocument();
+
+    // Verify header and footer are NOT rendered during loading
+    expect(screen.queryByTestId('header')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('footer')).not.toBeInTheDocument();
   });
 
   it('should not fetch data when not authenticated', () => {
