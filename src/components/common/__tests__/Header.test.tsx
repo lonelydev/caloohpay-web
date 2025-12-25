@@ -116,13 +116,6 @@ describe('Header', () => {
     expect(signOut).toHaveBeenCalledWith({ callbackUrl: '/' });
   });
 
-  it('should have correct elevation prop', () => {
-    (useSession as jest.Mock).mockReturnValue({
-      data: null,
-      status: 'unauthenticated',
-    });
-
-    const { container } = render(<Header elevation={4} />);
-    expect(container.firstChild).toBeInTheDocument();
-  });
+  // Note: Elevation prop test removed as redundant - component rendering
+  // is already verified by other tests, and elevation is a MUI internal prop
 });

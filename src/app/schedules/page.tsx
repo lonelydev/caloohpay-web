@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -10,28 +10,21 @@ import {
   Typography,
   Chip,
   Stack,
-  Card as MUICard,
-  CardContent,
   Pagination,
-  Button,
-  ButtonGroup,
   CircularProgress,
   Backdrop,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  CalendarMonth as CalendarIcon,
-  FirstPage as FirstPageIcon,
-  LastPage as LastPageIcon,
-  NavigateBefore as PrevIcon,
-  NavigateNext as NextIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, CalendarMonth as CalendarIcon } from '@mui/icons-material';
 import { Header, Footer, Loading, ErrorDisplay } from '@/components/common';
+import PaginationControls from '@/components/schedules/PaginationControls';
+import ScheduleCard from '@/components/schedules/ScheduleCard';
+import { ScheduleGrid, EmptyStateContainer } from '@/components/schedules/ScheduleCard.styles';
+import { SCHEDULE_LAYOUT } from '@/styles/layout.constants';
 import { useSession } from 'next-auth/react';
 import useSWR from 'swr';
 import { PagerDutySchedule } from '@/lib/types';
 
-const ITEMS_PER_PAGE = 16;
+const ITEMS_PER_PAGE = SCHEDULE_LAYOUT.ITEMS_PER_PAGE;
 
 interface SchedulesResponse {
   schedules: PagerDutySchedule[];
@@ -73,7 +66,8 @@ export default function SchedulesPage() {
   const [page, setPage] = useState(1);
   const [apiSearchQuery, setApiSearchQuery] = useState('');
   const [allSchedules, setAllSchedules] = useState<PagerDutySchedule[]>([]);
-  const [useClientSideFiltering, setUseClientSideFiltering] = useState(true);
+  const [showingLocalResults, setShowingLocalResults] = useState(false);
+  const [apiSearchComplete, setApiSearchComplete] = useState(false);
 
   // Calculate offset for API pagination
   const offset = (page - 1) * ITEMS_PER_PAGE;
@@ -88,123 +82,138 @@ export default function SchedulesPage() {
     }
   );
 
-  // Store all schedules for client-side filtering
+  // Store all schedules for client-side filtering and mark API search complete
   useEffect(() => {
-    if (data?.schedules && !apiSearchQuery) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAllSchedules((prev) => {
-        const existingIds = new Set(prev.map((s) => s.id));
-        const newSchedules = data.schedules.filter((s) => !existingIds.has(s.id));
-        return [...prev, ...newSchedules];
-      });
+    if (data?.schedules) {
+      if (!apiSearchQuery) {
+        // Regular pagination - add to cache
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAllSchedules((prev) => {
+          const existingIds = new Set(prev.map((s) => s.id));
+          const newSchedules = data.schedules.filter((s) => !existingIds.has(s.id));
+          return [...prev, ...newSchedules];
+        });
+      } else {
+        // API search complete - mark it
+        if (!apiSearchComplete) setApiSearchComplete(true);
+      }
     }
-  }, [data, apiSearchQuery]);
+  }, [data, apiSearchQuery, apiSearchComplete]);
 
-  // Client-side filtering from cached schedules
+  // Client-side filtering from cached schedules - always available for instant results
   const clientFilteredSchedules = useMemo(() => {
-    if (!searchQuery || !useClientSideFiltering) return [];
+    if (!searchQuery) return [];
 
     return allSchedules.filter((schedule) =>
       schedule.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [allSchedules, searchQuery, useClientSideFiltering]);
+  }, [allSchedules, searchQuery]);
 
-  // Determine if we should use client-side filtering or API search
+  // Enhanced search strategy: show local results immediately, search API in parallel
   useEffect(() => {
     if (!searchQuery) {
-      // No search query - use API pagination
+      // No search query - clear search state only if needed
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (!useClientSideFiltering) setUseClientSideFiltering(true);
-
-      if (apiSearchQuery) setApiSearchQuery('');
-
-      // Don't reset page here - allow API pagination to work
+      if (apiSearchQuery !== '') setApiSearchQuery('');
+      if (showingLocalResults !== false) setShowingLocalResults(false);
+      if (apiSearchComplete !== true) setApiSearchComplete(true);
       return;
     }
 
-    // Try client-side filtering first
+    // Check for local results
     const clientResults = allSchedules.filter((schedule) =>
       schedule.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    if (clientResults.length > 0) {
-      // Found results in cached schedules
+    const hasLocalResults = clientResults.length > 0;
 
-      if (!useClientSideFiltering) setUseClientSideFiltering(true);
-
-      if (apiSearchQuery) setApiSearchQuery('');
-
-      if (page !== 1) setPage(1);
-    } else {
-      // No client-side results, fallback to API search
-
-      if (useClientSideFiltering) setUseClientSideFiltering(false);
-
-      if (apiSearchQuery !== searchQuery) setApiSearchQuery(searchQuery);
-
-      if (page !== 1) setPage(1);
+    // Always trigger API search for comprehensive results
+    // This ensures we don't miss schedules not yet in local cache
+    if (apiSearchQuery !== searchQuery) {
+      setApiSearchQuery(searchQuery);
+      setApiSearchComplete(false);
     }
-  }, [searchQuery, allSchedules, useClientSideFiltering, apiSearchQuery, page]);
 
-  // Paginate client-filtered results
-  const paginatedClientResults = useMemo(() => {
-    if (!useClientSideFiltering || !searchQuery) return [];
+    // Show local results immediately if available
+    const shouldShowLocal = hasLocalResults;
+    if (showingLocalResults !== shouldShowLocal) {
+      setShowingLocalResults(shouldShowLocal);
+    }
+
+    // Reset to page 1 when search query changes
+    if (page !== 1) setPage(1);
+  }, [searchQuery, allSchedules, apiSearchQuery, showingLocalResults, apiSearchComplete, page]);
+
+  // Merge and deduplicate local and API search results
+  const mergedSearchResults = useMemo(() => {
+    if (!searchQuery) return [];
+
+    // Start with local results
+    const resultsMap = new Map(clientFilteredSchedules.map((s) => [s.id, s]));
+
+    // Add API results if search is complete
+    if (apiSearchComplete && data?.schedules && apiSearchQuery === searchQuery) {
+      data.schedules.forEach((schedule) => {
+        resultsMap.set(schedule.id, schedule);
+      });
+    }
+
+    return Array.from(resultsMap.values());
+  }, [searchQuery, clientFilteredSchedules, apiSearchComplete, data, apiSearchQuery]);
+
+  // Paginate merged search results
+  const paginatedSearchResults = useMemo(() => {
+    if (!searchQuery) return [];
 
     const start = (page - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
-    return clientFilteredSchedules.slice(start, end);
-  }, [clientFilteredSchedules, page, useClientSideFiltering, searchQuery]);
+    return mergedSearchResults.slice(start, end);
+  }, [mergedSearchResults, page, searchQuery]);
 
   // Final schedules to display
-  // When searching: use client-side paginated results if available, otherwise API results
-  // When not searching: always use API results (which reflects current page via offset)
-  const displaySchedules =
-    searchQuery && useClientSideFiltering ? paginatedClientResults : data?.schedules || [];
+  // When searching: use merged local + API results
+  // When not searching: use API pagination results
+  const displaySchedules = searchQuery ? paginatedSearchResults : data?.schedules || [];
 
   // Total count and pages
-  // When not searching, use estimated total from API (based on 'more' flag)
-  const totalCount = useClientSideFiltering
-    ? searchQuery
-      ? clientFilteredSchedules.length
-      : data?.total || allSchedules.length
-    : data?.total || 0;
+  // When searching, use merged results count; otherwise use API total
+  const totalCount = searchQuery ? mergedSearchResults.length : data?.total || 0;
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-  // Always show pagination controls if we have data, but disable buttons based on state
-  const showPagination = (data?.schedules && data.schedules.length > 0) || isLoading;
-  const isFirstPage = page === 1;
-  const isLastPage = !data?.more; // Use 'more' flag to determine if we're on last page
+  // Show pagination controls if we have multiple pages or during loading
+  // Use totalPages as primary condition to keep controls visible during navigation
+  const showPagination = true;
 
-  // Pagination handlers
-  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
+  // Pagination handlers - wrapped in useCallback for stable references
+  const handlePageChange = useCallback((_: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleFirstPage = () => {
+  const handleFirstPage = useCallback(() => {
     setPage(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleLastPage = () => {
+  const handleLastPage = useCallback(() => {
     setPage(totalPages);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [totalPages]);
 
-  const handlePrevPage = () => {
+  const handlePrevPage = useCallback(() => {
     if (page > 1) {
       setPage(page - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
+  }, [page]);
 
-  const handleNextPage = () => {
+  const handleNextPage = useCallback(() => {
     if (page < totalPages) {
       setPage(page + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
+  }, [page, totalPages]);
 
   // Only show full-screen loading on initial page load (auth check)
   // For data fetching, we'll show a loading overlay instead to prevent page re-render
@@ -273,11 +282,25 @@ export default function SchedulesPage() {
                   Page {page} of {totalPages} • Showing {displaySchedules.length} of {totalCount}
                 </Typography>
               )}
-              {searchQuery && useClientSideFiltering && (
-                <Chip label="Client-side search" size="small" color="success" variant="outlined" />
+              {searchQuery && showingLocalResults && !apiSearchComplete && (
+                <Chip
+                  label="Searching API..."
+                  size="small"
+                  color="info"
+                  variant="outlined"
+                  icon={<CircularProgress size={12} />}
+                />
               )}
-              {searchQuery && !useClientSideFiltering && (
-                <Chip label="API search" size="small" color="info" variant="outlined" />
+              {searchQuery && showingLocalResults && apiSearchComplete && (
+                <Chip
+                  label={`${clientFilteredSchedules.length} local, ${mergedSearchResults.length - clientFilteredSchedules.length} from API`}
+                  size="small"
+                  color="success"
+                  variant="outlined"
+                />
+              )}
+              {searchQuery && !showingLocalResults && !apiSearchComplete && (
+                <Chip label="Searching..." size="small" color="info" variant="outlined" />
               )}
             </Stack>
           )}
@@ -299,140 +322,17 @@ export default function SchedulesPage() {
 
             {/* Content below loading overlay */}
             {displaySchedules && displaySchedules.length > 0 ? (
-              <>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                      xs: '1fr',
-                      sm: 'repeat(2, 1fr)',
-                      md: 'repeat(4, 1fr)',
-                    },
-                    gap: 3,
-                  }}
-                >
-                  {displaySchedules.map((schedule) => (
-                    <MUICard
-                      key={schedule.id}
-                      elevation={2}
-                      sx={{
-                        height: '100%',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          elevation: 4,
-                          transform: 'translateY(-4px)',
-                          boxShadow: 8,
-                        },
-                      }}
-                      onClick={() => router.push(`/schedules/${schedule.id}`)}
-                      role="article"
-                    >
-                      <CardContent
-                        sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2 }}>
-                          <CalendarIcon color="primary" />
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography
-                              variant="h6"
-                              component="h3"
-                              fontWeight={600}
-                              sx={{
-                                wordWrap: 'break-word',
-                                overflowWrap: 'break-word',
-                                hyphens: 'auto',
-                              }}
-                            >
-                              {schedule.name}
-                            </Typography>
-                            {schedule.description && (
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                }}
-                              >
-                                {schedule.description}
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-
-                        {/* Spacer to push timezone chip to bottom */}
-                        <Box sx={{ flex: 1 }} />
-
-                        {schedule.time_zone && (
-                          <Chip
-                            label={schedule.time_zone}
-                            size="small"
-                            variant="outlined"
-                            sx={{ alignSelf: 'flex-start' }}
-                          />
-                        )}
-                      </CardContent>
-                    </MUICard>
-                  ))}
-                </Box>
-
-                {/* Pagination Controls */}
-                {showPagination && (
-                  <Stack spacing={3} alignItems="center" sx={{ mt: 6 }}>
-                    {/* Navigation Buttons */}
-                    <ButtonGroup variant="outlined" size="large">
-                      <Button
-                        onClick={handleFirstPage}
-                        disabled={isFirstPage}
-                        startIcon={<FirstPageIcon />}
-                      >
-                        First
-                      </Button>
-                      <Button
-                        onClick={handlePrevPage}
-                        disabled={isFirstPage}
-                        startIcon={<PrevIcon />}
-                      >
-                        Previous
-                      </Button>
-                      <Button onClick={handleNextPage} disabled={isLastPage} endIcon={<NextIcon />}>
-                        Next
-                      </Button>
-                      <Button
-                        onClick={handleLastPage}
-                        disabled={isLastPage}
-                        endIcon={<LastPageIcon />}
-                      >
-                        Last
-                      </Button>
-                    </ButtonGroup>
-
-                    {/* Page Number Pagination */}
-                    <Pagination
-                      count={totalPages}
-                      page={page}
-                      onChange={handlePageChange}
-                      color="primary"
-                      size="large"
-                      showFirstButton
-                      showLastButton
-                      siblingCount={1}
-                      boundaryCount={1}
-                    />
-                  </Stack>
-                )}
-              </>
+              <ScheduleGrid>
+                {displaySchedules.map((schedule) => (
+                  <ScheduleCard
+                    key={schedule.id}
+                    schedule={schedule}
+                    onClick={() => router.push(`/schedules/${schedule.id}`)}
+                  />
+                ))}
+              </ScheduleGrid>
             ) : (
-              <Box
-                sx={{
-                  textAlign: 'center',
-                  py: 8,
-                }}
-              >
+              <EmptyStateContainer>
                 <CalendarIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
                 <Typography variant="h6" color="text.secondary" gutterBottom>
                   {searchQuery ? 'No schedules found' : 'No schedules available'}
@@ -442,9 +342,38 @@ export default function SchedulesPage() {
                     ? 'Try adjusting your search query'
                     : 'Create schedules in PagerDuty to get started'}
                 </Typography>
-              </Box>
+              </EmptyStateContainer>
             )}
           </Box>
+
+          {/* Pagination Controls - Outside conditional to persist during loading */}
+          {showPagination && (
+            <Stack spacing={3} alignItems="center">
+              {/* Navigation Buttons */}
+              <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                isLoading={isLoading}
+                onFirstPage={handleFirstPage}
+                onPrevPage={handlePrevPage}
+                onNextPage={handleNextPage}
+                onLastPage={handleLastPage}
+              />
+
+              {/* Page Number Pagination */}
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                size="large"
+                showFirstButton
+                showLastButton
+                siblingCount={1}
+                boundaryCount={1}
+              />
+            </Stack>
+          )}
         </Stack>
       </Container>
 

@@ -16,27 +16,273 @@ import {
   Divider,
   Stack,
 } from '@mui/material';
-import {
-  ArrowBack,
-  CalendarMonth,
-  Schedule,
-  AccessTime,
-  Person,
-  EventBusy,
-  EventAvailable,
-  AttachMoney,
-} from '@mui/icons-material';
-import { useState, useMemo } from 'react';
+import { ArrowBack, AccessTime, Person, Wallet, Work, WorkOff } from '@mui/icons-material';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { DateTime } from 'luxon';
 import { OnCallPeriod } from 'caloohpay/core';
 import { PAYMENT_RATES } from '@/lib/constants';
 import { getPagerDutyHeaders } from '@/lib/utils/pagerdutyAuth';
 import { Header, Footer, Loading } from '@/components/common';
+import MonthNavigation from '@/components/schedules/MonthNavigation';
 import type { PagerDutySchedule, ScheduleEntry, User } from '@/lib/types';
 
 interface ScheduleResponse {
   schedule: PagerDutySchedule;
 }
+
+/**
+ * Memoized schedule header - only re-renders if schedule name/description/timezone changes
+ */
+const ScheduleHeader = memo<{
+  scheduleName: string;
+  scheduleDescription?: string;
+  timeZone: string;
+  onBack: () => void;
+}>(({ scheduleName, scheduleDescription, timeZone, onBack }) => (
+  <Box sx={{ mb: 4 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+      <IconButton onClick={onBack} size="large">
+        <ArrowBack />
+      </IconButton>
+      <Box sx={{ flex: 1 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          {scheduleName}
+        </Typography>
+        {scheduleDescription && (
+          <Typography variant="body1" color="text.secondary">
+            {scheduleDescription}
+          </Typography>
+        )}
+      </Box>
+      <Chip icon={<AccessTime />} label={timeZone} color="primary" variant="outlined" />
+    </Box>
+  </Box>
+));
+ScheduleHeader.displayName = 'ScheduleHeader';
+
+/**
+ * Memoized schedule actions - only re-renders if htmlUrl or hasSchedules changes
+ */
+const ScheduleActions = memo<{
+  htmlUrl: string;
+  hasSchedules: boolean;
+}>(({ htmlUrl, hasSchedules }) => (
+  <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+    <Button variant="contained" color="primary" size="large" disabled={!hasSchedules}>
+      Calculate Payments
+    </Button>
+    <Button variant="outlined" href={htmlUrl} target="_blank" rel="noopener noreferrer">
+      View in PagerDuty
+    </Button>
+  </Box>
+));
+ScheduleActions.displayName = 'ScheduleActions';
+
+/**
+ * Memoized on-call schedule display - only re-renders when schedule data changes
+ */
+const OnCallSchedule = memo<{
+  userSchedules: Array<{
+    user: User;
+    entries: Array<
+      ScheduleEntry & {
+        duration: number;
+        weekdayDays: number;
+        weekendDays: number;
+        compensation: number;
+      }
+    >;
+    totalHours: number;
+    totalWeekdays: number;
+    totalWeekends: number;
+    totalCompensation: number;
+  }>;
+  currentMonthDisplay: string;
+  timeZone: string;
+  isLoading: boolean;
+}>(({ userSchedules, currentMonthDisplay, timeZone, isLoading }) => {
+  // Show loading state only in this section
+  if (isLoading) {
+    return (
+      <Box sx={{ position: 'relative', minHeight: 300 }}>
+        <Loading message="Loading schedule..." />
+      </Box>
+    );
+  }
+
+  if (userSchedules.length === 0) {
+    return (
+      <Alert severity="info">
+        <Typography variant="h6" gutterBottom>
+          No On-Call Periods
+        </Typography>
+        <Typography variant="body2">
+          There are no on-call periods scheduled for {currentMonthDisplay}.
+        </Typography>
+      </Alert>
+    );
+  }
+
+  return (
+    <Box>
+      <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+        On-Call Schedule ({userSchedules.length} {userSchedules.length === 1 ? 'person' : 'people'})
+      </Typography>
+
+      <Stack spacing={3}>
+        {userSchedules.map(
+          ({ user, entries, totalHours, totalWeekdays, totalWeekends, totalCompensation }) => (
+            <Card key={user.id} variant="outlined">
+              <CardContent>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    mb: 2,
+                    flexWrap: 'wrap',
+                    gap: 2,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Person />
+                    <Box>
+                      <Typography variant="h6">{user.name || user.summary}</Typography>
+                      {user.email && (
+                        <Typography variant="body2" color="text.secondary">
+                          {user.email}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Chip
+                      label={`${totalHours.toFixed(1)} hours`}
+                      color="primary"
+                      variant="outlined"
+                    />
+                    <Chip
+                      icon={<Work />}
+                      label={`${totalWeekdays} weekdays`}
+                      color="default"
+                      variant="outlined"
+                    />
+                    <Chip
+                      icon={<WorkOff />}
+                      label={`${totalWeekends} weekends`}
+                      color="secondary"
+                      variant="outlined"
+                    />
+                    <Chip
+                      icon={<Wallet />}
+                      label={`${PAYMENT_RATES.CURRENCY_SYMBOL}${totalCompensation.toFixed(2)}`}
+                      color="success"
+                      variant="filled"
+                    />
+                  </Box>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    On-Call Periods ({entries.length})
+                  </Typography>
+                  <Stack spacing={1}>
+                    {entries.map((entry, index) => {
+                      const start = DateTime.fromISO(
+                        typeof entry.start === 'string' ? entry.start : entry.start.toISOString(),
+                        {
+                          zone: timeZone,
+                        }
+                      );
+                      const end = DateTime.fromISO(
+                        typeof entry.end === 'string' ? entry.end : entry.end.toISOString(),
+                        {
+                          zone: timeZone,
+                        }
+                      );
+
+                      return (
+                        <Box
+                          key={index}
+                          sx={{
+                            p: 1.5,
+                            bgcolor: 'action.hover',
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              flexWrap: 'wrap',
+                              gap: 1,
+                            }}
+                          >
+                            <Box sx={{ flex: 1, minWidth: '200px' }}>
+                              <Typography variant="body2" fontWeight="medium">
+                                {start.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {end.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ')}
+                              </Typography>
+                            </Box>
+
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                gap: 0.5,
+                                flexWrap: 'wrap',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <Chip
+                                label={`${entry.duration.toFixed(1)}h`}
+                                size="small"
+                                variant="outlined"
+                              />
+                              {entry.weekdayDays > 0 && (
+                                <Chip
+                                  label={`${entry.weekdayDays} WD`}
+                                  size="small"
+                                  color="default"
+                                  title={`${entry.weekdayDays} weekday${entry.weekdayDays > 1 ? 's' : ''} × ${PAYMENT_RATES.CURRENCY_SYMBOL}${PAYMENT_RATES.WEEKDAY}`}
+                                />
+                              )}
+                              {entry.weekendDays > 0 && (
+                                <Chip
+                                  label={`${entry.weekendDays} WE`}
+                                  size="small"
+                                  color="secondary"
+                                  title={`${entry.weekendDays} weekend${entry.weekendDays > 1 ? 's' : ''} × ${PAYMENT_RATES.CURRENCY_SYMBOL}${PAYMENT_RATES.WEEKEND}`}
+                                />
+                              )}
+                              <Chip
+                                icon={<Wallet sx={{ fontSize: '16px !important' }} />}
+                                label={`${PAYMENT_RATES.CURRENCY_SYMBOL}${entry.compensation.toFixed(2)}`}
+                                size="small"
+                                color="success"
+                                sx={{ fontWeight: 'medium' }}
+                              />
+                            </Box>
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              </CardContent>
+            </Card>
+          )
+        )}
+      </Stack>
+    </Box>
+  );
+});
+OnCallSchedule.displayName = 'OnCallSchedule';
 
 const fetcher = async ([url, token, authMethod]: [string, string, string | undefined]) => {
   const response = await fetch(url, {
@@ -56,6 +302,11 @@ export default function ScheduleDetailPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const scheduleId = params?.id as string;
+
+  // Stable back handler
+  const handleBack = useCallback(() => {
+    router.push('/schedules');
+  }, [router]);
 
   // Date range state - default to current month
   const [dateRange, setDateRange] = useState(() => {
@@ -79,25 +330,25 @@ export default function ScheduleDetailPage() {
     fetcher
   );
 
-  // Navigate to previous month
-  const handlePreviousMonth = () => {
+  // Navigate to previous month - wrapped in useCallback for stable reference
+  const handlePreviousMonth = useCallback(() => {
     const since = DateTime.fromISO(dateRange.since);
     const newSince = since.minus({ months: 1 });
     setDateRange({
       since: newSince.startOf('month').toISO() || '',
       until: newSince.endOf('month').toISO() || '',
     });
-  };
+  }, [dateRange.since]);
 
-  // Navigate to next month
-  const handleNextMonth = () => {
+  // Navigate to next month - wrapped in useCallback for stable reference
+  const handleNextMonth = useCallback(() => {
     const since = DateTime.fromISO(dateRange.since);
     const newSince = since.plus({ months: 1 });
     setDateRange({
       since: newSince.startOf('month').toISO() || '',
       until: newSince.endOf('month').toISO() || '',
     });
-  };
+  }, [dateRange.since]);
 
   // Get current month display
   const currentMonthDisplay = useMemo(() => {
@@ -178,11 +429,6 @@ export default function ScheduleDetailPage() {
     });
   }, [data]);
 
-  // Loading state
-  if (isLoading) {
-    return <Loading message="Loading schedule..." fullScreen />;
-  }
-
   // Error state
   if (error) {
     return (
@@ -212,7 +458,8 @@ export default function ScheduleDetailPage() {
 
   const schedule = data?.schedule;
 
-  if (!schedule) {
+  // Show "not found" only if not loading and no schedule exists
+  if (!schedule && !isLoading) {
     return (
       <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Header />
@@ -238,251 +485,37 @@ export default function ScheduleDetailPage() {
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
       <Box sx={{ maxWidth: 1200, mx: 'auto', py: 4, flex: 1 }}>
-        {/* Header */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <IconButton onClick={() => router.push('/schedules')} size="large">
-              <ArrowBack />
-            </IconButton>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="h4" component="h1" gutterBottom>
-                {schedule.name}
-              </Typography>
-              {schedule.description && (
-                <Typography variant="body1" color="text.secondary">
-                  {schedule.description}
-                </Typography>
-              )}
-            </Box>
-            <Chip
-              icon={<AccessTime />}
-              label={schedule.time_zone}
-              color="primary"
-              variant="outlined"
-            />
-          </Box>
-        </Box>
+        {/* Header - Memoized to prevent re-renders */}
+        <ScheduleHeader
+          scheduleName={schedule?.name || ''}
+          scheduleDescription={schedule?.description}
+          timeZone={schedule?.time_zone || ''}
+          onBack={handleBack}
+        />
 
-        {/* Month Navigation */}
+        {/* Month Navigation - Memoized to prevent re-renders */}
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Button startIcon={<ArrowBack />} onClick={handlePreviousMonth} variant="outlined">
-              Previous Month
-            </Button>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CalendarMonth />
-              <Typography variant="h5">{currentMonthDisplay}</Typography>
-            </Box>
-            <Button endIcon={<Schedule />} onClick={handleNextMonth} variant="outlined">
-              Next Month
-            </Button>
-          </Box>
+          <MonthNavigation
+            currentMonth={currentMonthDisplay}
+            isLoading={isLoading}
+            onPreviousMonth={handlePreviousMonth}
+            onNextMonth={handleNextMonth}
+          />
         </Paper>
 
-        {/* On-Call Summary */}
-        {userSchedules.length === 0 ? (
-          <Alert severity="info">
-            <Typography variant="h6" gutterBottom>
-              No On-Call Periods
-            </Typography>
-            <Typography variant="body2">
-              There are no on-call periods scheduled for {currentMonthDisplay}.
-            </Typography>
-          </Alert>
-        ) : (
-          <Box>
-            <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-              On-Call Schedule ({userSchedules.length}{' '}
-              {userSchedules.length === 1 ? 'person' : 'people'})
-            </Typography>
+        {/* On-Call Summary - Memoized, only re-renders when data changes */}
+        <OnCallSchedule
+          userSchedules={userSchedules}
+          currentMonthDisplay={currentMonthDisplay}
+          timeZone={schedule?.time_zone || 'UTC'}
+          isLoading={isLoading}
+        />
 
-            <Stack spacing={3}>
-              {userSchedules.map(
-                ({
-                  user,
-                  entries,
-                  totalHours,
-                  totalWeekdays,
-                  totalWeekends,
-                  totalCompensation,
-                }) => (
-                  <Card key={user.id} variant="outlined">
-                    <CardContent>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          mb: 2,
-                          flexWrap: 'wrap',
-                          gap: 2,
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Person />
-                          <Box>
-                            <Typography variant="h6">{user.name || user.summary}</Typography>
-                            {user.email && (
-                              <Typography variant="body2" color="text.secondary">
-                                {user.email}
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          <Chip
-                            label={`${totalHours.toFixed(1)} hours`}
-                            color="primary"
-                            variant="outlined"
-                          />
-                          <Chip
-                            icon={<EventBusy />}
-                            label={`${totalWeekdays} weekdays`}
-                            color="default"
-                            variant="outlined"
-                          />
-                          <Chip
-                            icon={<EventAvailable />}
-                            label={`${totalWeekends} weekends`}
-                            color="secondary"
-                            variant="outlined"
-                          />
-                          <Chip
-                            icon={<AttachMoney />}
-                            label={`${PAYMENT_RATES.CURRENCY_SYMBOL}${totalCompensation.toFixed(2)}`}
-                            color="success"
-                            variant="filled"
-                          />
-                        </Box>
-                      </Box>
-
-                      <Divider sx={{ my: 2 }} />
-
-                      <Box>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                          On-Call Periods ({entries.length})
-                        </Typography>
-                        <Stack spacing={1}>
-                          {entries.map((entry, index) => {
-                            const start = DateTime.fromISO(
-                              typeof entry.start === 'string'
-                                ? entry.start
-                                : entry.start.toISOString(),
-                              {
-                                zone: schedule.time_zone,
-                              }
-                            );
-                            const end = DateTime.fromISO(
-                              typeof entry.end === 'string' ? entry.end : entry.end.toISOString(),
-                              {
-                                zone: schedule.time_zone,
-                              }
-                            );
-
-                            return (
-                              <Box
-                                key={index}
-                                sx={{
-                                  p: 1.5,
-                                  bgcolor: 'action.hover',
-                                  borderRadius: 1,
-                                }}
-                              >
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'flex-start',
-                                    flexWrap: 'wrap',
-                                    gap: 1,
-                                  }}
-                                >
-                                  <Box sx={{ flex: 1, minWidth: '200px' }}>
-                                    <Typography variant="body2" fontWeight="medium">
-                                      {start.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ')}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                      {end.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ')}
-                                    </Typography>
-                                  </Box>
-
-                                  <Box
-                                    sx={{
-                                      display: 'flex',
-                                      gap: 0.5,
-                                      flexWrap: 'wrap',
-                                      alignItems: 'center',
-                                    }}
-                                  >
-                                    <Chip
-                                      label={`${entry.duration.toFixed(1)}h`}
-                                      size="small"
-                                      variant="outlined"
-                                    />
-                                    {entry.weekdayDays > 0 && (
-                                      <Chip
-                                        label={`${entry.weekdayDays} WD`}
-                                        size="small"
-                                        color="default"
-                                        title={`${entry.weekdayDays} weekday${entry.weekdayDays > 1 ? 's' : ''} × ${PAYMENT_RATES.CURRENCY_SYMBOL}${PAYMENT_RATES.WEEKDAY}`}
-                                      />
-                                    )}
-                                    {entry.weekendDays > 0 && (
-                                      <Chip
-                                        label={`${entry.weekendDays} WE`}
-                                        size="small"
-                                        color="secondary"
-                                        title={`${entry.weekendDays} weekend${entry.weekendDays > 1 ? 's' : ''} × ${PAYMENT_RATES.CURRENCY_SYMBOL}${PAYMENT_RATES.WEEKEND}`}
-                                      />
-                                    )}
-                                    <Chip
-                                      icon={<AttachMoney sx={{ fontSize: '16px !important' }} />}
-                                      label={`${PAYMENT_RATES.CURRENCY_SYMBOL}${entry.compensation.toFixed(2)}`}
-                                      size="small"
-                                      color="success"
-                                      sx={{ fontWeight: 'medium' }}
-                                    />
-                                  </Box>
-                                </Box>
-                              </Box>
-                            );
-                          })}
-                        </Stack>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                )
-              )}
-            </Stack>
-          </Box>
-        )}
-
-        {/* Actions */}
-        <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            disabled={userSchedules.length === 0}
-          >
-            Calculate Payments
-          </Button>
-          <Button
-            variant="outlined"
-            href={schedule.html_url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            View in PagerDuty
-          </Button>
-        </Box>
+        {/* Actions - Memoized to prevent re-renders */}
+        <ScheduleActions
+          htmlUrl={schedule?.html_url || '#'}
+          hasSchedules={userSchedules.length > 0}
+        />
       </Box>
       <Footer />
     </Box>
