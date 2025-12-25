@@ -1,0 +1,124 @@
+name: "CodeQL Analysis"
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**.js'
+      - '**.jsx'
+      - '**.ts'
+      - '**.tsx'
+      - '**.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/codeql-analysis.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.js'
+      - '**.jsx'
+      - '**.ts'
+      - '**.tsx'
+      - '**.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+  schedule:
+    # Run weekly on Mondays at 6:00 AM UTC to catch new vulnerabilities
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze Code
+    runs-on: ubuntu-latest
+    permissions:
+      # Required for all workflows
+      security-events: write
+      # Required for workflows in private repositories
+      contents: read
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript-typescript' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    # Initialize CodeQL tools for scanning
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        # Use security-and-quality query suite for comprehensive analysis
+        queries: security-and-quality
+        # Exclude test files, build outputs, and dependencies from analysis
+        config: |
+          paths-ignore:
+            - node_modules
+            - dist
+            - build
+            - coverage
+            - .next
+            - out
+            - playwright-report
+            - test-results
+          paths:
+            - src
+            - app
+            - lib
+            - components
+            - middleware.ts
+        # Optimize performance
+        setup-python-dependencies: false
+
+    # Install dependencies (required for accurate type analysis)
+    - name: Install dependencies
+      run: npm ci
+
+    # Build Next.js app for better analysis (CodeQL can analyze build output)
+    - name: Build Next.js application
+      run: npm run build
+      env:
+        # Provide dummy values for required env vars during build
+        NEXTAUTH_URL: 'http://localhost:3000'
+        NEXTAUTH_SECRET: 'dummy-secret-for-codeql-analysis'
+        NEXT_PUBLIC_PAGERDUTY_CLIENT_ID: 'dummy-client-id'
+
+    # Perform CodeQL Analysis
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{ matrix.language }}"
+        # Upload results even if there are findings
+        upload: true
+        # Generate SARIF output for detailed review
+        output: sarif-results
+        # Fail the workflow if critical/high severity issues are found
+        # Uncomment the line below to enable this:
+        # fail-on: critical
+
+    # Upload SARIF file as artifact for review
+    - name: Upload SARIF results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: codeql-results
+        path: sarif-results
+        retention-days: 7
+
+    # Optional: Comment on PR with summary (requires additional setup)
+    - name: CodeQL Analysis Summary
+      if: github.event_name == 'pull_request'
+      run: |
+        echo "✅ CodeQL analysis completed successfully"
+        echo "📊 Results have been uploaded to Security tab"
+        echo "🔍 Review findings at: ${{ github.server_url }}/${{ github.repository }}/security/code-scanning"
