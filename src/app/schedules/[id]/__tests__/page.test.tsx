@@ -3,6 +3,18 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import ScheduleDetailPage from '../page';
 
+// Mock all FullCalendar modules to avoid ES module issues in Jest
+jest.mock('@fullcalendar/react', () => {
+  return function MockFullCalendar() {
+    return <div data-testid="mock-fullcalendar">Calendar</div>;
+  };
+});
+
+jest.mock('@fullcalendar/core', () => ({}));
+jest.mock('@fullcalendar/daygrid', () => ({}));
+jest.mock('@fullcalendar/interaction', () => ({}));
+jest.mock('@fullcalendar/luxon3', () => ({}));
+
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useParams: jest.fn(),

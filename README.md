@@ -9,13 +9,16 @@ A modern web application that automates the calculation of out-of-hours (OOH) on
 
 ## Features
 
-- 🔐 **Secure Authentication** - PagerDuty OAuth integration with NextAuth.js
+- 🔐 **Secure Authentication** - Dual authentication (OAuth 2.0 + API Token) with NextAuth.js
 - 🔎 **Progressive Search** - Instant local results with seamless API search in background
-- 📅 **Schedule Visualization** - Interactive monthly calendar view of on-call schedules
+- 📅 **Schedule Visualization** - Dual view modes (List & Calendar) for on-call schedules
+  - **List View**: Detailed breakdown of on-call periods by user
+  - **Calendar View**: Interactive monthly calendar with FullCalendar integration
 - 💰 **Payment Calculation** - Uses the official [caloohpay](https://www.npmjs.com/package/caloohpay) package for accurate out-of-hours compensation
 - 📊 **Export Capabilities** - Generate CSV reports for payroll processing
 - 🎨 **Modern UI** - Built with Material-UI and Tailwind CSS
 - 🔒 **Type Safety** - Full TypeScript implementation
+- ♿ **Accessible** - WCAG compliant with keyboard navigation support
 
 ## 📋 Prerequisites
 
@@ -32,6 +35,7 @@ A modern web application that automates the calculation of out-of-hours (OOH) on
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 - **Forms**: [React Hook Form](https://react-hook-form.com/) with [Zod](https://zod.dev/)
 - **Date Handling**: [Luxon](https://moment.github.io/luxon/)
+- **Calendar**: [FullCalendar](https://fullcalendar.io/) with Luxon plugin
 - **API Client**: [Axios](https://axios-http.com/)
 - **Data Fetching**: [SWR](https://swr.vercel.app/)
 - **Testing**: [Jest](https://jestjs.io/), [React Testing Library](https://testing-library.com/), [Playwright](https://playwright.dev/)
