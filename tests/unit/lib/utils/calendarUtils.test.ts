@@ -140,6 +140,8 @@ describe('calendarUtils', () => {
 
       expect(events[0].title).not.toContain('<script>');
       expect(events[0].title).not.toContain('</script>');
+      expect(events[0].title).not.toContain('&lt;script&gt;');
+      expect(events[0].extendedProps.user.summary).not.toContain('<script>');
     });
 
     it('should throw error for invalid timezone', () => {

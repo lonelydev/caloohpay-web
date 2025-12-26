@@ -3,7 +3,7 @@
  */
 
 import { DateTime } from 'luxon';
-import { OnCallPeriod } from 'caloohpay/core';
+import { OnCallPeriod } from '@/lib/caloohpay';
 import type { ScheduleEntry, User } from '@/lib/types';
 import { PAYMENT_RATES } from '@/lib/constants';
 import he from 'he';
@@ -113,6 +113,7 @@ export function transformToCalendarEvents(
 
       // Sanitize user data to prevent XSS
       const userName = sanitizeUserInput(entry.user.name || entry.user.summary);
+      const userSummary = sanitizeUserInput(entry.user.summary);
       const userEmail = sanitizeUserInput(entry.user.email);
       const userId = sanitizeUserInput(entry.user.id);
 
@@ -125,7 +126,7 @@ export function transformToCalendarEvents(
         extendedProps: {
           user: {
             id: userId,
-            summary: entry.user.summary,
+            summary: userSummary,
             name: userName,
             email: userEmail && userEmail !== 'Unknown' ? userEmail : undefined,
             html_url: entry.user.html_url,

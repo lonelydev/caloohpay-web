@@ -30,7 +30,7 @@ import {
 } from '@mui/icons-material';
 import { useState, useMemo, useCallback, memo } from 'react';
 import { DateTime } from 'luxon';
-import { OnCallPeriod } from 'caloohpay/core';
+import { OnCallPeriod } from '@/lib/caloohpay';
 import { PAYMENT_RATES } from '@/lib/constants';
 import { getPagerDutyHeaders } from '@/lib/utils/pagerdutyAuth';
 import { Header, Footer, Loading } from '@/components/common';

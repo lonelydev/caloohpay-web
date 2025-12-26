@@ -13,6 +13,7 @@ import { test, expect } from '@playwright/test';
  * - Timezone handling
  *
  * Current workaround: Unit tests in CalendarView.test.tsx verify component behavior
+ * TODO: Enable once auth mocking pattern from schedules.spec.ts is extracted to a test helper
  */
 
 test.describe.skip('Calendar View E2E Tests', () => {
