@@ -54,6 +54,14 @@ const EventDetailDialog = memo<{
   const startDateTime = DateTime.fromISO(event.start, { zone: timezone });
   const endDateTime = DateTime.fromISO(event.end, { zone: timezone });
 
+  if (!startDateTime.isValid || !endDateTime.isValid) {
+    console.error('Invalid date format in calendar event:', {
+      event,
+      start: event.start,
+      end: event.end,
+    });
+    return null;
+  }
   const { user, duration, weekdayDays, weekendDays, compensation } = event.extendedProps;
 
   const weekdayPayment = weekdayDays * PAYMENT_RATES.WEEKDAY;
