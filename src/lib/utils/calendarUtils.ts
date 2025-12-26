@@ -46,7 +46,7 @@ function isValidDate(date: string | Date): boolean {
 function sanitizeUserInput(input: string | undefined): string {
   if (!input) return 'Unknown';
   // Encode HTML entities and trim whitespace to prevent HTML injection
-  return he.encode(input, { allowUnsafeSymbols: true }).trim();
+  return he.encode(input).trim();
 }
 
 /**
