@@ -77,6 +77,8 @@ export function transformToCalendarEvents(
   if (!Array.isArray(entries)) {
     throw new Error('Entries must be an array');
   }
+  // Calculate payments using caloohpay, instantiate calculator once
+  const calculator = new OnCallPaymentsCalculator();
 
   return entries
     .filter((entry) => {
@@ -107,7 +109,6 @@ export function transformToCalendarEvents(
       const duration = endDT.diff(startDT, 'hours').hours;
 
       // Calculate compensation using OnCallPaymentsCalculator
-      const calculator = new OnCallPaymentsCalculator();
       const onCallUser = new OnCallUser(entry.user.id, entry.user.name || entry.user.summary, [
         period,
       ]);
