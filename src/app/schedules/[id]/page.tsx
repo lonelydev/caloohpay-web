@@ -37,6 +37,7 @@ import { Header, Footer, Loading } from '@/components/common';
 import MonthNavigation from '@/components/schedules/MonthNavigation';
 import CalendarView from '@/components/schedules/CalendarView';
 import { transformToCalendarEvents } from '@/lib/utils/calendarUtils';
+import { sanitizeUrl } from '@/lib/utils/urlSanitization';
 import type { PagerDutySchedule, ScheduleEntry, User } from '@/lib/types';
 import * as styles from './page.styles';
 
@@ -553,7 +554,7 @@ export default function ScheduleDetailPage() {
 
         {/* Actions - Memoized to prevent re-renders */}
         <ScheduleActions
-          htmlUrl={schedule?.html_url || '#'}
+          htmlUrl={sanitizeUrl(schedule?.html_url, '#') || '#'}
           hasSchedules={userSchedules.length > 0}
         />
       </Box>

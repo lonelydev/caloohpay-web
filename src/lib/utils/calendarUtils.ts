@@ -6,6 +6,7 @@ import { DateTime } from 'luxon';
 import { OnCallPeriod, OnCallUser, OnCallPaymentsCalculator } from '@/lib/caloohpay';
 import type { ScheduleEntry, User } from '@/lib/types';
 import he from 'he';
+import { sanitizeUrl } from './urlSanitization';
 
 /**
  * Extended calendar event with payment details
@@ -119,6 +120,7 @@ export function transformToCalendarEvents(
       const userSummary = sanitizeUserInput(entry.user.summary);
       const userEmail = sanitizeUserInput(entry.user.email);
       const userId = sanitizeUserInput(entry.user.id);
+      const userHtmlUrl = sanitizeUrl(entry.user.html_url);
 
       return {
         // Generate unique ID combining user ID and index to prevent collisions
@@ -132,7 +134,7 @@ export function transformToCalendarEvents(
             summary: userSummary,
             name: userName,
             email: userEmail && userEmail !== 'Unknown' ? userEmail : undefined,
-            html_url: entry.user.html_url,
+            html_url: userHtmlUrl,
           },
           duration,
           weekdayDays,
