@@ -682,8 +682,8 @@ export function ThemeProvider({ children }) {
 
 **Test Coverage Summary**:
 
-- **Unit Tests**: 117 tests across components, pages, and API routes
-  - NextAuth route handler: 12 tests (100% coverage)
+- **Unit Tests**: 114 tests across components, pages, and API routes
+  - NextAuth route handler: 9 tests (100% coverage)
   - Progressive search: 8 tests
   - Component tests: 52 tests (PaginationControls, MonthNavigation, ScheduleCard)
   - Page tests: 19+ tests

@@ -42,18 +42,6 @@ describe('NextAuth Route Handler', () => {
     POST = routeModule.POST;
   });
 
-  it('should export GET handler', () => {
-    expect(GET).toBeDefined();
-    // GET should be a function (the handler returned by NextAuth)
-    expect(typeof GET).toBe('function');
-  });
-
-  it('should export POST handler', () => {
-    expect(POST).toBeDefined();
-    // POST should be a function (the handler returned by NextAuth)
-    expect(typeof POST).toBe('function');
-  });
-
   it('should initialize NextAuth with authOptions', async () => {
     // Verify NextAuth was called
     expect(NextAuth).toHaveBeenCalled();
@@ -64,9 +52,20 @@ describe('NextAuth Route Handler', () => {
     expect(callArgs[0]).toBe(mockAuthOptions);
   });
 
-  it('should return the same handler for GET and POST', () => {
-    // Both GET and POST should reference the same NextAuth handler
+  it('should have function signature compatible with Next.js route handlers', () => {
+    // GET and POST should be functions that can accept Request objects
+    expect(typeof GET).toBe('function');
+    expect(typeof POST).toBe('function');
+
+    // Verify they're the same handler (NextAuth returns one handler for both)
     expect(GET).toBe(POST);
+  });
+
+  it('should properly export handlers named GET and POST', async () => {
+    // Verify exports are named correctly for Next.js App Router
+    const routeModule = await import('../route');
+    expect(routeModule).toHaveProperty('GET');
+    expect(routeModule).toHaveProperty('POST');
   });
 
   describe('Route Handler Configuration', () => {
@@ -88,24 +87,6 @@ describe('NextAuth Route Handler', () => {
     });
   });
 
-  describe('Handler Properties', () => {
-    it('should have function signature compatible with Next.js route handlers', () => {
-      // GET and POST should be functions that can accept Request objects
-      expect(typeof GET).toBe('function');
-      expect(typeof POST).toBe('function');
-
-      // Verify they're the same handler (NextAuth returns one handler for both)
-      expect(GET).toBe(POST);
-    });
-
-    it('should properly export handlers named GET and POST', async () => {
-      // Verify exports are named correctly for Next.js App Router
-      const routeModule = await import('../route');
-      expect(routeModule).toHaveProperty('GET');
-      expect(routeModule).toHaveProperty('POST');
-    });
-  });
-
   describe('Integration', () => {
     it('should integrate NextAuth with custom auth options', () => {
       // Verify NextAuth was initialized with the mocked authOptions
@@ -114,7 +95,7 @@ describe('NextAuth Route Handler', () => {
 
     it('should support both OAuth and Credentials providers', async () => {
       // Import actual authOptions (unmocked for this test)
-      jest.isolateModules(async () => {
+      jest.isolateModulesAsync(async () => {
         // This verifies the actual file exports valid authOptions
         const { authOptions: actualAuthOptions } = await import('@/lib/auth/options');
         expect(actualAuthOptions.providers).toBeDefined();

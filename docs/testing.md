@@ -6,11 +6,11 @@ CalOohPay has comprehensive test coverage across unit, integration, and end-to-e
 
 ## Test Statistics
 
-- **Total Tests**: 125 passing (10 test suites)
-- **Unit Tests**: 117 (93.6%)
-- **E2E Tests**: 8 (6.4%)
+- **Total Tests**: 122 passing (10 test suites)
+- **Unit Tests**: 114 (93.4%)
+- **E2E Tests**: 8 (6.6%)
 - **Coverage Target**: >80%
-- **Latest**: NextAuth route handler - 100% coverage (12 tests)
+- **Latest**: NextAuth route handler - 100% coverage (9 tests)
 
 ## Test Structure
 
@@ -35,7 +35,7 @@ src/app/schedules/[id]/__tests__/
 └── page.test.tsx                  # Schedule detail page tests
 
 src/app/api/auth/[...nextauth]/__tests__/
-└── route.test.ts                  # 12 tests (NextAuth route handler)
+└── route.test.ts                  # 9 tests (NextAuth route handler)
 
 src/app/api/schedules/__tests__/
 └── route.test.ts                  # API route tests

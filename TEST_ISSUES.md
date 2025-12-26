@@ -3,7 +3,7 @@
 Comprehensive list of testing issues, gaps, and improvements needed for CalOohPay Web.
 
 **Last Updated**: December 26, 2025  
-**Current Test Count**: 125 passing (10 test suites), 75 E2E passing  
+**Current Test Count**: 122 passing (10 test suites), 75 E2E passing  
 **Current Coverage**: ~60%  
 **Target Coverage**: 85%+
 
@@ -26,14 +26,13 @@ Core authentication endpoint at `src/app/api/auth/[...nextauth]/route.ts` had 0%
 - No verification that authOptions were properly exported
 
 **Fix Applied**:
-Created comprehensive test suite at `src/app/api/auth/[...nextauth]/__tests__/route.test.ts` with 12 tests covering:
+Created comprehensive test suite at `src/app/api/auth/[...nextauth]/__tests__/route.test.ts` with 9 tests covering:
 
-- GET and POST handler exports verification
 - NextAuth initialization with authOptions
 - Handler configuration and Next.js App Router compatibility
+- GET and POST handler exports and signatures
 - Integration with OAuth and Credentials providers
 - Error handling and environment variable management
-- Proper module loading and initialization
 
 **Result**: Achieved 100% code coverage (statements, branches, functions, lines) for the NextAuth route handler.
 

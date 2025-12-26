@@ -126,7 +126,7 @@ Follow the [PagerDuty OAuth Setup Guide](../setup/pagerduty-oauth-setup.md) to c
 ```bash
 npm run lint    # Should pass with no errors
 npm run build   # Should build successfully
-npm test        # Should run all unit tests (125 tests)
+npm test        # Should run all unit tests (122 tests)
 ```
 
 ## Project Structure
@@ -311,8 +311,8 @@ npx playwright test --ui
 
 Current test coverage:
 
-- **Unit Tests**: 125 tests (10 test suites) covering:
-  - NextAuth route handler (12 tests - 100% coverage)
+- **Unit Tests**: 122 tests (10 test suites) covering:
+  - NextAuth route handler (9 tests - 100% coverage)
   - Authentication flows (14 tests)
   - API routes (8+ tests)
   - Progressive search (8 tests)
