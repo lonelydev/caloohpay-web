@@ -65,7 +65,7 @@ export function transformToCalendarEvents(
 ): CalendarEvent[] {
   // Validate timezone
   if (!timezone || typeof timezone !== 'string') {
-    throw new Error('Invalid timezone provided');
+    throw new Error(`Invalid timezone provided: ${timezone}`);
   }
 
   // Test timezone validity with Luxon
