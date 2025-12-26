@@ -127,7 +127,7 @@ export function transformToCalendarEvents(
             id: userId,
             summary: entry.user.summary,
             name: userName,
-            email: userEmail || undefined,
+            email: userEmail && userEmail !== 'Unknown' ? userEmail : undefined,
             html_url: entry.user.html_url,
           },
           duration,
