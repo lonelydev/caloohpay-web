@@ -6,6 +6,7 @@ import { DateTime } from 'luxon';
 import { OnCallPeriod } from 'caloohpay/core';
 import type { ScheduleEntry, User } from '@/lib/types';
 import { PAYMENT_RATES } from '@/lib/constants';
+import he from 'he';
 
 /**
  * Extended calendar event with payment details
@@ -44,8 +45,8 @@ function isValidDate(date: string | Date): boolean {
  */
 function sanitizeUserInput(input: string | undefined): string {
   if (!input) return 'Unknown';
-  // Remove HTML tags and trim whitespace
-  return input.replace(/<[^>]*>/g, '').trim();
+  // Encode HTML entities and trim whitespace to prevent HTML injection
+  return he.encode(input, { allowUnsafeSymbols: true }).trim();
 }
 
 /**
