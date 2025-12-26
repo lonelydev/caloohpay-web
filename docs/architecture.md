@@ -680,6 +680,18 @@ export function ThemeProvider({ children }) {
  /________________\
 ```
 
+**Test Coverage Summary**:
+
+- **Unit Tests**: 117 tests across components, pages, and API routes
+  - NextAuth route handler: 12 tests (100% coverage)
+  - Progressive search: 8 tests
+  - Component tests: 52 tests (PaginationControls, MonthNavigation, ScheduleCard)
+  - Page tests: 19+ tests
+- **API Tests**: Part of unit tests (route handlers)
+- **E2E Tests**: 8 Playwright tests for critical user flows
+
+````
+
 **Unit Tests (Base)**: 22 tests
 
 - Authentication logic (14 tests)
@@ -724,7 +736,7 @@ describe('/api/schedules', () => {
     expect(response.status).toBe(200);
   });
 });
-```
+````
 
 ### E2E Testing Strategy
 
