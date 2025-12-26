@@ -736,7 +736,6 @@ describe('/api/schedules', () => {
     expect(response.status).toBe(200);
   });
 });
-````
 
 ### E2E Testing Strategy
 
