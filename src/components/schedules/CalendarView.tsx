@@ -318,14 +318,15 @@ export default function CalendarView({ events, timezone, initialDate }: Calendar
           height="auto"
           validRange={
             initialDate
-              ? {
-                  start:
-                    DateTime.fromISO(initialDate, { zone: timezone }).startOf('month').toISO() ||
-                    undefined,
-                  end:
-                    DateTime.fromISO(initialDate, { zone: timezone }).endOf('month').toISO() ||
-                    undefined,
-                }
+              ? (() => {
+                  const start = DateTime.fromISO(initialDate, { zone: timezone })
+                    .startOf('month')
+                    .toISO();
+                  const end = DateTime.fromISO(initialDate, { zone: timezone })
+                    .endOf('month')
+                    .toISO();
+                  return start && end ? { start, end } : undefined;
+                })()
               : undefined
           }
           eventTimeFormat={{
