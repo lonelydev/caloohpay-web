@@ -145,7 +145,7 @@ graph TB
 
 CaloohPay uses Next.js 14's App Router architecture:
 
-```
+```console
 src/app/
 ├── api/                    # API Routes
 │   ├── auth/              # NextAuth endpoints
@@ -186,13 +186,13 @@ export const config = {
 
 ### Server vs Client Components
 
-**Default: Server Components**
+#### Default: Server Components
 
 - Better performance (no client-side JavaScript)
 - Direct database/API access
 - Automatic code splitting
 
-**Client Components**: Only when needed
+#### Client Components: Only when needed
 
 - Interactive UI (buttons, forms)
 - Browser APIs (localStorage, window)
@@ -379,7 +379,7 @@ graph TD
 
 ### Component Hierarchy
 
-```
+```console
 App Layout
 ├── SessionProvider (Context)
 │   ├── ThemeProvider (Context)
@@ -522,7 +522,7 @@ try {
 
 The payment calculation engine is ported from the original CalOohPay Python implementation:
 
-```
+```console
 src/lib/calculations/
 ├── PaymentCalculator.ts   # Main calculation logic
 ├── OnCallPeriod.ts        # On-call period model
@@ -669,7 +669,7 @@ export function ThemeProvider({ children }) {
 
 ### Testing Pyramid
 
-```
+```console
         /\
        /  \
       / E2E \
@@ -690,9 +690,7 @@ export function ThemeProvider({ children }) {
 - **API Tests**: Part of unit tests (route handlers)
 - **E2E Tests**: 8 Playwright tests for critical user flows
 
-````
-
-**Unit Tests (Base)**: 22 tests
+#### Unit Tests (Base): 22 tests
 
 - Authentication logic (14 tests)
 - API routes (8 tests)
@@ -736,6 +734,7 @@ describe('/api/schedules', () => {
     expect(response.status).toBe(200);
   });
 });
+```
 
 ### E2E Testing Strategy
 
