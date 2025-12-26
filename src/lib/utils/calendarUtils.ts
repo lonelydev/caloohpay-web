@@ -3,9 +3,8 @@
  */
 
 import { DateTime } from 'luxon';
-import { OnCallPeriod } from '@/lib/caloohpay';
+import { OnCallPeriod, OnCallUser, OnCallPaymentsCalculator } from '@/lib/caloohpay';
 import type { ScheduleEntry, User } from '@/lib/types';
-import { PAYMENT_RATES } from '@/lib/constants';
 import he from 'he';
 
 /**
@@ -107,9 +106,12 @@ export function transformToCalendarEvents(
       const endDT = DateTime.fromISO(endISO, { zone: timezone });
       const duration = endDT.diff(startDT, 'hours').hours;
 
-      // Calculate compensation based on payment rates
-      const compensation =
-        weekdayDays * PAYMENT_RATES.WEEKDAY + weekendDays * PAYMENT_RATES.WEEKEND;
+      // Calculate compensation using OnCallPaymentsCalculator
+      const calculator = new OnCallPaymentsCalculator();
+      const onCallUser = new OnCallUser(entry.user.id, entry.user.name || entry.user.summary, [
+        period,
+      ]);
+      const compensation = calculator.calculateOnCallPayment(onCallUser);
 
       // Sanitize user data to prevent XSS
       const userName = sanitizeUserInput(entry.user.name || entry.user.summary);

@@ -30,7 +30,7 @@ import {
 } from '@mui/icons-material';
 import { useState, useMemo, useCallback, memo } from 'react';
 import { DateTime } from 'luxon';
-import { OnCallPeriod } from '@/lib/caloohpay';
+import { OnCallPeriod, OnCallUser, OnCallPaymentsCalculator } from '@/lib/caloohpay';
 import { PAYMENT_RATES } from '@/lib/constants';
 import { getPagerDutyHeaders } from '@/lib/utils/pagerdutyAuth';
 import { Header, Footer, Loading } from '@/components/common';
@@ -373,6 +373,7 @@ export default function ScheduleDetailPage() {
       );
 
       // Calculate details for each entry
+      const calculator = new OnCallPaymentsCalculator();
       const entriesWithCompensation = sortedEntries.map((entry, index) => {
         const start = DateTime.fromISO(
           typeof entry.start === 'string' ? entry.start : entry.start.toISOString()
@@ -386,9 +387,11 @@ export default function ScheduleDetailPage() {
         const weekdayDays = period.numberOfOohWeekDays;
         const weekendDays = period.numberOfOohWeekends;
 
-        // Calculate compensation for this single period
-        const compensation =
-          weekdayDays * PAYMENT_RATES.WEEKDAY + weekendDays * PAYMENT_RATES.WEEKEND;
+        // Calculate compensation using OnCallPaymentsCalculator
+        const onCallUser = new OnCallUser(entry.user.id, entry.user.name || entry.user.summary, [
+          period,
+        ]);
+        const compensation = calculator.calculateOnCallPayment(onCallUser);
 
         return {
           ...entry,
