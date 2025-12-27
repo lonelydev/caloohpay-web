@@ -7,8 +7,7 @@ export default async function globalSetup(config: FullConfig) {
     return;
   }
 
-  const baseURL =
-    (config.projects[0] as { use?: { baseURL?: string } })?.use?.baseURL || 'http://localhost:3000';
+  const baseURL = config.use?.baseURL || 'http://localhost:3000';
   const stateFile = 'tests/e2e/.auth/state.json';
 
   // Ensure .auth directory exists
