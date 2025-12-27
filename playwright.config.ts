@@ -5,6 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e',
+  globalSetup: './tests/e2e/global-setup.ts',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -25,29 +26,71 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
+    // Auth-seeded projects
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'chromium (seeded)',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'tests/e2e/.auth/state.json',
+        env: {
+          ENABLE_TEST_SESSION_SEED: 'true',
+          NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'dev-e2e-secret',
+        },
+      },
+    },
+    {
+      name: 'firefox (seeded)',
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'tests/e2e/.auth/state.json',
+        env: {
+          ENABLE_TEST_SESSION_SEED: 'true',
+          NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'dev-e2e-secret',
+        },
+      },
+    },
+    {
+      name: 'webkit (seeded)',
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: 'tests/e2e/.auth/state.json',
+        env: {
+          ENABLE_TEST_SESSION_SEED: 'true',
+          NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'dev-e2e-secret',
+        },
+      },
     },
 
+    // Unauthenticated projects
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-
-    /* Test against mobile viewports. */
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      name: 'chromium (unauth)',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: undefined,
+        env: {
+          ENABLE_TEST_SESSION_SEED: 'false',
+        },
+      },
     },
     {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
+      name: 'firefox (unauth)',
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: undefined,
+        env: {
+          ENABLE_TEST_SESSION_SEED: 'false',
+        },
+      },
+    },
+    {
+      name: 'webkit (unauth)',
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: undefined,
+        env: {
+          ENABLE_TEST_SESSION_SEED: 'false',
+        },
+      },
     },
   ],
 

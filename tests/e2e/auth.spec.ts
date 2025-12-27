@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 
+const SEEDED = process.env.ENABLE_TEST_SESSION_SEED === 'true';
+
 test.describe('Authentication Flow', () => {
+  // Skip unauthenticated flow tests when session is pre-seeded
+  test.skip(SEEDED, 'Skipped when session is seeded for authenticated E2E.');
   test.beforeEach(async ({ page }) => {
     // Start from the home page
     await page.goto('/');
@@ -103,7 +107,7 @@ test.describe('Authenticated User Flow', () => {
   // In a real implementation, you'd use Playwright's context API
   // to set session cookies before each test
 
-  test.skip('should display user avatar when authenticated', async ({ page }) => {
+  test('should display user avatar when authenticated', async ({ page }) => {
     // TODO: Mock authenticated session
     await page.goto('/');
 
@@ -112,7 +116,7 @@ test.describe('Authenticated User Flow', () => {
     await expect(avatar).toBeVisible();
   });
 
-  test.skip('should allow access to protected routes when authenticated', async ({ page }) => {
+  test('should allow access to protected routes when authenticated', async ({ page }) => {
     // TODO: Mock authenticated session
     await page.goto('/schedules');
 
@@ -120,7 +124,7 @@ test.describe('Authenticated User Flow', () => {
     await expect(page).toHaveURL('/schedules');
   });
 
-  test.skip('should display user menu on avatar click', async ({ page }) => {
+  test('should display user menu on avatar click', async ({ page }) => {
     // TODO: Mock authenticated session
     await page.goto('/');
 
@@ -132,7 +136,7 @@ test.describe('Authenticated User Flow', () => {
     await expect(page.getByText(/Sign Out/i)).toBeVisible();
   });
 
-  test.skip('should sign out successfully', async ({ page }) => {
+  test('should sign out successfully', async ({ page }) => {
     // TODO: Mock authenticated session
     await page.goto('/');
 
@@ -152,7 +156,7 @@ test.describe('Authenticated User Flow', () => {
 });
 
 test.describe('Session Persistence', () => {
-  test.skip('should maintain session across page refreshes', async ({ page }) => {
+  test('should maintain session across page refreshes', async ({ page }) => {
     // TODO: Mock authenticated session
     await page.goto('/schedules');
 
@@ -163,7 +167,7 @@ test.describe('Session Persistence', () => {
     await expect(page).toHaveURL('/schedules');
   });
 
-  test.skip('should maintain session across navigation', async ({ page }) => {
+  test('should maintain session across navigation', async ({ page }) => {
     // TODO: Mock authenticated session
     await page.goto('/schedules');
 

@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+const SEEDED = process.env.ENABLE_TEST_SESSION_SEED === 'true';
+
 test.describe('Schedules Page', () => {
+  test.skip(SEEDED, 'Skipped under seeded auth; redirect not expected.');
   test('should redirect to login when not authenticated', async ({ page }) => {
     await page.goto('/schedules', { waitUntil: 'domcontentloaded' });
 
