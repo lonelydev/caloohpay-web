@@ -38,42 +38,13 @@ import MonthNavigation from '@/components/schedules/MonthNavigation';
 import CalendarView from '@/components/schedules/CalendarView';
 import { transformToCalendarEvents } from '@/lib/utils/calendarUtils';
 import { sanitizeUrl } from '@/lib/utils/urlSanitization';
+import ScheduleHeader from './components/ScheduleHeader';
 import type { PagerDutySchedule, ScheduleEntry, User } from '@/lib/types';
 import * as styles from './page.styles';
 
 interface ScheduleResponse {
   schedule: PagerDutySchedule;
 }
-
-/**
- * Memoized schedule header - only re-renders if schedule name/description/timezone changes
- */
-const ScheduleHeader = memo<{
-  scheduleName: string;
-  scheduleDescription?: string;
-  timeZone: string;
-  onBack: () => void;
-}>(({ scheduleName, scheduleDescription, timeZone, onBack }) => (
-  <Box sx={styles.headerContainer}>
-    <Box sx={styles.headerTopRow}>
-      <IconButton onClick={onBack} size="large">
-        <ArrowBack />
-      </IconButton>
-      <Box sx={styles.headerTitleContainer}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          {scheduleName}
-        </Typography>
-        {scheduleDescription && (
-          <Typography variant="body1" color="text.secondary">
-            {scheduleDescription}
-          </Typography>
-        )}
-      </Box>
-      <Chip icon={<AccessTime />} label={timeZone} color="primary" variant="outlined" />
-    </Box>
-  </Box>
-));
-ScheduleHeader.displayName = 'ScheduleHeader';
 
 /**
  * Memoized schedule actions - only re-renders if htmlUrl or hasSchedules changes
