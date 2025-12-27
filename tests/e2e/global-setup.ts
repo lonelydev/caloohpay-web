@@ -7,7 +7,8 @@ export default async function globalSetup(config: FullConfig) {
     return;
   }
 
-  const baseURL = config.use?.baseURL || 'http://localhost:3000';
+  const baseURL =
+    (config.projects[0] as { use?: { baseURL?: string } })?.use?.baseURL || 'http://localhost:3000';
   const stateFile = 'tests/e2e/.auth/state.json';
 
   // Ensure .auth directory exists
@@ -26,7 +27,7 @@ export default async function globalSetup(config: FullConfig) {
 
   if (!response.ok()) {
     throw new Error(
-      `Failed to seed test session: ${response.status()} ${response.statusText()} for ${response.url()}`,
+      `Failed to seed test session: ${response.status()} ${response.statusText()} for ${response.url()}`
     );
   }
 
@@ -37,12 +38,12 @@ export default async function globalSetup(config: FullConfig) {
     (cookie) =>
       (cookie.name === 'next-auth.session-token' ||
         cookie.name === '__Secure-next-auth.session-token') &&
-      (cookie.domain === hostname || cookie.domain?.endsWith(`.${hostname}`)),
+      (cookie.domain === hostname || cookie.domain?.endsWith(`.${hostname}`))
   );
 
   if (!hasSessionCookie) {
     throw new Error(
-      'Failed to seed test session: NextAuth session cookie was not found after hitting /api/test/session.',
+      'Failed to seed test session: NextAuth session cookie was not found after hitting /api/test/session.'
     );
   }
   // Persist storage state for all tests
