@@ -19,7 +19,11 @@ export function makeSession(partial?: Partial<Session>): Session {
       image: null,
     },
   };
-  return { ...base, ...(partial || {}) } as Session;
+  const merged = { ...base, ...(partial || {}) } as Session;
+  if (partial?.user) {
+    merged.user = { ...base.user, ...partial.user } as Session['user'];
+  }
+  return merged;
 }
 
 /**
