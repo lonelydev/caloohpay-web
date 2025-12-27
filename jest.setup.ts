@@ -40,3 +40,6 @@ if (!global.Response) {
     }
   } as unknown as typeof Response;
 }
+
+// Export test utilities re-exports for convenience (no side effects)
+export * from './tests/utils/authMock';

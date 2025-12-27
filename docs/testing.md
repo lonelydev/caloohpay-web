@@ -125,6 +125,31 @@ npm run test:e2e:report
 
 ## Test Patterns
 
+### Auth Mock Pattern (NextAuth)
+
+Centralize NextAuth mocking using helpers in `tests/utils/authMock.ts`:
+
+```typescript
+import { renderWithSession, makeSession, mockUseSession, mockServerSession, clearSessionMocks } from 'tests/utils/authMock';
+
+// Client component test (useSession)
+mockUseSession(makeSession({ authMethod: 'api-token', accessToken: 'token_123' }));
+renderWithSession(<Header />);
+
+// Server/API route test (getServerSession)
+mockServerSession(makeSession({ accessToken: 'token_abc' }));
+const res = await GET(req);
+
+// Cleanup
+afterEach(() => clearSessionMocks());
+```
+
+Benefits:
+
+- One place to create typed sessions aligned with `types/next-auth.d.ts`
+- Consistent mocking for `useSession` and `getServerSession`
+- Easy to switch between `oauth` and `api-token`
+
 ### Mocking SWR
 
 ```typescript
