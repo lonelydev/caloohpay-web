@@ -10,6 +10,7 @@ import { test, expect } from '@playwright/test';
  * - Card dimensions are consistent
  *
  * Current workaround: Unit tests in PaginationControls.test.tsx verify button states
+ * TODO: Enable once auth mocking pattern from schedules.spec.ts is extracted to a test helper
  */
 
 test.describe.skip('Pagination Controls Stability', () => {

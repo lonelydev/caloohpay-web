@@ -15,16 +15,31 @@ import {
   CardContent,
   Divider,
   Stack,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
-import { ArrowBack, AccessTime, Person, Wallet, Work, WorkOff } from '@mui/icons-material';
+import {
+  ArrowBack,
+  AccessTime,
+  Person,
+  Wallet,
+  Work,
+  WorkOff,
+  ViewList,
+  CalendarMonth,
+} from '@mui/icons-material';
 import { useState, useMemo, useCallback, memo } from 'react';
 import { DateTime } from 'luxon';
-import { OnCallPeriod } from 'caloohpay/core';
+import { OnCallPeriod, OnCallUser, OnCallPaymentsCalculator } from '@/lib/caloohpay';
 import { PAYMENT_RATES } from '@/lib/constants';
 import { getPagerDutyHeaders } from '@/lib/utils/pagerdutyAuth';
 import { Header, Footer, Loading } from '@/components/common';
 import MonthNavigation from '@/components/schedules/MonthNavigation';
+import CalendarView from '@/components/schedules/CalendarView';
+import { transformToCalendarEvents } from '@/lib/utils/calendarUtils';
+import { sanitizeUrl } from '@/lib/utils/urlSanitization';
 import type { PagerDutySchedule, ScheduleEntry, User } from '@/lib/types';
+import * as styles from './page.styles';
 
 interface ScheduleResponse {
   schedule: PagerDutySchedule;
@@ -39,12 +54,12 @@ const ScheduleHeader = memo<{
   timeZone: string;
   onBack: () => void;
 }>(({ scheduleName, scheduleDescription, timeZone, onBack }) => (
-  <Box sx={{ mb: 4 }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+  <Box sx={styles.headerContainer}>
+    <Box sx={styles.headerTopRow}>
       <IconButton onClick={onBack} size="large">
         <ArrowBack />
       </IconButton>
-      <Box sx={{ flex: 1 }}>
+      <Box sx={styles.headerTitleContainer}>
         <Typography variant="h4" component="h1" gutterBottom>
           {scheduleName}
         </Typography>
@@ -67,7 +82,7 @@ const ScheduleActions = memo<{
   htmlUrl: string;
   hasSchedules: boolean;
 }>(({ htmlUrl, hasSchedules }) => (
-  <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+  <Box sx={styles.actionsContainer}>
     <Button variant="contained" color="primary" size="large" disabled={!hasSchedules}>
       Calculate Payments
     </Button>
@@ -104,7 +119,7 @@ const OnCallSchedule = memo<{
   // Show loading state only in this section
   if (isLoading) {
     return (
-      <Box sx={{ position: 'relative', minHeight: 300 }}>
+      <Box sx={styles.loadingContainer}>
         <Loading message="Loading schedule..." />
       </Box>
     );
@@ -125,7 +140,7 @@ const OnCallSchedule = memo<{
 
   return (
     <Box>
-      <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+      <Typography variant="h5" gutterBottom sx={styles.scheduleTitle}>
         On-Call Schedule ({userSchedules.length} {userSchedules.length === 1 ? 'person' : 'people'})
       </Typography>
 
@@ -134,17 +149,8 @@ const OnCallSchedule = memo<{
           ({ user, entries, totalHours, totalWeekdays, totalWeekends, totalCompensation }) => (
             <Card key={user.id} variant="outlined">
               <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    mb: 2,
-                    flexWrap: 'wrap',
-                    gap: 2,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={styles.userCardHeader}>
+                  <Box sx={styles.userInfoContainer}>
                     <Person />
                     <Box>
                       <Typography variant="h6">{user.name || user.summary}</Typography>
@@ -156,7 +162,7 @@ const OnCallSchedule = memo<{
                     </Box>
                   </Box>
 
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Box sx={styles.chipsContainer}>
                     <Chip
                       label={`${totalHours.toFixed(1)} hours`}
                       color="primary"
@@ -183,7 +189,7 @@ const OnCallSchedule = memo<{
                   </Box>
                 </Box>
 
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={styles.dividerStyle} />
 
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -205,24 +211,9 @@ const OnCallSchedule = memo<{
                       );
 
                       return (
-                        <Box
-                          key={index}
-                          sx={{
-                            p: 1.5,
-                            bgcolor: 'action.hover',
-                            borderRadius: 1,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'flex-start',
-                              flexWrap: 'wrap',
-                              gap: 1,
-                            }}
-                          >
-                            <Box sx={{ flex: 1, minWidth: '200px' }}>
+                        <Box key={index} sx={styles.periodEntryBox}>
+                          <Box sx={styles.periodEntryInner}>
+                            <Box sx={styles.periodDateContainer}>
                               <Typography variant="body2" fontWeight="medium">
                                 {start.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ')}
                               </Typography>
@@ -231,14 +222,7 @@ const OnCallSchedule = memo<{
                               </Typography>
                             </Box>
 
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                gap: 0.5,
-                                flexWrap: 'wrap',
-                                alignItems: 'center',
-                              }}
-                            >
+                            <Box sx={styles.periodChipsContainer}>
                               <Chip
                                 label={`${entry.duration.toFixed(1)}h`}
                                 size="small"
@@ -261,11 +245,11 @@ const OnCallSchedule = memo<{
                                 />
                               )}
                               <Chip
-                                icon={<Wallet sx={{ fontSize: '16px !important' }} />}
+                                icon={<Wallet sx={styles.walletIconStyle} />}
                                 label={`${PAYMENT_RATES.CURRENCY_SYMBOL}${entry.compensation.toFixed(2)}`}
                                 size="small"
                                 color="success"
-                                sx={{ fontWeight: 'medium' }}
+                                sx={styles.compensationChipStyle}
                               />
                             </Box>
                           </Box>
@@ -302,6 +286,9 @@ export default function ScheduleDetailPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const scheduleId = params?.id as string;
+
+  // View mode state - 'list' or 'calendar'
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // Stable back handler
   const handleBack = useCallback(() => {
@@ -387,6 +374,7 @@ export default function ScheduleDetailPage() {
       );
 
       // Calculate details for each entry
+      const calculator = new OnCallPaymentsCalculator();
       const entriesWithCompensation = sortedEntries.map((entry, index) => {
         const start = DateTime.fromISO(
           typeof entry.start === 'string' ? entry.start : entry.start.toISOString()
@@ -400,9 +388,11 @@ export default function ScheduleDetailPage() {
         const weekdayDays = period.numberOfOohWeekDays;
         const weekendDays = period.numberOfOohWeekends;
 
-        // Calculate compensation for this single period
-        const compensation =
-          weekdayDays * PAYMENT_RATES.WEEKDAY + weekendDays * PAYMENT_RATES.WEEKEND;
+        // Calculate compensation using OnCallPaymentsCalculator
+        const onCallUser = new OnCallUser(entry.user.id, entry.user.name || entry.user.summary, [
+          period,
+        ]);
+        const compensation = calculator.calculateOnCallPayment(onCallUser);
 
         return {
           ...entry,
@@ -429,13 +419,34 @@ export default function ScheduleDetailPage() {
     });
   }, [data]);
 
+  // Transform schedule entries to calendar events
+  const calendarEvents = useMemo(() => {
+    if (!data?.schedule?.final_schedule?.rendered_schedule_entries || !data.schedule.time_zone) {
+      return [];
+    }
+    return transformToCalendarEvents(
+      data.schedule.final_schedule.rendered_schedule_entries,
+      data.schedule.time_zone
+    );
+  }, [data]);
+
+  // Handle view mode change
+  const handleViewModeChange = useCallback(
+    (_event: React.MouseEvent<HTMLElement>, newMode: 'list' | 'calendar' | null) => {
+      if (newMode !== null) {
+        setViewMode(newMode);
+      }
+    },
+    []
+  );
+
   // Error state
   if (error) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={styles.pageContainer}>
         <Header />
-        <Box sx={{ maxWidth: 800, mx: 'auto', mt: 4, mb: 4, flex: 1 }}>
-          <Alert severity="error" sx={{ mb: 2 }}>
+        <Box sx={styles.errorContentContainer}>
+          <Alert severity="error" sx={styles.errorAlert}>
             <Typography variant="h6" gutterBottom>
               Failed to Load Schedule
             </Typography>
@@ -461,9 +472,9 @@ export default function ScheduleDetailPage() {
   // Show "not found" only if not loading and no schedule exists
   if (!schedule && !isLoading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={styles.pageContainer}>
         <Header />
-        <Box sx={{ maxWidth: 800, mx: 'auto', mt: 4, mb: 4, flex: 1 }}>
+        <Box sx={styles.errorContentContainer}>
           <Alert severity="warning">
             <Typography variant="h6">Schedule Not Found</Typography>
           </Alert>
@@ -471,7 +482,7 @@ export default function ScheduleDetailPage() {
             variant="contained"
             startIcon={<ArrowBack />}
             onClick={() => router.push('/schedules')}
-            sx={{ mt: 2 }}
+            sx={styles.backButtonStyle}
           >
             Back to Schedules
           </Button>
@@ -482,9 +493,9 @@ export default function ScheduleDetailPage() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={styles.pageContainer}>
       <Header />
-      <Box sx={{ maxWidth: 1200, mx: 'auto', py: 4, flex: 1 }}>
+      <Box sx={styles.contentContainer}>
         {/* Header - Memoized to prevent re-renders */}
         <ScheduleHeader
           scheduleName={schedule?.name || ''}
@@ -493,27 +504,57 @@ export default function ScheduleDetailPage() {
           onBack={handleBack}
         />
 
-        {/* Month Navigation - Memoized to prevent re-renders */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <MonthNavigation
-            currentMonth={currentMonthDisplay}
-            isLoading={isLoading}
-            onPreviousMonth={handlePreviousMonth}
-            onNextMonth={handleNextMonth}
-          />
+        {/* View Mode Toggle */}
+        <Paper sx={styles.viewModeContainer}>
+          <Box sx={styles.viewModeInner}>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={handleViewModeChange}
+              aria-label="view mode"
+              size="small"
+            >
+              <ToggleButton value="list" aria-label="list view">
+                <ViewList sx={styles.toggleButtonIcon} />
+                List View
+              </ToggleButton>
+              <ToggleButton value="calendar" aria-label="calendar view">
+                <CalendarMonth sx={styles.toggleButtonIcon} />
+                Calendar View
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <MonthNavigation
+              currentMonth={currentMonthDisplay}
+              isLoading={isLoading}
+              onPreviousMonth={handlePreviousMonth}
+              onNextMonth={handleNextMonth}
+            />
+          </Box>
         </Paper>
 
-        {/* On-Call Summary - Memoized, only re-renders when data changes */}
-        <OnCallSchedule
-          userSchedules={userSchedules}
-          currentMonthDisplay={currentMonthDisplay}
-          timeZone={schedule?.time_zone || 'UTC'}
-          isLoading={isLoading}
-        />
+        {/* Schedule Display - Toggle between list and calendar views */}
+        {viewMode === 'calendar' ? (
+          <Paper sx={styles.scheduleDisplayContainer}>
+            <CalendarView
+              events={calendarEvents}
+              timezone={schedule?.time_zone || 'UTC'}
+              initialDate={dateRange.since}
+            />
+          </Paper>
+        ) : (
+          <Paper sx={styles.scheduleDisplayContainer}>
+            <OnCallSchedule
+              userSchedules={userSchedules}
+              currentMonthDisplay={currentMonthDisplay}
+              timeZone={schedule?.time_zone || 'UTC'}
+              isLoading={isLoading}
+            />
+          </Paper>
+        )}
 
         {/* Actions - Memoized to prevent re-renders */}
         <ScheduleActions
-          htmlUrl={schedule?.html_url || '#'}
+          htmlUrl={sanitizeUrl(schedule?.html_url, '#') || '#'}
           hasSchedules={userSchedules.length > 0}
         />
       </Box>

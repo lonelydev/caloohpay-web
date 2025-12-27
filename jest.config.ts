@@ -15,7 +15,9 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   silent: true,
-  transformIgnorePatterns: ['node_modules/(?!(jose|openid-client|next-auth)/)'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(jose|openid-client|next-auth|@fullcalendar|preact)/)',
+  ],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
