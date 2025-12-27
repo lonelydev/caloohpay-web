@@ -59,9 +59,9 @@ export function TokenForm({
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {TOKEN_INSTRUCTIONS.map((instruction, index) => (
-            <span key={index}>
+            <span key={instruction}>
               {index + 1}. {instruction}
-              {index < TOKEN_INSTRUCTIONS.length - 1 && <br />}
+              <br />
             </span>
           ))}
         </Typography>

@@ -33,10 +33,10 @@ export function OAuthForm({ isLoading, onSignIn }: OAuthFormProps) {
           Required Permissions:
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {PERMISSIONS.map((permission, index) => (
-            <span key={index}>
+          {PERMISSIONS.map((permission) => (
+            <span key={permission}>
               • {permission}
-              {index < PERMISSIONS.length - 1 && <br />}
+              <br />
             </span>
           ))}
         </Typography>
