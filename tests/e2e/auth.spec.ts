@@ -103,81 +103,51 @@ test.describe('Authentication Flow', () => {
 });
 
 test.describe('Authenticated User Flow', () => {
-  // Note: These tests would require mocking the NextAuth session
-  // In a real implementation, you'd use Playwright's context API
-  // to set session cookies before each test
+  // Skip when session is not seeded
+  test.skip(!SEEDED, 'Skipped in unauthenticated E2E projects.');
 
   test('should display user avatar when authenticated', async ({ page }) => {
-    // TODO: Mock authenticated session
     await page.goto('/');
-
-    // Should show user avatar instead of sign in button
     const avatar = page.locator('button[aria-label*="account"]');
     await expect(avatar).toBeVisible();
   });
 
   test('should allow access to protected routes when authenticated', async ({ page }) => {
-    // TODO: Mock authenticated session
     await page.goto('/schedules');
-
-    // Should not redirect to login
     await expect(page).toHaveURL('/schedules');
   });
 
   test('should display user menu on avatar click', async ({ page }) => {
-    // TODO: Mock authenticated session
     await page.goto('/');
-
-    // Click avatar
     const avatar = page.locator('button[aria-label*="account"]');
     await avatar.click();
-
-    // Should show menu with email and sign out option
     await expect(page.getByText(/Sign Out/i)).toBeVisible();
   });
 
   test('should sign out successfully', async ({ page }) => {
-    // TODO: Mock authenticated session
     await page.goto('/');
-
-    // Open user menu
     const avatar = page.locator('button[aria-label*="account"]');
     await avatar.click();
-
-    // Click sign out
     await page.getByText(/Sign Out/i).click();
-
-    // Should redirect to home page
     await expect(page).toHaveURL('/');
-
-    // Sign in button should be visible again
     await expect(page.getByRole('link', { name: /Sign In/i })).toBeVisible();
   });
 });
 
 test.describe('Session Persistence', () => {
+  // Skip when session is not seeded
+  test.skip(!SEEDED, 'Skipped in unauthenticated E2E projects.');
+
   test('should maintain session across page refreshes', async ({ page }) => {
-    // TODO: Mock authenticated session
     await page.goto('/schedules');
-
-    // Refresh page
     await page.reload();
-
-    // Should still be authenticated
     await expect(page).toHaveURL('/schedules');
   });
 
   test('should maintain session across navigation', async ({ page }) => {
-    // TODO: Mock authenticated session
     await page.goto('/schedules');
-
-    // Navigate to home
     await page.goto('/');
-
-    // Navigate back to schedules
     await page.goto('/schedules');
-
-    // Should not redirect to login
     await expect(page).toHaveURL('/schedules');
   });
 });

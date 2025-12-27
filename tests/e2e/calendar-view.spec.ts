@@ -16,7 +16,12 @@ import { test, expect } from '@playwright/test';
  * TODO: Enable once auth mocking pattern from schedules.spec.ts is extracted to a test helper
  */
 
+const SEEDED = process.env.ENABLE_TEST_SESSION_SEED === 'true';
+
 test.describe('Calendar View E2E Tests', () => {
+  // Skip when session is not seeded, since protected routes will redirect
+  test.skip(!SEEDED, 'Skipped in unauthenticated E2E projects.');
+
   test.beforeEach(async ({ page }) => {
     // Mock authentication session
     await page.route('**/api/auth/session', async (route) => {
