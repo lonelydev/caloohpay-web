@@ -32,10 +32,14 @@ export async function GET() {
   const token = await encode({ token: jwtPayload, secret, maxAge: 30 * 24 * 60 * 60 });
 
   const res = NextResponse.json({ ok: true });
-  // Set dev cookie name for NextAuth JWT session strategy
-  res.headers.append(
-    'Set-Cookie',
-    `next-auth.session-token=${token}; Path=/; HttpOnly; SameSite=Lax`
-  );
+
+  const isProd = process.env.NODE_ENV === 'production';
+  const cookieName = isProd ? '__Secure-next-auth.session-token' : 'next-auth.session-token';
+  const cookieAttributes = ['Path=/', 'HttpOnly', 'SameSite=Lax'];
+  if (isProd) {
+    cookieAttributes.push('Secure');
+  }
+
+  res.headers.append('Set-Cookie', `${cookieName}=${token}; ${cookieAttributes.join('; ')}`);
   return res;
 }
