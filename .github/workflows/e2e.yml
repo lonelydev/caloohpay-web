@@ -1,0 +1,53 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main, feat/e2e-auth-session-seed ]
+  pull_request:
+
+jobs:
+  seeded:
+    name: Seeded E2E (auth)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Seeded E2E
+        env:
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+        run: |
+          ./scripts/e2e-seeded.sh
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seeded-playwright-report
+          path: playwright-report
+
+  unauth:
+    name: Unauth E2E (login/redirect)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Unauth E2E
+        run: |
+          ./scripts/e2e-unauth.sh
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unauth-playwright-report
+          path: playwright-report
