@@ -62,7 +62,8 @@ describe('useLoginForm', () => {
   describe('Authentication redirect', () => {
     it('should redirect to schedules when authenticated', async () => {
       mockUseSession.mockReturnValue({
-        data: { user: { name: 'Test User' } } as unknown as Parameters<typeof useSession>[0],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: { user: { name: 'Test User' } } as any,
         status: 'authenticated',
         update: jest.fn(),
       });
