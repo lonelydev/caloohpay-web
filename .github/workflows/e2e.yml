@@ -2,7 +2,7 @@ name: E2E Tests
 
 on:
   push:
-    branches: [ main, feat/e2e-auth-session-seed ]
+    branches: [ main ]
   pull_request:
 
 jobs:
