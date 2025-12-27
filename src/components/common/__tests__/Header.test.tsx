@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { useSession, signOut } from 'next-auth/react';
-import { makeSession, mockUseSession, clearSessionMocks } from '../../../../tests/utils/authMock';
+import { makeSession, mockUseSession } from '../../../../tests/utils/authMock';
 import { Header } from '../Header';
 import { useThemeMode } from '@/context/ThemeContext';
 
@@ -33,9 +33,7 @@ describe('Header', () => {
     });
   });
 
-  afterEach(() => {
-    clearSessionMocks();
-  });
+  // Cleanup handled globally in jest.setup.ts
 
   it('should render the CalOohPay logo', () => {
     (useSession as jest.Mock).mockReturnValue({
