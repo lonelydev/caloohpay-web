@@ -17,6 +17,10 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
+    "test:e2e:seeded": "ENABLE_TEST_SESSION_SEED=true NEXTAUTH_SECRET=dev-e2e-secret playwright test --project=\"chromium (seeded)\" --project=\"firefox (seeded)\" --project=\"webkit (seeded)\"",
+    "test:e2e:seeded:ui": "ENABLE_TEST_SESSION_SEED=true NEXTAUTH_SECRET=dev-e2e-secret playwright test --ui --project=\"chromium (seeded)\" --project=\"firefox (seeded)\" --project=\"webkit (seeded)\"",
+    "test:e2e:unauth": "ENABLE_TEST_SESSION_SEED=false playwright test --project=\"chromium (unauth)\" --project=\"firefox (unauth)\" --project=\"webkit (unauth)\"",
+    "test:e2e:unauth:ui": "ENABLE_TEST_SESSION_SEED=false playwright test --ui --project=\"chromium (unauth)\" --project=\"firefox (unauth)\" --project=\"webkit (unauth)\"",
     "type-check": "tsc --noEmit",
     "prepare": "husky",
     "postinstall": "playwright install --with-deps chromium"
