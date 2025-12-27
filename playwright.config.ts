@@ -32,10 +32,6 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'tests/e2e/.auth/state.json',
-        env: {
-          ENABLE_TEST_SESSION_SEED: 'true',
-          NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'dev-e2e-secret',
-        },
       },
     },
     {
@@ -43,10 +39,6 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         storageState: 'tests/e2e/.auth/state.json',
-        env: {
-          ENABLE_TEST_SESSION_SEED: 'true',
-          NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'dev-e2e-secret',
-        },
       },
     },
     {
@@ -54,10 +46,6 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         storageState: 'tests/e2e/.auth/state.json',
-        env: {
-          ENABLE_TEST_SESSION_SEED: 'true',
-          NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'dev-e2e-secret',
-        },
       },
     },
 
@@ -67,9 +55,6 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         storageState: undefined,
-        env: {
-          ENABLE_TEST_SESSION_SEED: 'false',
-        },
       },
     },
     {
@@ -77,9 +62,6 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         storageState: undefined,
-        env: {
-          ENABLE_TEST_SESSION_SEED: 'false',
-        },
       },
     },
     {
@@ -87,9 +69,6 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         storageState: undefined,
-        env: {
-          ENABLE_TEST_SESSION_SEED: 'false',
-        },
       },
     },
   ],

@@ -77,7 +77,7 @@ describe('Header', () => {
 
   it('should show user menu when authenticated', () => {
     const session = makeSession({
-      user: { name: 'Test User', email: 'test@example.com', image: null },
+      user: { id: 'test-user-1', name: 'Test User', email: 'test@example.com', image: null },
     });
     mockUseSession(session);
 
