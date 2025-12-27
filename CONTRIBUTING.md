@@ -389,13 +389,56 @@ Located in `src/lib/api/__tests__/`:
 - Use Playwright
 - Focus on happy paths and edge cases
 
+#### Running Seeded E2E (Authenticated)
+
+Run E2E tests with a pre-seeded NextAuth session (no login required):
+
+```bash
+npm run test:e2e:seeded          # Run all seeded projects
+npm run test:e2e:seeded:ui       # Interactive UI mode
+./scripts/e2e-seeded.sh          # Shell script wrapper
+```
+
+Seeded mode:
+
+- Sets `ENABLE_TEST_SESSION_SEED=true` and injects a valid NextAuth JWT session.
+- Tests authenticated flows: protected routes, avatar menu, schedule detail pages.
+- Covers: auth state, navigation, calendar view, pagination stability.
+- Uses `NEXTAUTH_SECRET=dev-e2e-secret` by default (override via env).
+
+#### Running Unauth E2E (Login/Redirect)
+
+Run E2E tests that validate login flows and unauthenticated redirects:
+
+```bash
+npm run test:e2e:unauth          # Run all unauth projects
+npm run test:e2e:unauth:ui       # Interactive UI mode
+./scripts/e2e-unauth.sh          # Shell script wrapper
+```
+
+Unauth mode:
+
+- Sets `ENABLE_TEST_SESSION_SEED=false`, no session injected.
+- Tests unauthenticated flows: login page, OAuth buttons, redirects.
+- Skips authenticated-only suites (e.g., calendar view, session persistence).
+
+#### CI/CD
+
+GitHub Actions runs both seeded and unauth suites automatically:
+
+- **Seeded job**: Uses `NEXTAUTH_SECRET` from repository secrets.
+- **Unauth job**: Validates login/redirect behavior.
+- Both upload Playwright reports as artifacts.
+
+See `.github/workflows/e2e.yml` for configuration.
+
 ### Running Tests
 
 ```bash
 npm test                    # Run unit tests
 npm run test:watch         # Run tests in watch mode
 npm run test:coverage      # Generate coverage report
-npm run test:e2e          # Run E2E tests
+npm run test:e2e          # Run all E2E tests (seeded + unauth)
 npm run test:e2e:ui       # Run E2E tests with UI
 ```
 
