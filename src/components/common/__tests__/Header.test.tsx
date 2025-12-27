@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { useSession, signOut } from 'next-auth/react';
-import { makeSession, mockUseSession } from '@/tests/utils/authMock';
+import { makeSession, mockUseSession } from '@/tests/utils';
 import { Header } from '../Header';
 import { useThemeMode } from '@/context/ThemeContext';
 

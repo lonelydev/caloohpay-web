@@ -130,7 +130,7 @@ npm run test:e2e:report
 Centralize NextAuth mocking using helpers in `tests/utils/authMock.tsx`:
 
 ```typescript
-import { renderWithSession, makeSession, mockUseSession, mockServerSession, clearSessionMocks } from '@/tests/utils/authMock';
+import { renderWithSession, makeSession, mockUseSession, mockServerSession, clearSessionMocks } from '@/tests/utils';
 
 // Client component test (useSession)
 mockUseSession(makeSession({ authMethod: 'api-token', accessToken: 'token_123' }));
@@ -143,8 +143,7 @@ const res = await GET(req);
 // Cleanup: handled automatically in jest.setup.ts (no manual afterEach needed)
 
 Notes:
-- Prefer alias imports: `@/tests/utils/authMock` for test helpers.
-- Helpers are also re-exported from jest.setup.ts for convenience.
+- Prefer alias imports: `@/tests/utils` for test helpers.
 - Client tests avoid importing server-only `next-auth` by wrapping requires inside helpers.
 ```
 

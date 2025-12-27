@@ -41,8 +41,7 @@ if (!global.Response) {
   } as unknown as typeof Response;
 }
 
-// Export test utilities re-exports for convenience (no side effects)
-export * from '@/tests/utils/authMock';
+// Note: Do not re-export test utilities from setup; import directly from '@/tests/utils'.
 
 // Ensure auth mocks are reset between tests
 import { clearSessionMocks } from '@/tests/utils/authMock';
