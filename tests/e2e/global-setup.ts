@@ -19,8 +19,33 @@ export default async function globalSetup(config: FullConfig) {
   const page = await context.newPage();
 
   // Hit the session seed endpoint to set the NextAuth session cookie
-  await page.goto(baseURL + '/api/test/session');
+  const response = await page.goto(baseURL + '/api/test/session');
 
+  if (!response) {
+    throw new Error('Failed to reach test session endpoint: no response received.');
+  }
+
+  if (!response.ok()) {
+    throw new Error(
+      `Failed to seed test session: ${response.status()} ${response.statusText()} for ${response.url()}`,
+    );
+  }
+
+  // Verify that a NextAuth session cookie was actually set before saving storage state
+  const { hostname } = new URL(baseURL);
+  const cookies = await context.cookies();
+  const hasSessionCookie = cookies.some(
+    (cookie) =>
+      (cookie.name === 'next-auth.session-token' ||
+        cookie.name === '__Secure-next-auth.session-token') &&
+      (cookie.domain === hostname || cookie.domain?.endsWith(`.${hostname}`)),
+  );
+
+  if (!hasSessionCookie) {
+    throw new Error(
+      'Failed to seed test session: NextAuth session cookie was not found after hitting /api/test/session.',
+    );
+  }
   // Persist storage state for all tests
   await context.storageState({ path: stateFile });
 
