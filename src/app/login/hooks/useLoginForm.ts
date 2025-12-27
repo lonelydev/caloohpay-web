@@ -5,7 +5,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ERROR_MESSAGES, ROUTES, AUTH_METHODS } from '../constants';
+import { ROUTES } from '@/lib/constants';
+import { ERROR_MESSAGES, AUTH_METHODS } from '../constants';
 import type { AuthMethod } from '../types';
 
 export function useLoginForm() {

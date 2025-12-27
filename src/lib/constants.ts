@@ -84,6 +84,7 @@ export const ROUTES = {
   SCHEDULES: '/schedules',
   SCHEDULE_DETAIL: (id: string) => `/schedules/${id}`,
   PAYMENTS: '/payments',
+  DOCUMENTATION: 'https://github.com/lonelydev/caloohpay',
 } as const;
 
 /**

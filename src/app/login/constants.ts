@@ -15,11 +15,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   Default: 'An error occurred during authentication',
 } as const;
 
-export const ROUTES = {
-  SCHEDULES: '/schedules',
-  DOCUMENTATION: 'https://github.com/lonelydev/caloohpay',
-} as const;
-
 export const AUTH_METHODS = {
   OAUTH: 'oauth',
   TOKEN: 'token',

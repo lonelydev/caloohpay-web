@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { LoginFooter } from '@/app/login/components/LoginFooter';
-import { ROUTES } from '@/app/login/constants';
+import { ROUTES } from '@/lib/constants';
 
 describe('LoginFooter', () => {
   describe('Rendering', () => {

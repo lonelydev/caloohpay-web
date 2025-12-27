@@ -3,7 +3,7 @@
  */
 
 import { Typography } from '@mui/material';
-import { ROUTES } from '../constants';
+import { ROUTES } from '@/lib/constants';
 import * as styles from '../page.styles';
 
 export function LoginFooter() {
