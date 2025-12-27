@@ -7,6 +7,10 @@ import type { JWT } from 'next-auth/jwt';
  * Enabled only when ENABLE_TEST_SESSION_SEED=true.
  */
 export async function GET() {
+  // Hard-disable this endpoint in production for defense-in-depth
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not Found' }, { status: 404 });
+  }
   if (process.env.ENABLE_TEST_SESSION_SEED !== 'true') {
     return NextResponse.json({ error: 'Not Found' }, { status: 404 });
   }
