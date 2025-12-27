@@ -2,7 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLoginForm } from '@/app/login/hooks/useLoginForm';
-import { ERROR_MESSAGES } from '@/app/login/constants';
+import { AUTH_ERROR_MESSAGES } from '@/lib/constants';
 
 // Mock next-auth
 jest.mock('next-auth/react');
@@ -47,7 +47,7 @@ describe('useLoginForm', () => {
 
       const { result } = renderHook(() => useLoginForm());
 
-      expect(result.current.error).toBe(ERROR_MESSAGES.OAuthCallback);
+      expect(result.current.error).toBe(AUTH_ERROR_MESSAGES.OAuthCallback);
     });
 
     it('should handle unknown error codes with default message', () => {
@@ -55,18 +55,20 @@ describe('useLoginForm', () => {
 
       const { result } = renderHook(() => useLoginForm());
 
-      expect(result.current.error).toBe(ERROR_MESSAGES.Default);
+      expect(result.current.error).toBe(AUTH_ERROR_MESSAGES.Default);
     });
   });
 
   describe('Authentication redirect', () => {
     it('should redirect to schedules when authenticated', async () => {
       mockUseSession.mockReturnValue({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data: { user: { name: 'Test User' } } as any,
+        data: {
+          user: { id: 'test-user-id', name: 'Test User' },
+          expires: new Date(Date.now() + 86400000).toISOString(),
+        },
         status: 'authenticated',
         update: jest.fn(),
-      });
+      } as ReturnType<typeof useSession>);
 
       renderHook(() => useLoginForm());
 
@@ -349,18 +351,16 @@ describe('useLoginForm', () => {
 
   describe('Error messages', () => {
     const errorCases = [
-      { param: 'OAuthSignin', expected: ERROR_MESSAGES.OAuthSignin },
-      { param: 'OAuthCallback', expected: ERROR_MESSAGES.OAuthCallback },
-      { param: 'OAuthCreateAccount', expected: ERROR_MESSAGES.OAuthCreateAccount },
-      { param: 'CredentialsSignin', expected: ERROR_MESSAGES.CredentialsSignin },
-      { param: 'SessionRequired', expected: ERROR_MESSAGES.SessionRequired },
+      { param: 'OAuthSignin', expected: AUTH_ERROR_MESSAGES.OAuthSignin },
+      { param: 'OAuthCallback', expected: AUTH_ERROR_MESSAGES.OAuthCallback },
+      { param: 'OAuthCreateAccount', expected: AUTH_ERROR_MESSAGES.OAuthCreateAccount },
+      { param: 'CredentialsSignin', expected: AUTH_ERROR_MESSAGES.CredentialsSignin },
+      { param: 'SessionRequired', expected: AUTH_ERROR_MESSAGES.SessionRequired },
     ];
 
     errorCases.forEach(({ param, expected }) => {
       it(`should display correct message for ${param} error`, () => {
-        // Create new mock for each test
-        const localMockGet = jest.fn().mockReturnValue(param);
-        (useSearchParams as jest.Mock).mockReturnValue({ get: localMockGet });
+        mockGet.mockReturnValue(param);
 
         const { result } = renderHook(() => useLoginForm());
 

@@ -4,7 +4,7 @@
  */
 
 import type { SxProps, Theme } from '@mui/material';
-import { LAYOUT } from './constants';
+import { SCHEDULE_DETAIL_LAYOUT as LAYOUT } from '@/lib/constants';
 
 // Page layout styles
 export const pageContainer: SxProps<Theme> = {

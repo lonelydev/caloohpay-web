@@ -5,8 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ROUTES } from '@/lib/constants';
-import { ERROR_MESSAGES, AUTH_METHODS } from '../constants';
+import { ROUTES, AUTH_ERROR_MESSAGES, AUTH_METHODS } from '@/lib/constants';
 import type { AuthMethod } from '../types';
 
 export function useLoginForm() {
@@ -19,7 +18,7 @@ export function useLoginForm() {
   const [tokenError, setTokenError] = useState('');
 
   const errorParam = searchParams.get('error');
-  const error = errorParam ? ERROR_MESSAGES[errorParam] || ERROR_MESSAGES.Default : null;
+  const error = errorParam ? AUTH_ERROR_MESSAGES[errorParam] || AUTH_ERROR_MESSAGES.Default : null;
 
   useEffect(() => {
     if (status === 'authenticated') {

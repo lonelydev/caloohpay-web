@@ -143,3 +143,123 @@ export const SUCCESS_MESSAGES = {
   CALCULATION_SUCCESS: 'Payment calculation completed',
   EXPORT_SUCCESS: 'Data exported successfully',
 } as const;
+
+/**
+ * Authentication-specific error messages for OAuth and token flows
+ */
+export const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  OAuthSignin: 'Error starting OAuth sign in',
+  OAuthCallback: 'Error handling OAuth callback',
+  OAuthCreateAccount: 'Error creating OAuth account',
+  EmailCreateAccount: 'Error creating email account',
+  Callback: 'Error in OAuth callback',
+  OAuthAccountNotLinked: 'Account already exists with different provider',
+  EmailSignin: 'Error sending email',
+  CredentialsSignin: 'Invalid credentials',
+  SessionRequired: 'Please sign in to access this page',
+  Default: 'An error occurred during authentication',
+} as const;
+
+/**
+ * Authentication methods
+ */
+export const AUTH_METHODS = {
+  OAUTH: 'oauth',
+  TOKEN: 'token',
+} as const;
+
+/**
+ * PagerDuty OAuth permissions displayed to users
+ */
+export const PAGERDUTY_PERMISSIONS = [
+  'Read access to schedules',
+  'Read access to user information',
+  'Read access to on-call schedules',
+] as const;
+
+/**
+ * Instructions for obtaining PagerDuty API token
+ */
+export const API_TOKEN_INSTRUCTIONS = [
+  'Log into PagerDuty',
+  'Click your user icon → My Profile',
+  'Go to User Settings tab',
+  'Scroll to API Access section',
+  'Create or copy your User API Token',
+] as const;
+
+/**
+ * Schedule layout configuration for list view
+ */
+export const SCHEDULE_LAYOUT = {
+  /** Cards per page */
+  ITEMS_PER_PAGE: 16,
+  /** Grid configuration */
+  GRID: {
+    /** Number of columns per breakpoint */
+    COLUMNS: {
+      xs: 1,
+      sm: 2,
+      md: 4,
+    },
+    /** Number of rows to accommodate ITEMS_PER_PAGE */
+    ROWS: {
+      xs: 16, // All cards in single column
+      sm: 8, // 8 rows x 2 columns = 16 cards
+      md: 4, // 4 rows x 4 columns = 16 cards
+    },
+    /** Fixed row height to prevent layout shifts */
+    ROW_HEIGHT: 250, // px
+    /** Gap between grid items */
+    GAP: 3, // theme spacing units (24px)
+    GAP_PX: 24, // Actual pixel value for calculations
+  },
+  /** Card dimensions */
+  CARD: {
+    MIN_HEIGHT: 200,
+    PADDING: 2, // theme spacing units
+  },
+} as const;
+
+/**
+ * Layout and spacing constants for schedule detail page
+ */
+export const SCHEDULE_DETAIL_LAYOUT = {
+  /** Maximum width for main content container (px) */
+  MAX_WIDTH_DESKTOP: 1200,
+  /** Maximum width for error content container (px) */
+  MAX_WIDTH_ERROR: 800,
+  /** Minimum height for loading container (px) */
+  MIN_HEIGHT_LOADING: 300,
+  /** Vertical padding for main content (theme spacing units) */
+  PADDING_VERTICAL: 4,
+  /** Vertical margin for error content (theme spacing units) */
+  MARGIN_VERTICAL_ERROR: 4,
+  /** Bottom margin for header (theme spacing units) */
+  MARGIN_BOTTOM_HEADER: 4,
+  /** Bottom margin for view mode container (theme spacing units) */
+  MARGIN_BOTTOM_VIEW_MODE: 3,
+  /** Bottom margin for schedule display (theme spacing units) */
+  MARGIN_BOTTOM_SCHEDULE: 3,
+  /** Padding for card/paper components (theme spacing units) */
+  PADDING_CARD: 3,
+  /** Padding for view mode container (theme spacing units) */
+  PADDING_VIEW_MODE: 2,
+  /** Top margin for actions container (theme spacing units) */
+  MARGIN_TOP_ACTIONS: 4,
+} as const;
+
+/**
+ * View mode options for schedule display
+ */
+export enum ViewMode {
+  /** List view - shows on-call periods in expandable cards */
+  List = 'list',
+  /** Calendar view - displays schedule in monthly calendar format */
+  Calendar = 'calendar',
+}
+
+/**
+ * Type-safe view mode type
+ */
+export type ViewModeType = `${ViewMode}`;

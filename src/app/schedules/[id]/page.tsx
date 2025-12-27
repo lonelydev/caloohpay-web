@@ -18,12 +18,12 @@ import { Header, Footer } from '@/components/common';
 import MonthNavigation from '@/components/schedules/MonthNavigation';
 import CalendarView from '@/components/schedules/CalendarView';
 import { transformToCalendarEvents } from '@/lib/utils/calendarUtils';
+import { ViewMode } from '@/lib/constants';
 import { sanitizeUrl } from '@/lib/utils/urlSanitization';
 import ScheduleHeader from './components/ScheduleHeader';
 import ScheduleActions from './components/ScheduleActions';
 import OnCallSchedule from './components/OnCallSchedule';
 import { useScheduleData, useDateRangeNavigation, useViewMode } from './hooks';
-import { ViewMode } from './constants';
 import * as styles from './page.styles';
 
 export default function ScheduleDetailPage() {

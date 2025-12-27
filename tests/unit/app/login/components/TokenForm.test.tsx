@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TokenForm } from '@/app/login/components/TokenForm';
-import { TOKEN_INSTRUCTIONS } from '@/app/login/constants';
+import { API_TOKEN_INSTRUCTIONS } from '@/lib/constants';
 
 describe('TokenForm', () => {
   const mockOnSignIn = jest.fn();
@@ -47,7 +47,7 @@ describe('TokenForm', () => {
     it('should render all instructions from constants', () => {
       render(<TokenForm {...defaultProps} />);
 
-      TOKEN_INSTRUCTIONS.forEach((instruction) => {
+      API_TOKEN_INSTRUCTIONS.forEach((instruction) => {
         expect(screen.getByText(new RegExp(instruction, 'i'))).toBeInTheDocument();
       });
     });

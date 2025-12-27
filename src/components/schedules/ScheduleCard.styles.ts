@@ -1,6 +1,11 @@
 import { styled } from '@mui/material/styles';
 import { Box, Card, CardContent } from '@mui/material';
-import { SCHEDULE_LAYOUT, calculateGridHeight } from '@/styles/layout.constants';
+import { SCHEDULE_LAYOUT } from '@/lib/constants';
+
+// Helper function to calculate grid height
+const calculateGridHeight = (rows: number, rowHeight: number, gap: number) => {
+  return rows * rowHeight + (rows - 1) * gap;
+};
 
 /**
  * Grid container for schedule cards with fixed height to prevent layout shifts

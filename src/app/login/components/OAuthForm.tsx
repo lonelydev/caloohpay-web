@@ -4,7 +4,7 @@
 
 import { Button, Stack, Typography } from '@mui/material';
 import { Login as LoginIcon } from '@mui/icons-material';
-import { PERMISSIONS } from '../constants';
+import { PAGERDUTY_PERMISSIONS } from '@/lib/constants';
 import * as styles from '../page.styles';
 import type { OAuthFormProps } from '../types';
 
@@ -33,7 +33,7 @@ export function OAuthForm({ isLoading, onSignIn }: OAuthFormProps) {
           Required Permissions:
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {PERMISSIONS.map((permission) => (
+          {PAGERDUTY_PERMISSIONS.map((permission) => (
             <span key={permission}>
               • {permission}
               <br />

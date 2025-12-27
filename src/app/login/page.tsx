@@ -8,7 +8,7 @@ import { LoginFooter } from './components/LoginFooter';
 import { OAuthForm } from './components/OAuthForm';
 import { TokenForm } from './components/TokenForm';
 import { useLoginForm } from './hooks/useLoginForm';
-import { AUTH_METHODS } from './constants';
+import { AUTH_METHODS } from '@/lib/constants';
 import * as styles from './page.styles';
 
 function LoginForm() {

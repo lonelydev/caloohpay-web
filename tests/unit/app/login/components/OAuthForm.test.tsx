@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { OAuthForm } from '@/app/login/components/OAuthForm';
-import { PERMISSIONS } from '@/app/login/constants';
+import { PAGERDUTY_PERMISSIONS } from '@/lib/constants';
 
 describe('OAuthForm', () => {
   const mockOnSignIn = jest.fn();
@@ -36,7 +36,7 @@ describe('OAuthForm', () => {
     it('should render all permissions from constants', () => {
       render(<OAuthForm isLoading={false} onSignIn={mockOnSignIn} />);
 
-      PERMISSIONS.forEach((permission) => {
+      PAGERDUTY_PERMISSIONS.forEach((permission) => {
         expect(screen.getByText(new RegExp(permission, 'i'))).toBeInTheDocument();
       });
     });

@@ -19,7 +19,7 @@ import { Header, Footer, Loading, ErrorDisplay } from '@/components/common';
 import PaginationControls from '@/components/schedules/PaginationControls';
 import ScheduleCard from '@/components/schedules/ScheduleCard';
 import { ScheduleGrid, EmptyStateContainer } from '@/components/schedules/ScheduleCard.styles';
-import { SCHEDULE_LAYOUT } from '@/styles/layout.constants';
+import { SCHEDULE_LAYOUT } from '@/lib/constants';
 import { useSession } from 'next-auth/react';
 import useSWR from 'swr';
 import { PagerDutySchedule } from '@/lib/types';

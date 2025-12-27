@@ -4,7 +4,7 @@
 
 import { Button, Stack, TextField, Typography, Alert } from '@mui/material';
 import { VpnKey as ApiKeyIcon } from '@mui/icons-material';
-import { TOKEN_INSTRUCTIONS } from '../constants';
+import { API_TOKEN_INSTRUCTIONS } from '@/lib/constants';
 import * as styles from '../page.styles';
 import type { TokenFormProps } from '../types';
 
@@ -58,7 +58,7 @@ export function TokenForm({
           How to get your API Token:
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {TOKEN_INSTRUCTIONS.map((instruction, index) => (
+          {API_TOKEN_INSTRUCTIONS.map((instruction, index) => (
             <span key={instruction}>
               {index + 1}. {instruction}
               <br />

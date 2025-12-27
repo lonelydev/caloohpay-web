@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { ViewMode, ViewModeType } from '../constants';
+import { ViewMode, ViewModeType } from '@/lib/constants';
 
 /**
  * Hook for managing the schedule view mode (list or calendar)
