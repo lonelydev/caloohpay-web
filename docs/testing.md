@@ -127,7 +127,7 @@ npm run test:e2e:report
 
 ### Auth Mock Pattern (NextAuth)
 
-Centralize NextAuth mocking using helpers in `tests/utils/authMock.ts`:
+Centralize NextAuth mocking using helpers in `tests/utils/authMock.tsx`:
 
 ```typescript
 import { renderWithSession, makeSession, mockUseSession, mockServerSession, clearSessionMocks } from 'tests/utils/authMock';
@@ -140,8 +140,12 @@ renderWithSession(<Header />);
 mockServerSession(makeSession({ accessToken: 'token_abc' }));
 const res = await GET(req);
 
-// Cleanup
+// Cleanup (automatically handled in jest.setup.ts)
 afterEach(() => clearSessionMocks());
+
+Notes:
+- Helpers are also re-exported from jest.setup.ts for convenience.
+- Client tests avoid importing server-only `next-auth` by wrapping requires inside helpers.
 ```
 
 Benefits:
