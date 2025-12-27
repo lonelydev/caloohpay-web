@@ -22,7 +22,7 @@
     "test:e2e:unauth": "ENABLE_TEST_SESSION_SEED=false playwright test --project=\"chromium (unauth)\" --project=\"firefox (unauth)\" --project=\"webkit (unauth)\"",
     "test:e2e:unauth:ui": "ENABLE_TEST_SESSION_SEED=false playwright test --ui --project=\"chromium (unauth)\" --project=\"firefox (unauth)\" --project=\"webkit (unauth)\"",
     "type-check": "tsc --noEmit",
-"prepare": "husky",
+    "prepare": "husky",
     "postinstall": "playwright install --with-deps chromium"
   },
   "lint-staged": {
