@@ -16,11 +16,10 @@ const SEEDED = process.env.ENABLE_TEST_SESSION_SEED === 'true';
  */
 
 test.describe('Pagination Controls Stability', () => {
-  // These visual stability tests are sensitive to layout/pagination timing.
-  // Skip when running with seeded auth to avoid flakiness from mocked data.
-  test.skip(SEEDED, 'Skipped under seeded auth; run in dedicated visual suite.');
+  // These visual stability tests require authenticated access to /schedules.
+  // Skip in unauthenticated projects where routes redirect to /login.
+  test.skip(!SEEDED, 'Skipped in unauthenticated E2E projects.');
   test.beforeEach(async ({ page }) => {
-    // Ensure we start from home (session should be seeded when enabled)
     await page.goto('/');
 
     // Mock schedules API with deterministic pagination dataset
