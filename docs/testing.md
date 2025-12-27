@@ -139,6 +139,10 @@ renderWithSession(<Header />);
 // Server/API route test (getServerSession)
 mockServerSession(makeSession({ accessToken: 'token_abc' }));
 const res = await GET(req);
+// Unauthenticated / Loading examples
+mockUnauthenticatedSession();
+// or
+mockLoadingSession();
 
 // Cleanup: handled automatically in jest.setup.ts (no manual afterEach needed)
 

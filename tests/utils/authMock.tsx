@@ -41,14 +41,31 @@ export function renderWithSession(ui: React.ReactElement, session?: Session) {
 /**
  * Mock useSession() to return a specific session for client component tests
  */
-export function mockUseSession(session?: Session) {
+export function mockUseSession(
+  session?: Session,
+  status: 'authenticated' | 'unauthenticated' | 'loading' = 'authenticated'
+) {
   const mod: any = require('next-auth/react');
-  const data = session ?? makeSession();
+  const data = status === 'authenticated' ? (session ?? makeSession()) : null;
   if (mod.useSession && jest.isMockFunction(mod.useSession)) {
-    mod.useSession.mockReturnValue({ data, status: 'authenticated' });
+    mod.useSession.mockReturnValue({ data, status });
   } else {
-    jest.spyOn(mod, 'useSession').mockReturnValue({ data, status: 'authenticated' });
+    jest.spyOn(mod, 'useSession').mockReturnValue({ data, status });
   }
+}
+
+/**
+ * Convenience: mock unauthenticated client state (data=null)
+ */
+export function mockUnauthenticatedSession() {
+  mockUseSession(undefined, 'unauthenticated');
+}
+
+/**
+ * Convenience: mock loading client state (data=null)
+ */
+export function mockLoadingSession() {
+  mockUseSession(undefined, 'loading');
 }
 
 /**
@@ -61,6 +78,18 @@ export function mockServerSession(session?: Session) {
     mod.getServerSession.mockResolvedValue(data);
   } else {
     jest.spyOn(mod, 'getServerSession').mockResolvedValue(data);
+  }
+}
+
+/**
+ * Convenience: mock unauthenticated server/API state (session=null)
+ */
+export function mockServerSessionUnauthenticated() {
+  const mod: any = require('next-auth');
+  if (mod.getServerSession && jest.isMockFunction(mod.getServerSession)) {
+    mod.getServerSession.mockResolvedValue(null);
+  } else {
+    jest.spyOn(mod, 'getServerSession').mockResolvedValue(null);
   }
 }
 
