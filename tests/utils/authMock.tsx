@@ -11,6 +11,7 @@ export function makeSession(partial?: Partial<Session>): Session {
   const base: Session = {
     accessToken: 'test_access_token',
     authMethod: 'oauth',
+    expires: '2099-12-31T23:59:59.000Z',
     user: {
       id: 'user_123',
       name: 'Test User',
