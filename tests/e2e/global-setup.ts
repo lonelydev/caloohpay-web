@@ -1,4 +1,6 @@
 import { chromium, FullConfig } from '@playwright/test';
+import { mkdir } from 'fs/promises';
+import { dirname } from 'path';
 
 export default async function globalSetup(config: FullConfig) {
   if (process.env.ENABLE_TEST_SESSION_SEED !== 'true') {
@@ -7,6 +9,11 @@ export default async function globalSetup(config: FullConfig) {
 
   const baseURL =
     (config.projects[0] as { use?: { baseURL?: string } })?.use?.baseURL || 'http://localhost:3000';
+  const stateFile = 'tests/e2e/.auth/state.json';
+
+  // Ensure .auth directory exists
+  await mkdir(dirname(stateFile), { recursive: true });
+
   const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -15,7 +22,7 @@ export default async function globalSetup(config: FullConfig) {
   await page.goto(baseURL + '/api/test/session');
 
   // Persist storage state for all tests
-  await context.storageState({ path: 'tests/e2e/.auth/state.json' });
+  await context.storageState({ path: stateFile });
 
   await browser.close();
 }
