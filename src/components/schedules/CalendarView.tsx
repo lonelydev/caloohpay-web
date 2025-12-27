@@ -98,9 +98,21 @@ const EventDetailDialog = memo<{
               On-Call Period
             </Typography>
             <Box sx={styles.timePeriodBorder}>
-              <Typography variant="body1" fontWeight="medium">
-                {startDateTime.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')} →{' '}
-                {endDateTime.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}
+              <Typography variant="body1" gutterBottom>
+                <Typography component="span" color="text.secondary">
+                  From:{' '}
+                </Typography>
+                <Typography component="span" fontWeight="medium">
+                  {startDateTime.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}
+                </Typography>
+              </Typography>
+              <Typography variant="body1">
+                <Typography component="span" color="text.secondary">
+                  To:{' '}
+                </Typography>
+                <Typography component="span" fontWeight="medium">
+                  {endDateTime.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}
+                </Typography>
               </Typography>
             </Box>
           </Box>

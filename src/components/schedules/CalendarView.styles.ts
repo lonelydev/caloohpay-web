@@ -23,10 +23,6 @@ export const timePeriodBorder: SxProps<Theme> = {
   borderColor: 'primary.main',
 };
 
-export const endDateText: SxProps<Theme> = {
-  mt: 1,
-};
-
 // Duration chips container
 export const chipsContainer: SxProps<Theme> = {
   display: 'flex',

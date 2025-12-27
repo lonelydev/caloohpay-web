@@ -34,9 +34,21 @@ const PeriodEntry = memo<{
     <Box sx={styles.periodEntryBox}>
       <Box sx={styles.periodEntryInner}>
         <Box sx={styles.periodDateContainer}>
-          <Typography variant="body2" fontWeight="medium">
-            {start.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')} →{' '}
-            {end.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}
+          <Typography variant="body2" gutterBottom>
+            <Typography component="span" color="text.secondary">
+              From:{' '}
+            </Typography>
+            <Typography component="span" fontWeight="medium">
+              {start.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}
+            </Typography>
+          </Typography>
+          <Typography variant="body2">
+            <Typography component="span" color="text.secondary">
+              To:{' '}
+            </Typography>
+            <Typography component="span" fontWeight="medium">
+              {end.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}
+            </Typography>
           </Typography>
         </Box>
 

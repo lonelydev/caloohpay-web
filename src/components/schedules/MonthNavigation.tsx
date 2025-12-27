@@ -24,26 +24,30 @@ const MonthNavigation: React.FC<MonthNavigationProps> = React.memo(
     return (
       <NavigationContainer>
         <Tooltip title="Previous month" arrow>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={onPreviousMonth}
-            variant="outlined"
-            disabled={isLoading}
-            aria-label="Previous month"
-          ></Button>
+          <span>
+            <Button
+              startIcon={<ArrowBack />}
+              onClick={onPreviousMonth}
+              variant="outlined"
+              disabled={isLoading}
+              aria-label="Previous month"
+            />
+          </span>
         </Tooltip>
         <MonthDisplay>
           <CalendarMonth />
           <Typography variant="h5">{currentMonth}</Typography>
         </MonthDisplay>
         <Tooltip title="Next month" arrow>
-          <Button
-            endIcon={<ArrowForward />}
-            onClick={onNextMonth}
-            variant="outlined"
-            disabled={isLoading}
-            aria-label="Next month"
-          ></Button>
+          <span>
+            <Button
+              endIcon={<ArrowForward />}
+              onClick={onNextMonth}
+              variant="outlined"
+              disabled={isLoading}
+              aria-label="Next month"
+            />
+          </span>
         </Tooltip>
       </NavigationContainer>
     );
