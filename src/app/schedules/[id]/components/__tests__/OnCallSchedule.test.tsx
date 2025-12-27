@@ -133,7 +133,7 @@ describe('OnCallSchedule', () => {
       userSchedules: [
         {
           ...defaultProps.userSchedules[0],
-          entries: [{ ...mockEntry, weekdayDays: 0, weekendDays: 1, totalCompensation: 75 }],
+          entries: [{ ...mockEntry, weekdayDays: 0, weekendDays: 1, compensation: 75 }],
         },
       ],
     };

@@ -20,6 +20,42 @@ const eslintConfig = defineConfig([
   ]),
   ...nextVitals,
   ...nextTs,
+  {
+    files: [
+      "**/__tests__/**/*.{ts,tsx,js,jsx}",
+      "tests/**/*.{ts,tsx,js,jsx}"
+    ],
+    rules: {
+      // Enforce using the '@/tests/utils' alias for test helpers
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '../../**/tests/utils/**',
+                '../**/tests/utils/**',
+                './tests/utils/**',
+                'tests/utils/**'
+              ],
+              message: 'Use the barrel export @/tests/utils to maintain consistent import patterns',
+            },
+          ],
+          paths: [
+            {
+              name: '@/tests/utils/authMock',
+              message: 'Use the barrel export @/tests/utils (not @/tests/utils/authMock) to keep imports consistent',
+            },
+            {
+              name: '@/tests/utils',
+              importNames: ['clearSessionMocks'],
+              message: 'Global cleanup runs in jest.setup.ts; do not import clearSessionMocks in tests',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

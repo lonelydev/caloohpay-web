@@ -11,6 +11,7 @@ First off, thank you for considering contributing to CalOohPay Web! It's people 
 - [Commit Messages](#commit-messages)
 - [Pull Request Process](#pull-request-process)
 - [Testing Guidelines](#testing-guidelines)
+- [Testing Utilities](#testing-utilities)
 - [Documentation](#documentation)
 
 ## 📜 Code of Conduct
@@ -397,6 +398,17 @@ npm run test:coverage      # Generate coverage report
 npm run test:e2e          # Run E2E tests
 npm run test:e2e:ui       # Run E2E tests with UI
 ```
+
+## 🧰 Testing Utilities
+
+To keep test imports clean and consistent:
+
+- Use the alias import for test helpers: `@/tests/utils`
+- Avoid long relative paths to `tests/utils/**`
+- Centralized NextAuth helpers (`makeSession`, `mockUseSession`, `mockServerSession`, `renderWithSession`, `clearSessionMocks`) live under `tests/utils/authMock.tsx` and are re-exported via `tests/utils/index.ts`
+- Cleanup (`clearSessionMocks`) runs automatically in `jest.setup.ts` via a global `afterEach`
+
+ESLint enforces alias usage in test files; if you see a lint error for test helper imports, switch to `@/tests/utils`.
 
 ## 📚 Documentation
 

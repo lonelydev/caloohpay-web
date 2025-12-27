@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { useSession, signOut } from 'next-auth/react';
+import { makeSession, mockUseSession } from '@/tests/utils';
 import { Header } from '../Header';
 import { useThemeMode } from '@/context/ThemeContext';
 
@@ -32,6 +33,8 @@ describe('Header', () => {
     });
   });
 
+  // Cleanup handled globally in jest.setup.ts
+
   it('should render the CalOohPay logo', () => {
     (useSession as jest.Mock).mockReturnValue({
       data: null,
@@ -43,13 +46,7 @@ describe('Header', () => {
   });
 
   it('should show Schedules link when authenticated', () => {
-    (useSession as jest.Mock).mockReturnValue({
-      data: {
-        user: { name: 'Test User', email: 'test@example.com' },
-        accessToken: 'token',
-      },
-      status: 'authenticated',
-    });
+    mockUseSession(makeSession());
 
     render(<Header />);
     expect(screen.getByText('Schedules')).toBeInTheDocument();
@@ -79,13 +76,10 @@ describe('Header', () => {
   });
 
   it('should show user menu when authenticated', () => {
-    (useSession as jest.Mock).mockReturnValue({
-      data: {
-        user: { name: 'Test User', email: 'test@example.com' },
-        accessToken: 'token',
-      },
-      status: 'authenticated',
+    const session = makeSession({
+      user: { name: 'Test User', email: 'test@example.com', image: null },
     });
+    mockUseSession(session);
 
     render(<Header />);
 
