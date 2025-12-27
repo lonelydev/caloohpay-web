@@ -42,10 +42,10 @@ if (!global.Response) {
 }
 
 // Export test utilities re-exports for convenience (no side effects)
-export * from './tests/utils/authMock';
+export * from '@/tests/utils/authMock';
 
 // Ensure auth mocks are reset between tests
-import { clearSessionMocks } from './tests/utils/authMock';
+import { clearSessionMocks } from '@/tests/utils/authMock';
 
 afterEach(() => {
   clearSessionMocks();
