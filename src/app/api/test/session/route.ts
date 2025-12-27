@@ -37,7 +37,7 @@ export async function GET() {
 
   const res = NextResponse.json({ ok: true });
 
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = (process.env.NODE_ENV as string) === 'production';
   const cookieName = isProd ? '__Secure-next-auth.session-token' : 'next-auth.session-token';
   const cookieAttributes = ['Path=/', 'HttpOnly', 'SameSite=Lax'];
   if (isProd) {
