@@ -78,6 +78,43 @@ npm run test:e2e -- --project=chromium
 npm run test:e2e:report
 ```
 
+## E2E Auth Seeding
+
+Seeded authentication enables running E2E tests as an already-authenticated user using NextAuth’s JWT session strategy.
+
+- **Toggle**: Controlled by `ENABLE_TEST_SESSION_SEED`.
+- **Env vars**:
+  - `ENABLE_TEST_SESSION_SEED=true` to enable seeding.
+  - `NEXTAUTH_SECRET` must be set (used by NextAuth JWT encoder).
+- **How it works**:
+  - Global setup hits the test-only endpoint at `/api/test/session` to set a valid NextAuth session cookie, then saves storage state to `tests/e2e/.auth/state.json`.
+  - The endpoint is gated and returns 404 when seeding is disabled.
+- **Playwright projects**:
+  - Seeded projects: `chromium (seeded)`, `firefox (seeded)`, `webkit (seeded)` use `storageState` and set the required env vars.
+  - Unauthenticated projects: `chromium (unauth)`, `firefox (unauth)`, `webkit (unauth)` run with seeding disabled.
+- **Run examples**:
+  - Seeded: `npm run test:e2e -- --project="chromium (seeded)"`
+  - Unauth: `npm run test:e2e -- --project="chromium (unauth)"`
+- **CI usage**:
+  - Provide `NEXTAUTH_SECRET` via CI secrets.
+  - Run both seeded and unauth projects to cover authenticated flows and login/redirect behavior.
+  - Example: `npm run test:e2e` (executes all configured projects).
+
+### Quick Reference
+
+| Use Case               | Command                                             | Env Required                                  |
+| ---------------------- | --------------------------------------------------- | --------------------------------------------- |
+| All seeded tests       | `npm run test:e2e:seeded`                           | `NEXTAUTH_SECRET` (default: `dev-e2e-secret`) |
+| Seeded UI mode         | `npm run test:e2e:seeded:ui`                        | `NEXTAUTH_SECRET` (default: `dev-e2e-secret`) |
+| All unauth tests       | `npm run test:e2e:unauth`                           | None                                          |
+| Unauth UI mode         | `npm run test:e2e:unauth:ui`                        | None                                          |
+| Single seeded browser  | `npm run test:e2e -- --project="chromium (seeded)"` | Set via shell scripts                         |
+| Single unauth browser  | `npm run test:e2e -- --project="chromium (unauth)"` | Set via shell scripts                         |
+| Shell wrapper (seeded) | `./scripts/e2e-seeded.sh`                           | Auto-set                                      |
+| Shell wrapper (unauth) | `./scripts/e2e-unauth.sh`                           | Auto-set                                      |
+
+**Note**: Shell scripts (`scripts/e2e-*.sh`) automatically set required environment variables and accept pass-through arguments.
+
 ## Progressive Search Test Coverage
 
 ### Unit Tests (8 tests in `src/app/schedules/__tests__/page.test.tsx`)

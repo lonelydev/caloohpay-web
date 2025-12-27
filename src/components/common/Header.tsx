@@ -108,7 +108,7 @@ export function Header({ elevation }: HeaderProps) {
               {/* Auth Section */}
               {status === 'authenticated' && session?.user ? (
                 <>
-                  <IconButton onClick={handleMenuOpen} sx={{ p: 0 }}>
+                  <IconButton onClick={handleMenuOpen} sx={{ p: 0 }} aria-label="account menu">
                     <Avatar
                       alt={session.user.name || 'User'}
                       src={session.user.image || undefined}

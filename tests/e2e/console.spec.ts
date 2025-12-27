@@ -12,6 +12,8 @@ function isAcceptableMessage(text: string): boolean {
     'data-emotion', // MUI Emotion styling warnings
     'next-auth', // NextAuth debug warnings
     'DEBUG_ENABLED', // NextAuth debug mode warnings
+    'Failed to load resource', // Network errors during mocked flows
+    '401 (Unauthorized)', // Unauthorized API calls in dev
   ];
 
   return acceptablePatterns.some((pattern) => text.toLowerCase().includes(pattern.toLowerCase()));

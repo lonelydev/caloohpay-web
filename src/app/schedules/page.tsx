@@ -269,44 +269,57 @@ export default function SchedulesPage() {
             sx={{ maxWidth: 600 }}
           />
 
-          {/* Schedule Count & Pagination Info */}
-          {displaySchedules && totalCount > 0 && (
-            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-              <Chip
-                label={`${totalCount} schedule${totalCount !== 1 ? 's' : ''} found`}
-                color="primary"
-                variant="outlined"
-              />
-              {totalPages > 1 && (
-                <Typography variant="body2" color="text.secondary">
-                  Page {page} of {totalPages} • Showing {displaySchedules.length} of {totalCount}
-                </Typography>
-              )}
-              {searchQuery && showingLocalResults && !apiSearchComplete && (
+          {/* Schedule Count & Pagination Info - Always rendered to maintain layout stability */}
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+            {displaySchedules && totalCount > 0 && (
+              <>
                 <Chip
-                  label="Searching API..."
-                  size="small"
-                  color="info"
-                  variant="outlined"
-                  icon={<CircularProgress size={12} />}
-                />
-              )}
-              {searchQuery && showingLocalResults && apiSearchComplete && (
-                <Chip
-                  label={`${clientFilteredSchedules.length} local, ${mergedSearchResults.length - clientFilteredSchedules.length} from API`}
-                  size="small"
-                  color="success"
+                  label={`${totalCount} schedule${totalCount !== 1 ? 's' : ''} found`}
+                  color="primary"
                   variant="outlined"
                 />
-              )}
-              {searchQuery && !showingLocalResults && !apiSearchComplete && (
-                <Chip label="Searching..." size="small" color="info" variant="outlined" />
-              )}
-            </Stack>
-          )}
+                {totalPages > 1 && (
+                  <Typography variant="body2" color="text.secondary">
+                    Page {page} of {totalPages} • Showing {displaySchedules.length} of {totalCount}
+                  </Typography>
+                )}
+                {searchQuery && showingLocalResults && !apiSearchComplete && (
+                  <Chip
+                    label="Searching API..."
+                    size="small"
+                    color="info"
+                    variant="outlined"
+                    icon={<CircularProgress size={12} />}
+                  />
+                )}
+                {searchQuery && showingLocalResults && apiSearchComplete && (
+                  <Chip
+                    label={`${clientFilteredSchedules.length} local, ${mergedSearchResults.length - clientFilteredSchedules.length} from API`}
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                  />
+                )}
+                {searchQuery && !showingLocalResults && !apiSearchComplete && (
+                  <Chip label="Searching..." size="small" color="info" variant="outlined" />
+                )}
+              </>
+            )}
+          </Stack>
 
           {/* Schedules Grid with Loading Overlay */}
-          <Box sx={{ position: 'relative', minHeight: 400 }}>
+          <Box
+            sx={(theme) => ({
+              position: 'relative',
+              // Fixed height to prevent pagination controls from shifting
+              // Responsive height based on breakpoint grid layout
+              height: {
+                xs: `calc(16 * 250px + 15 * 24px)`, // 16 rows (single column)
+                sm: `calc(8 * 250px + 7 * 24px)`, // 8 rows (2 columns)
+                md: `calc(4 * 250px + 3 * 24px)`, // 4 rows (4 columns)
+              },
+            })}
+          >
             {/* Loading Overlay - Always render, visibility controlled by 'open' */}
             <Backdrop
               open={isLoading}
@@ -331,6 +344,9 @@ export default function SchedulesPage() {
                   />
                 ))}
               </ScheduleGrid>
+            ) : isLoading ? (
+              // During loading, render empty grid to maintain layout stability
+              <ScheduleGrid />
             ) : (
               <EmptyStateContainer>
                 <CalendarIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
@@ -348,31 +364,33 @@ export default function SchedulesPage() {
 
           {/* Pagination Controls - Outside conditional to persist during loading */}
           {showPagination && (
-            <Stack spacing={3} alignItems="center">
-              {/* Navigation Buttons */}
-              <PaginationControls
-                page={page}
-                totalPages={totalPages}
-                isLoading={isLoading}
-                onFirstPage={handleFirstPage}
-                onPrevPage={handlePrevPage}
-                onNextPage={handleNextPage}
-                onLastPage={handleLastPage}
-              />
+            <nav aria-label="pagination navigation">
+              <Stack spacing={3} alignItems="center">
+                {/* Navigation Buttons */}
+                <PaginationControls
+                  page={page}
+                  totalPages={totalPages}
+                  isLoading={isLoading}
+                  onFirstPage={handleFirstPage}
+                  onPrevPage={handlePrevPage}
+                  onNextPage={handleNextPage}
+                  onLastPage={handleLastPage}
+                />
 
-              {/* Page Number Pagination */}
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                size="large"
-                showFirstButton
-                showLastButton
-                siblingCount={1}
-                boundaryCount={1}
-              />
-            </Stack>
+                {/* Page Number Pagination */}
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  size="large"
+                  showFirstButton
+                  showLastButton
+                  siblingCount={1}
+                  boundaryCount={1}
+                />
+              </Stack>
+            </nav>
           )}
         </Stack>
       </Container>
