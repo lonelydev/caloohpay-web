@@ -26,12 +26,13 @@ const MonthNavigation: React.FC<MonthNavigationProps> = React.memo(
         <Tooltip title="Previous month" arrow>
           <span>
             <Button
-              startIcon={<ArrowBack />}
               onClick={onPreviousMonth}
               variant="outlined"
               disabled={isLoading}
               aria-label="Previous month"
-            />
+            >
+              <ArrowBack />
+            </Button>
           </span>
         </Tooltip>
         <MonthDisplay>
@@ -41,12 +42,13 @@ const MonthNavigation: React.FC<MonthNavigationProps> = React.memo(
         <Tooltip title="Next month" arrow>
           <span>
             <Button
-              endIcon={<ArrowForward />}
               onClick={onNextMonth}
               variant="outlined"
               disabled={isLoading}
               aria-label="Next month"
-            />
+            >
+              <ArrowForward />
+            </Button>
           </span>
         </Tooltip>
       </NavigationContainer>
