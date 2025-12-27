@@ -16,6 +16,14 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - name: Validate NEXTAUTH_SECRET
+        run: |
+          if [ -z "${{ secrets.NEXTAUTH_SECRET }}" ]; then
+            echo "::error::NEXTAUTH_SECRET repository secret is not configured."
+            echo "::error::Please add NEXTAUTH_SECRET to repository secrets at:"
+            echo "::error::https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          fi
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Run Seeded E2E
