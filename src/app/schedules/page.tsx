@@ -269,41 +269,43 @@ export default function SchedulesPage() {
             sx={{ maxWidth: 600 }}
           />
 
-          {/* Schedule Count & Pagination Info */}
-          {displaySchedules && totalCount > 0 && (
-            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-              <Chip
-                label={`${totalCount} schedule${totalCount !== 1 ? 's' : ''} found`}
-                color="primary"
-                variant="outlined"
-              />
-              {totalPages > 1 && (
-                <Typography variant="body2" color="text.secondary">
-                  Page {page} of {totalPages} • Showing {displaySchedules.length} of {totalCount}
-                </Typography>
-              )}
-              {searchQuery && showingLocalResults && !apiSearchComplete && (
+          {/* Schedule Count & Pagination Info - Always rendered to maintain layout stability */}
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+            {displaySchedules && totalCount > 0 && (
+              <>
                 <Chip
-                  label="Searching API..."
-                  size="small"
-                  color="info"
-                  variant="outlined"
-                  icon={<CircularProgress size={12} />}
-                />
-              )}
-              {searchQuery && showingLocalResults && apiSearchComplete && (
-                <Chip
-                  label={`${clientFilteredSchedules.length} local, ${mergedSearchResults.length - clientFilteredSchedules.length} from API`}
-                  size="small"
-                  color="success"
+                  label={`${totalCount} schedule${totalCount !== 1 ? 's' : ''} found`}
+                  color="primary"
                   variant="outlined"
                 />
-              )}
-              {searchQuery && !showingLocalResults && !apiSearchComplete && (
-                <Chip label="Searching..." size="small" color="info" variant="outlined" />
-              )}
-            </Stack>
-          )}
+                {totalPages > 1 && (
+                  <Typography variant="body2" color="text.secondary">
+                    Page {page} of {totalPages} • Showing {displaySchedules.length} of {totalCount}
+                  </Typography>
+                )}
+                {searchQuery && showingLocalResults && !apiSearchComplete && (
+                  <Chip
+                    label="Searching API..."
+                    size="small"
+                    color="info"
+                    variant="outlined"
+                    icon={<CircularProgress size={12} />}
+                  />
+                )}
+                {searchQuery && showingLocalResults && apiSearchComplete && (
+                  <Chip
+                    label={`${clientFilteredSchedules.length} local, ${mergedSearchResults.length - clientFilteredSchedules.length} from API`}
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                  />
+                )}
+                {searchQuery && !showingLocalResults && !apiSearchComplete && (
+                  <Chip label="Searching..." size="small" color="info" variant="outlined" />
+                )}
+              </>
+            )}
+          </Stack>
 
           {/* Schedules Grid with Loading Overlay */}
           <Box
