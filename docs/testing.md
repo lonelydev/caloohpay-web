@@ -143,7 +143,7 @@ const res = await GET(req);
 // Cleanup: handled automatically in jest.setup.ts (no manual afterEach needed)
 
 Notes:
-- Prefer alias imports: `@/tests/utils` for test helpers.
+- Prefer alias imports: `@/tests/utils` for test helpers (lint-enforced).
 - Client tests avoid importing server-only `next-auth` by wrapping requires inside helpers.
 ```
 
