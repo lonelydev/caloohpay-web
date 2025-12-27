@@ -6,7 +6,7 @@ import { Person, Work, WorkOff, Wallet } from '@mui/icons-material';
 import { DateTime } from 'luxon';
 import { PAYMENT_RATES } from '@/lib/constants';
 import { Loading } from '@/components/common';
-import * as styles from '../page.styles';
+import * as styles from './OnCallSchedule.styles';
 import type { OnCallScheduleProps } from './OnCallSchedule.types';
 
 /**
@@ -34,11 +34,21 @@ const PeriodEntry = memo<{
     <Box sx={styles.periodEntryBox}>
       <Box sx={styles.periodEntryInner}>
         <Box sx={styles.periodDateContainer}>
-          <Typography variant="body2" fontWeight="medium">
-            {start.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ')}
+          <Typography variant="body2" gutterBottom>
+            <Typography component="span" color="text.secondary">
+              From:{' '}
+            </Typography>
+            <Typography component="span" fontWeight="medium">
+              {start.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}
+            </Typography>
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {end.toFormat('EEE, MMM d, yyyy, HH:mm ZZZ')}
+          <Typography variant="body2">
+            <Typography component="span" color="text.secondary">
+              To:{' '}
+            </Typography>
+            <Typography component="span" fontWeight="medium">
+              {end.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}
+            </Typography>
           </Typography>
         </Box>
 

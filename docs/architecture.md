@@ -159,7 +159,17 @@ src/app/
 │   └── [id]/             # Dynamic schedule detail
 │       └── page.tsx      # Schedule detail view
 ├── login/                 # Login page
-│   └── page.tsx
+│   ├── page.tsx          # Main login page (76 lines, modular)
+│   ├── page.styles.ts    # All login page styles
+│   ├── constants.ts      # Error messages, routes, permissions
+│   ├── types.ts          # TypeScript interfaces
+│   ├── components/       # Login UI components
+│   │   ├── OAuthForm.tsx
+│   │   ├── TokenForm.tsx
+│   │   ├── LoginHeader.tsx
+│   │   └── LoginFooter.tsx
+│   └── hooks/
+│       └── useLoginForm.ts  # Login business logic
 ├── layout.tsx            # Root layout
 └── page.tsx              # Home page
 ```
@@ -457,6 +467,66 @@ Located in `src/components/common/`:
 - **Header**: Navigation bar with auth status
 - **Footer**: App footer
 - **Loading**: Loading spinner
+
+### Schedule Components
+
+Located in `src/components/schedules/`:
+
+- **MonthNavigation**: Month selector with Previous/Next navigation
+  - Styled components in `MonthNavigation.styles.ts`
+  - Memoized for performance
+  - Implements responsive spacing and gaps
+- **PaginationControls**: Page navigation buttons
+  - Memoized with useCallback handlers
+  - Stable during re-renders
+- **ScheduleCard**: Individual schedule display card
+  - Styled components in `ScheduleCard.styles.ts`
+  - Reusable across list views
+- **CalendarView**: FullCalendar integration with event dialog
+  - Styled components in `CalendarView.styles.ts`
+  - Factory function `getCalendarStyles(theme)` for theme integration
+  - Date format: "EEE yyyy/MM/dd, HH:mm ZZZ"
+
+### Login Page Components
+
+Located in `src/app/login/components/`:
+
+- **LoginHeader**: Page branding and description
+- **LoginFooter**: Help text with documentation link
+- **OAuthForm**: OAuth sign-in form with permissions display
+- **TokenForm**: API token input form with instructions
+
+**Supporting files**:
+
+- `hooks/useLoginForm.ts`: Business logic (state, auth handlers, validation)
+- `constants.ts`: Error messages, routes, permissions, instructions
+- `types.ts`: TypeScript interfaces for all props
+- `page.styles.ts`: All styling in one place
+
+### Component Refactoring Pattern
+
+Recent refactorings (MonthNavigation, OnCallSchedule, CalendarView, Login) follow a consistent pattern:
+
+**File Structure**:
+
+```
+Component.tsx           # UI composition and logic
+Component.styles.ts     # All styling (styled components or sx objects)
+constants.ts           # Configuration (where needed)
+types.ts              # TypeScript interfaces (where needed)
+hooks/useComponent.ts  # Business logic extraction (where needed)
+```
+
+**Benefits**:
+
+- **Separation of Concerns**: Styles, logic, and UI separated
+- **Maintainability**: Easy to locate and modify specific aspects
+- **Testability**: Each module can be tested independently
+- **Consistency**: Same pattern across all major components
+- **Performance**: Enables memoization and tree-shaking
+
+**Date Format Standard**: All date displays use Luxon format `'EEE yyyy/MM/dd, HH:mm ZZZ'`
+Example: "Thu 2025/12/27, 14:30 +0000"
 
 ### Design Patterns
 
@@ -960,6 +1030,79 @@ test('user can view schedule list', async ({ page }) => {
 
 ## Performance Optimizations
 
+### Component Memoization
+
+**Schedule List Page**:
+
+- `PaginationControls`: Wrapped in `React.memo` to prevent re-renders
+- `MonthNavigation`: Memoized with styled components for spacing
+- Callbacks wrapped in `useCallback` with proper dependencies
+
+**Schedule Detail Page**:
+
+- `ScheduleHeader`: Memoized, stays stable during month navigation
+- `ScheduleActions`: Memoized, prevents re-renders on data changes
+- `OnCallSchedule`: Memoized with scoped loading indicators
+
+**Performance Patterns**:
+
+```typescript
+// Memoize component
+const MonthNavigation = React.memo(({ ... }) => { ... });
+
+// Memoize callbacks
+const handleNext = useCallback(() => { ... }, [dependencies]);
+
+// Memoize expensive computations
+const sortedData = useMemo(() => data.sort(...), [data]);
+```
+
+### Layout Stability
+
+**Fixed Layouts**:
+
+- Calendar-optimized pages: Fixed 1200px width containers
+- Prevents layout shifts during state changes
+- Grid layouts with fixed heights
+
+**UI Improvements**:
+
+- Icon-only ToggleButtons with tooltips for compact display
+- Scoped loading indicators (data sections only, not UI chrome)
+- Header, navigation, and actions remain stable during data fetches
+
+**Example**:
+
+```typescript
+// Fixed width for calendar optimization
+<Box sx={{ width: 1200, maxWidth: '100%', px: 2 }}>
+  <ScheduleHeader /> {/* Stable */}
+  <MonthNavigation /> {/* Stable */}
+  {isLoading ? <Loading /> : <OnCallSchedule />} {/* Only data section loads */}
+</Box>
+```
+
+### Date Format Standardization
+
+All date displays use consistent Luxon DateTime format for maintainability:
+
+```typescript
+dateTime.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ');
+// Example output: "Thu 2025/12/27, 14:30 +0000"
+```
+
+**Affected Components**:
+
+- `OnCallSchedule`: Start/end dates in period entries
+- `CalendarView`: Event dialog date display
+
+**Benefits**:
+
+- Consistent UX across all views
+- Timezone-aware display
+- Easy to parse and maintain
+- Luxon handles DST and timezone shifts
+
 ### Server-Side Rendering
 
 - Initial page load with data
@@ -1072,6 +1215,4 @@ The architecture supports the current feature set while remaining flexible for f
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: November 2024  
 **Maintained By**: CaloohPay Contributors

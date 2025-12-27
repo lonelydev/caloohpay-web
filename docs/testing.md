@@ -6,27 +6,41 @@ CalOohPay has comprehensive test coverage across unit, integration, and end-to-e
 
 ## Test Statistics
 
-- **Total Tests**: 122 passing (10 test suites)
-- **Unit Tests**: 114 (93.4%)
-- **E2E Tests**: 8 (6.6%)
+- **Total Tests**: 226+ passing (15+ test suites)
+- **Unit Tests**: 218+ (96.5%)
+- **E2E Tests**: 12 (3.5%)
 - **Coverage Target**: >80%
-- **Latest**: NextAuth route handler - 100% coverage (9 tests)
+- **Latest Additions**:
+  - Login page modular components: 104 tests (5 new suites)
+  - NextAuth route handler: 9 tests (100% coverage)
 
 ## Test Structure
 
 ```
 tests/
 ├── unit/                           # Unit tests for components and utilities
+│   ├── app/
+│   │   └── login/
+│   │       ├── hooks/
+│   │       │   └── useLoginForm.test.tsx          # 57 tests
+│   │       └── components/
+│   │           ├── OAuthForm.test.tsx             # 15 tests
+│   │           ├── TokenForm.test.tsx             # 22 tests
+│   │           ├── LoginHeader.test.tsx           # 5 tests
+│   │           └── LoginFooter.test.tsx           # 5 tests
 │   └── components/
 │       └── schedules/
-│           ├── PaginationControls.test.tsx    # 17 tests
-│           ├── MonthNavigation.test.tsx       # 19 tests
-│           └── ScheduleCard.test.tsx          # 16 tests
+│           ├── PaginationControls.test.tsx        # 17 tests
+│           ├── MonthNavigation.test.tsx           # 19 tests
+│           ├── ScheduleCard.test.tsx              # 16 tests
+│           └── CalendarView.test.tsx              # Component tests
 ├── integration/                    # Integration tests (future)
 └── e2e/                           # End-to-end tests
-    ├── auth.spec.ts               # Authentication flows
+    ├── auth.spec.ts               # 12 authentication tests
     ├── schedules.spec.ts          # Schedule browsing
-    └── pagination-stability.spec.ts # 6 layout stability tests
+    ├── calendar-view.spec.ts      # Calendar view tests
+    ├── pagination-stability.spec.ts # 6 layout stability tests
+    └── console.spec.ts            # Console error tests
 
 src/app/schedules/__tests__/
 └── page.test.tsx                  # 19 tests (includes 8 progressive search tests)
@@ -76,6 +90,21 @@ npm run test:e2e -- --project=chromium
 
 # View test report
 npm run test:e2e:report
+```
+
+## Playwright Configuration
+
+### Log Filtering
+
+The Playwright configuration pipes `stderr` and `stdout` to suppress non-critical NextAuth JWT decryption warnings during test runs. These warnings occur when NextAuth encounters unauthenticated requests during E2E tests but don't affect test results.
+
+```typescript
+// playwright.config.ts
+webServer: {
+  command: 'npm run dev',
+  stderr: 'pipe',  // Suppress verbose logs
+  stdout: 'pipe',
+}
 ```
 
 ## E2E Auth Seeding
@@ -134,6 +163,155 @@ Seeded authentication enables running E2E tests as an already-authenticated user
 4. **should clear search state when search query is removed**
    - Ensures proper cleanup of search state
    - Tests return to normal pagination mode
+
+5. **should reset page to 1 when searching**
+   - Validates pagination reset on new search
+   - Prevents showing empty pages
+
+6. **should handle search with no local results**
+   - Tests fallback when cache is empty
+   - Validates API-only search path
+
+7. **should deduplicate merged local and API results**
+   - Confirms no duplicate schedules shown
+   - Tests Map-based deduplication logic
+
+8. **should handle rapid search query changes**
+   - Tests resilience with fast typing
+   - Ensures stable behavior during rapid state changes
+
+## Login Page Test Coverage (December 2025)
+
+### New Test Suites: 104 tests total
+
+#### `useLoginForm.test.tsx` - 57 tests
+
+Custom hook business logic testing covering:
+
+- **Initialization** (3): Default values, URL error parsing
+- **Authentication redirect** (3): Status-based navigation
+- **OAuth sign-in** (3): Flow trigger, loading, errors
+- **Token sign-in** (9): Validation, trimming, errors, loading
+- **Auth method change** (3): Tab switching, error clearing
+- **Error messages** (5): All error types from constants
+
+**Key Patterns**:
+
+```typescript
+// Test hook initialization
+const { result } = renderHook(() => useLoginForm());
+expect(result.current.authMethod).toBe('oauth');
+
+// Test async operations with act
+await act(async () => {
+  await result.current.handleOAuthSignIn();
+});
+expect(mockSignIn).toHaveBeenCalled();
+
+// Test loading states with waitFor
+await waitFor(() => {
+  expect(result.current.isLoading).toBe(false);
+});
+```
+
+#### `OAuthForm.test.tsx` - 15 tests
+
+Component rendering and interaction:
+
+- Rendering (4): Button, text, permissions
+- Button behavior (5): Click, disabled/enabled, text changes
+- Accessibility (2): Roles, icons
+
+#### `TokenForm.test.tsx` - 22 tests
+
+Form validation and interaction:
+
+- Rendering (5): Input, button, alerts, instructions
+- Input behavior (7): onChange, Enter key, validation states
+- Button behavior (7): Click, disabled states, text changes
+- Error handling (1): Helper text display
+- Accessibility (2): Labels, icons
+
+**Key Patterns**:
+
+```typescript
+// Test form input
+const input = screen.getByLabelText(/API Token/i);
+fireEvent.change(input, { target: { value: 'test-token' } });
+expect(mockOnTokenChange).toHaveBeenCalledWith('test-token');
+
+// Test Enter key
+fireEvent.keyDown(input, { key: 'Enter' });
+expect(mockOnSignIn).toHaveBeenCalledTimes(1);
+
+// Test disabled state
+const button = screen.getByRole('button');
+expect(button).toBeDisabled();
+```
+
+#### `LoginHeader.test.tsx` - 5 tests
+
+Branding and layout validation
+
+#### `LoginFooter.test.tsx` - 5 tests
+
+Link validation and security attributes
+
+### E2E Test Updates - `auth.spec.ts`
+
+Added 4 new/updated tests for tab-based UI:
+
+1. **should display login page with OAuth tab by default**
+   - Validates tab presence and initial selection
+
+2. **should switch between OAuth and API Token tabs** (NEW)
+   - Tests tab navigation
+   - Verifies form changes with tabs
+
+3. **should validate empty API token** (NEW)
+   - Tests disabled button state
+
+4. **should enable API token button when token is entered** (NEW)
+   - Validates enabled state with input
+
+**Key Patterns**:
+
+```typescript
+// Test tab navigation
+await page.getByRole('tab', { name: /API Token/i }).click();
+await expect(page.getByLabel(/API Token/i)).toBeVisible();
+
+// Test form validation
+const button = page.getByRole('button', { name: /Sign in with API Token/i });
+await expect(button).toBeDisabled();
+
+// Type in input
+await page.getByLabel(/API Token/i).fill('test-token');
+await expect(button).toBeEnabled();
+```
+
+### Calendar View E2E Tests - `calendar-view.spec.ts`
+
+Tests calendar navigation with icon-only buttons:
+
+**Icon-Only Button Testing Pattern**:
+
+```typescript
+// Use exact aria-label strings (not regex) for icon-only buttons
+const nextButton = page.getByRole('button', { name: 'Next month' });
+const prevButton = page.getByRole('button', { name: 'Previous month' });
+
+await nextButton.click();
+// Month should change in calendar
+```
+
+**Key Tests**:
+
+- ✅ Month navigation with icon-only controls
+- ✅ FullCalendar built-in buttons are hidden
+- ✅ Custom navigation accessible via aria-labels
+
+## Component Refactoring Test Patterns
 
 5. **should reset page to 1 when searching**
    - Validates pagination reset on new search
@@ -268,6 +446,7 @@ fireEvent.change(searchInput, { target: { value: 'engineering' } });
 ### MonthNavigation (19 tests)
 
 - ✅ Renders month display and navigation buttons
+- ✅ Icon-only buttons with aria-labels (accessibility)
 - ✅ Formats month correctly
 - ✅ Disables buttons during loading
 - ✅ Calls navigation handlers
@@ -301,6 +480,7 @@ fireEvent.change(searchInput, { target: { value: 'engineering' } });
 4. **Mock external dependencies**: NextAuth, SWR, API calls
 5. **Test user behavior**: Not implementation details
 6. **Use Testing Library queries**: getByRole > getByLabelText > getByText
+7. **Icon-only buttons**: Always add `aria-label` and use exact strings in E2E tests
 
 ### Test Organization
 

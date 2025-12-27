@@ -78,5 +78,8 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    // Suppress NextAuth JWT decryption warnings (expected in tests with mocked auth)
+    stderr: 'pipe',
+    stdout: 'pipe',
   },
 });

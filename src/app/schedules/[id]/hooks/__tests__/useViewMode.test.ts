@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useViewMode } from '../useViewMode';
-import { ViewMode } from '../../constants';
+import { ViewMode } from '@/lib/constants';
 
 describe('useViewMode', () => {
   it('initializes with list view mode', () => {

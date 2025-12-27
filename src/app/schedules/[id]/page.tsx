@@ -10,19 +10,20 @@ import {
   Typography,
   ToggleButtonGroup,
   ToggleButton,
+  Tooltip,
 } from '@mui/material';
 import { ArrowBack, ViewList, CalendarMonth } from '@mui/icons-material';
 import { useCallback, useMemo } from 'react';
-import { Header, Footer, Loading, ErrorDisplay } from '@/components/common';
+import { Header, Footer } from '@/components/common';
 import MonthNavigation from '@/components/schedules/MonthNavigation';
 import CalendarView from '@/components/schedules/CalendarView';
 import { transformToCalendarEvents } from '@/lib/utils/calendarUtils';
+import { ViewMode } from '@/lib/constants';
 import { sanitizeUrl } from '@/lib/utils/urlSanitization';
 import ScheduleHeader from './components/ScheduleHeader';
 import ScheduleActions from './components/ScheduleActions';
 import OnCallSchedule from './components/OnCallSchedule';
 import { useScheduleData, useDateRangeNavigation, useViewMode } from './hooks';
-import { ViewMode } from './constants';
 import * as styles from './page.styles';
 
 export default function ScheduleDetailPage() {
@@ -132,14 +133,16 @@ export default function ScheduleDetailPage() {
               aria-label="view mode"
               size="small"
             >
-              <ToggleButton value={ViewMode.List} aria-label="list view">
-                <ViewList sx={styles.toggleButtonIcon} />
-                List View
-              </ToggleButton>
-              <ToggleButton value={ViewMode.Calendar} aria-label="calendar view">
-                <CalendarMonth sx={styles.toggleButtonIcon} />
-                Calendar View
-              </ToggleButton>
+              <Tooltip title="List View" arrow>
+                <ToggleButton value={ViewMode.List} aria-label="list view">
+                  <ViewList />
+                </ToggleButton>
+              </Tooltip>
+              <Tooltip title="Calendar View" arrow>
+                <ToggleButton value={ViewMode.Calendar} aria-label="calendar view">
+                  <CalendarMonth />
+                </ToggleButton>
+              </Tooltip>
             </ToggleButtonGroup>
             <MonthNavigation
               currentMonth={currentMonthDisplay}

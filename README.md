@@ -256,6 +256,3 @@ If you encounter any issues or have questions:
 ---
 
 **Made with ❤️ for engineering teams who deserve fair compensation for their on-call dedication.**
-
-**Version**: 0.1.0  
-**Last Updated**: November 6, 2025
