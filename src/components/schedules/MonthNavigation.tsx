@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 import { ArrowBack, CalendarMonth, ArrowForward } from '@mui/icons-material';
+import { NavigationContainer, MonthDisplay } from './MonthNavigation.styles';
 
 export interface MonthNavigationProps {
   /** Current month display text (e.g., "January 2025") */
@@ -21,34 +22,26 @@ export interface MonthNavigationProps {
 const MonthNavigation: React.FC<MonthNavigationProps> = React.memo(
   ({ currentMonth, isLoading = false, onPreviousMonth, onNextMonth }) => {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
+      <NavigationContainer>
         <Button
           startIcon={<ArrowBack />}
           onClick={onPreviousMonth}
           variant="outlined"
           disabled={isLoading}
-        >
-          Previous Month
-        </Button>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          aria-label="Previous month"
+        ></Button>
+        <MonthDisplay>
           <CalendarMonth />
           <Typography variant="h5">{currentMonth}</Typography>
-        </Box>
+        </MonthDisplay>
         <Button
           endIcon={<ArrowForward />}
           onClick={onNextMonth}
           variant="outlined"
           disabled={isLoading}
-        >
-          Next Month
-        </Button>
-      </Box>
+          aria-label="Next month"
+        ></Button>
+      </NavigationContainer>
     );
   }
 );

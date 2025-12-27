@@ -14,9 +14,11 @@ export const pageContainer: SxProps<Theme> = {
 };
 
 export const contentContainer: SxProps<Theme> = {
-  maxWidth: LAYOUT.MAX_WIDTH_DESKTOP,
+  width: LAYOUT.MAX_WIDTH_DESKTOP,
+  maxWidth: '100%',
   mx: 'auto',
   py: LAYOUT.PADDING_VERTICAL,
+  px: 2,
   flex: 1,
 };
 
@@ -66,75 +68,6 @@ export const toggleButtonIcon: SxProps<Theme> = {
 export const scheduleDisplayContainer: SxProps<Theme> = {
   p: LAYOUT.PADDING_CARD,
   mb: LAYOUT.MARGIN_BOTTOM_SCHEDULE,
-};
-
-// OnCallSchedule component styles
-export const loadingContainer: SxProps<Theme> = {
-  position: 'relative',
-  minHeight: LAYOUT.MIN_HEIGHT_LOADING,
-};
-
-export const scheduleTitle: SxProps<Theme> = {
-  mb: 3,
-};
-
-export const userCardHeader: SxProps<Theme> = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'flex-start',
-  mb: 2,
-  flexWrap: 'wrap',
-  gap: 2,
-};
-
-export const userInfoContainer: SxProps<Theme> = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 1,
-};
-
-export const chipsContainer: SxProps<Theme> = {
-  display: 'flex',
-  gap: 1,
-  flexWrap: 'wrap',
-};
-
-export const dividerStyle: SxProps<Theme> = {
-  my: 2,
-};
-
-export const periodEntryBox: SxProps<Theme> = {
-  p: 1.5,
-  bgcolor: 'action.hover',
-  borderRadius: 1,
-};
-
-export const periodEntryInner: SxProps<Theme> = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'flex-start',
-  flexWrap: 'wrap',
-  gap: 1,
-};
-
-export const periodDateContainer: SxProps<Theme> = {
-  flex: 1,
-  minWidth: '200px',
-};
-
-export const periodChipsContainer: SxProps<Theme> = {
-  display: 'flex',
-  gap: 0.5,
-  flexWrap: 'wrap',
-  alignItems: 'center',
-};
-
-export const walletIconStyle: SxProps<Theme> = {
-  fontSize: '16px !important',
-};
-
-export const compensationChipStyle: SxProps<Theme> = {
-  fontWeight: 'medium',
 };
 
 // Actions styles

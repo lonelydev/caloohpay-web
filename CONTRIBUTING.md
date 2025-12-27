@@ -484,10 +484,12 @@ export function calculatePayment(schedule: Schedule, timezone: string): number {
 
 When making changes that affect:
 
-- **User behavior**: Update README.md
+- **User behavior**: Update README.md and CHANGELOG.md (see issue #25)
 - **API endpoints**: Update docs/api.md
 - **Architecture**: Update docs/architecture.md
 - **Deployment**: Update docs/deployment.md
+
+Note: Keep documentation timeless - avoid "Recent Updates" sections. Use CHANGELOG.md for version history.
 
 ## 🐛 Reporting Bugs
 

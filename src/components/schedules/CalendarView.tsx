@@ -8,6 +8,7 @@
 
 import { useCallback, useState, useMemo, memo } from 'react';
 import { useTheme } from '@mui/material/styles';
+import * as styles from './CalendarView.styles';
 import {
   Box,
   Dialog,
@@ -77,14 +78,14 @@ const EventDetailDialog = memo<{
       aria-labelledby="event-detail-dialog-title"
     >
       <DialogTitle id="event-detail-dialog-title">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={styles.dialogHeaderBox}>
           <Person color="primary" />
           <Typography variant="h6" component="span">
             {user.name || user.summary}
           </Typography>
         </Box>
         {user.email && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={styles.dialogEmailText}>
             {user.email}
           </Typography>
         )}
@@ -96,15 +97,10 @@ const EventDetailDialog = memo<{
             <Typography variant="caption" color="text.secondary" gutterBottom display="block">
               On-Call Period
             </Typography>
-            <Box sx={{ pl: 1, borderLeft: 3, borderColor: 'primary.main' }}>
+            <Box sx={styles.timePeriodBorder}>
               <Typography variant="body1" fontWeight="medium">
-                {startDateTime.toFormat('EEE, MMM d, yyyy')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {startDateTime.toFormat('HH:mm ZZZ')} → {endDateTime.toFormat('HH:mm ZZZ')}
-              </Typography>
-              <Typography variant="body1" fontWeight="medium" sx={{ mt: 1 }}>
-                {endDateTime.toFormat('EEE, MMM d, yyyy')}
+                {startDateTime.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')} →{' '}
+                {endDateTime.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}
               </Typography>
             </Box>
           </Box>
@@ -116,7 +112,7 @@ const EventDetailDialog = memo<{
             <Typography variant="caption" color="text.secondary" gutterBottom display="block">
               Duration & Coverage
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+            <Box sx={styles.chipsContainer}>
               <Chip
                 icon={<AccessTime />}
                 label={`${duration.toFixed(1)} hours total`}
@@ -145,17 +141,10 @@ const EventDetailDialog = memo<{
           <Divider />
 
           {/* Compensation Breakdown */}
-          <Box
-            sx={{
-              p: 2,
-              bgcolor: 'success.light',
-              borderRadius: 1,
-              color: 'success.contrastText',
-            }}
-          >
+          <Box sx={styles.compensationBox}>
             <Typography
               variant="caption"
-              sx={{ opacity: 0.8 }}
+              sx={styles.compensationTitle}
               display="block"
               gutterBottom
               fontWeight="bold"
@@ -165,9 +154,7 @@ const EventDetailDialog = memo<{
 
             <Stack spacing={1}>
               {weekdayDays > 0 && (
-                <Box
-                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
+                <Box sx={styles.paymentRow}>
                   <Typography variant="body2">
                     {weekdayDays} weekday{weekdayDays > 1 ? 's' : ''} ×{' '}
                     {PAYMENT_RATES.CURRENCY_SYMBOL}
@@ -180,9 +167,7 @@ const EventDetailDialog = memo<{
                 </Box>
               )}
               {weekendDays > 0 && (
-                <Box
-                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
+                <Box sx={styles.paymentRow}>
                   <Typography variant="body2">
                     {weekendDays} weekend{weekendDays > 1 ? 's' : ''} ×{' '}
                     {PAYMENT_RATES.CURRENCY_SYMBOL}
@@ -195,10 +180,10 @@ const EventDetailDialog = memo<{
                 </Box>
               )}
 
-              <Divider sx={{ my: 1, bgcolor: 'success.contrastText', opacity: 0.3 }} />
+              <Divider sx={styles.compensationDivider} />
 
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box sx={styles.totalRow}>
+                <Typography variant="h6" sx={styles.totalLabel}>
                   <Wallet /> Total Compensation
                 </Typography>
                 <Typography variant="h6" fontWeight="bold">
@@ -252,53 +237,7 @@ export default function CalendarView({ events, timezone, initialDate }: Calendar
   }, []);
 
   // Memoize calendar styling to prevent unnecessary re-renders
-  const calendarStyles = useMemo(
-    () => ({
-      '& .fc': {
-        '--fc-border-color': theme.palette.divider,
-        '--fc-button-bg-color': theme.palette.primary.main,
-        '--fc-button-border-color': theme.palette.primary.main,
-        '--fc-button-hover-bg-color': theme.palette.primary.dark,
-        '--fc-button-active-bg-color': theme.palette.primary.dark,
-        '--fc-today-bg-color': theme.palette.action.hover,
-        '--fc-neutral-bg-color': theme.palette.background.paper,
-        '--fc-page-bg-color': theme.palette.background.default,
-      },
-      '& .fc-theme-standard td, & .fc-theme-standard th': {
-        borderColor: theme.palette.divider,
-      },
-      '& .fc-event': {
-        backgroundColor: theme.palette.primary.main,
-        borderColor: theme.palette.primary.dark,
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          backgroundColor: theme.palette.primary.dark,
-          transform: 'scale(1.02)',
-        },
-      },
-      '& .fc-daygrid-event': {
-        padding: '2px 4px',
-        fontSize: '0.85rem',
-      },
-      '& .fc-button': {
-        textTransform: 'none',
-        fontWeight: 500,
-      },
-      '& .fc-toolbar-title': {
-        fontSize: '1.5rem',
-        fontWeight: 600,
-        color: theme.palette.text.primary,
-        padding: '0 20px',
-      },
-      '& .fc-toolbar-chunk': {
-        display: 'flex',
-        gap: '12px',
-        alignItems: 'center',
-      },
-    }),
-    [theme]
-  );
+  const calendarStyles = useMemo(() => styles.getCalendarStyles(theme), [theme]);
 
   return (
     <>

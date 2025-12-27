@@ -10,12 +10,18 @@ test.describe('Authentication Flow', () => {
     await page.goto('/');
   });
 
-  test('should display login page', async ({ page }) => {
+  test('should display login page with OAuth tab by default', async ({ page }) => {
     await page.goto('/login');
 
     // Check for main elements
     await expect(page.getByRole('heading', { name: /CalOohPay Web/i })).toBeVisible();
     await expect(page.getByText(/Sign in with your PagerDuty account/i)).toBeVisible();
+
+    // Check tabs are present
+    await expect(page.getByRole('tab', { name: /OAuth Login/i })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /API Token/i })).toBeVisible();
+
+    // OAuth tab should be selected by default
     await expect(page.getByRole('button', { name: /Sign in with PagerDuty/i })).toBeVisible();
   });
 
@@ -85,10 +91,57 @@ test.describe('Authentication Flow', () => {
   test('should display help text on login page', async ({ page }) => {
     await page.goto('/login');
 
-    // Check for required permissions section
+    // Check for required permissions section in OAuth tab
     await expect(page.getByText(/Required Permissions/i)).toBeVisible();
     await expect(page.getByText(/Read access to schedules/i)).toBeVisible();
     await expect(page.getByText(/Read access to user information/i)).toBeVisible();
+  });
+
+  test('should switch between OAuth and API Token tabs', async ({ page }) => {
+    await page.goto('/login');
+
+    // Initially on OAuth tab
+    await expect(page.getByRole('button', { name: /Sign in with PagerDuty/i })).toBeVisible();
+
+    // Switch to API Token tab
+    await page.getByRole('tab', { name: /API Token/i }).click();
+
+    // Should show token input and button
+    await expect(page.getByLabel(/PagerDuty User API Token/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /Sign in with API Token/i })).toBeVisible();
+    await expect(page.getByText(/How to get your API Token/i)).toBeVisible();
+
+    // Switch back to OAuth tab
+    await page.getByRole('tab', { name: /OAuth Login/i }).click();
+
+    // Should show OAuth button again
+    await expect(page.getByRole('button', { name: /Sign in with PagerDuty/i })).toBeVisible();
+  });
+
+  test('should validate empty API token', async ({ page }) => {
+    await page.goto('/login');
+
+    // Switch to API Token tab
+    await page.getByRole('tab', { name: /API Token/i }).click();
+
+    // Button should be disabled when token is empty
+    const signInButton = page.getByRole('button', { name: /Sign in with API Token/i });
+    await expect(signInButton).toBeDisabled();
+  });
+
+  test('should enable API token button when token is entered', async ({ page }) => {
+    await page.goto('/login');
+
+    // Switch to API Token tab
+    await page.getByRole('tab', { name: /API Token/i }).click();
+
+    // Enter a token
+    const tokenInput = page.getByLabel(/PagerDuty User API Token/i);
+    await tokenInput.fill('test-token-123');
+
+    // Button should be enabled
+    const signInButton = page.getByRole('button', { name: /Sign in with API Token/i });
+    await expect(signInButton).toBeEnabled();
   });
 
   test('should have link to documentation', async ({ page }) => {

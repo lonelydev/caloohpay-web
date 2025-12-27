@@ -237,8 +237,8 @@ test.describe('Calendar View E2E Tests', () => {
     // Get current month title
     const titleBefore = await page.locator('.fc-toolbar-title').textContent();
 
-    // Use page-level next month button (not FullCalendar's built-in buttons which are now removed)
-    const nextButton = page.getByRole('button', { name: /next month/i });
+    // Use page-level next month button (icon-only button with aria-label)
+    const nextButton = page.getByRole('button', { name: 'Next month' });
     await nextButton.click();
 
     // Month should change
@@ -339,8 +339,8 @@ test.describe('Calendar View E2E Tests', () => {
     // But the month title should still be visible
     await expect(page.locator('.fc-toolbar-title')).toBeVisible();
 
-    // And page-level navigation should be present
-    await expect(page.getByRole('button', { name: /previous month/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /next month/i })).toBeVisible();
+    // And page-level navigation should be present (icon-only buttons with aria-labels)
+    await expect(page.getByRole('button', { name: 'Previous month' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Next month' })).toBeVisible();
   });
 });
