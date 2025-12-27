@@ -7,47 +7,62 @@ export default async function globalSetup(config: FullConfig) {
     return;
   }
 
+  // Safer baseURL extraction with validation
+  const firstProject = config.projects?.[0];
+  if (!firstProject) {
+    throw new Error('No Playwright projects configured');
+  }
+
   const baseURL =
-    (config.projects[0] as { use?: { baseURL?: string } })?.use?.baseURL || 'http://localhost:3000';
+    (firstProject as { use?: { baseURL?: string } })?.use?.baseURL || 'http://localhost:3000';
   const stateFile = 'tests/e2e/.auth/state.json';
 
   // Ensure .auth directory exists
   await mkdir(dirname(stateFile), { recursive: true });
 
   const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
 
-  // Hit the session seed endpoint to set the NextAuth session cookie
-  const response = await page.goto(baseURL + '/api/test/session');
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
 
-  if (!response) {
-    throw new Error('Failed to reach test session endpoint: no response received.');
-  }
+    // Hit the session seed endpoint to set the NextAuth session cookie
+    const response = await page.goto(baseURL + '/api/test/session');
 
-  if (!response.ok()) {
-    throw new Error(
-      `Failed to seed test session: ${response.status()} ${response.statusText()} for ${response.url()}`
+    if (!response) {
+      throw new Error(
+        'Failed to reach test session endpoint: no response received.\n' +
+          'Ensure NEXTAUTH_SECRET is set and the dev server is running.'
+      );
+    }
+
+    if (!response.ok()) {
+      throw new Error(
+        `Failed to seed test session: ${response.status()} ${response.statusText()}\n` +
+          `URL: ${response.url()}\n` +
+          'Check that ENABLE_TEST_SESSION_SEED=true and NODE_ENV is not production.'
+      );
+    }
+
+    // Verify that a NextAuth session cookie was set
+    const cookies = await context.cookies();
+    const hasSessionCookie = cookies.some(
+      (cookie) =>
+        cookie.name === 'next-auth.session-token' ||
+        cookie.name === '__Secure-next-auth.session-token'
     );
+
+    if (!hasSessionCookie) {
+      throw new Error(
+        'Failed to seed test session: NextAuth session cookie not found after /api/test/session.\n' +
+          `Received cookies: ${cookies.map((c) => c.name).join(', ')}`
+      );
+    }
+
+    // Persist storage state for all tests
+    await context.storageState({ path: stateFile });
+  } finally {
+    // Always close browser, even on error
+    await browser.close();
   }
-
-  // Verify that a NextAuth session cookie was actually set before saving storage state
-  const { hostname } = new URL(baseURL);
-  const cookies = await context.cookies();
-  const hasSessionCookie = cookies.some(
-    (cookie) =>
-      (cookie.name === 'next-auth.session-token' ||
-        cookie.name === '__Secure-next-auth.session-token') &&
-      (cookie.domain === hostname || cookie.domain?.endsWith(`.${hostname}`))
-  );
-
-  if (!hasSessionCookie) {
-    throw new Error(
-      'Failed to seed test session: NextAuth session cookie was not found after hitting /api/test/session.'
-    );
-  }
-  // Persist storage state for all tests
-  await context.storageState({ path: stateFile });
-
-  await browser.close();
 }
