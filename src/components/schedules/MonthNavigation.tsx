@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Typography } from '@mui/material';
+import { Button, Typography, Tooltip } from '@mui/material';
 import { ArrowBack, CalendarMonth, ArrowForward } from '@mui/icons-material';
 import { NavigationContainer, MonthDisplay } from './MonthNavigation.styles';
 
@@ -23,24 +23,28 @@ const MonthNavigation: React.FC<MonthNavigationProps> = React.memo(
   ({ currentMonth, isLoading = false, onPreviousMonth, onNextMonth }) => {
     return (
       <NavigationContainer>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={onPreviousMonth}
-          variant="outlined"
-          disabled={isLoading}
-          aria-label="Previous month"
-        ></Button>
+        <Tooltip title="Previous month" arrow>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={onPreviousMonth}
+            variant="outlined"
+            disabled={isLoading}
+            aria-label="Previous month"
+          ></Button>
+        </Tooltip>
         <MonthDisplay>
           <CalendarMonth />
           <Typography variant="h5">{currentMonth}</Typography>
         </MonthDisplay>
-        <Button
-          endIcon={<ArrowForward />}
-          onClick={onNextMonth}
-          variant="outlined"
-          disabled={isLoading}
-          aria-label="Next month"
-        ></Button>
+        <Tooltip title="Next month" arrow>
+          <Button
+            endIcon={<ArrowForward />}
+            onClick={onNextMonth}
+            variant="outlined"
+            disabled={isLoading}
+            aria-label="Next month"
+          ></Button>
+        </Tooltip>
       </NavigationContainer>
     );
   }
