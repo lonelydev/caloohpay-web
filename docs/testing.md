@@ -140,8 +140,7 @@ renderWithSession(<Header />);
 mockServerSession(makeSession({ accessToken: 'token_abc' }));
 const res = await GET(req);
 
-// Cleanup (automatically handled in jest.setup.ts)
-afterEach(() => clearSessionMocks());
+// Cleanup: handled automatically in jest.setup.ts (no manual afterEach needed)
 
 Notes:
 - Helpers are also re-exported from jest.setup.ts for convenience.
