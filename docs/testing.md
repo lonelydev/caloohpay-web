@@ -130,7 +130,7 @@ npm run test:e2e:report
 Centralize NextAuth mocking using helpers in `tests/utils/authMock.tsx`:
 
 ```typescript
-import { renderWithSession, makeSession, mockUseSession, mockServerSession, clearSessionMocks } from '@/tests/utils';
+import { renderWithSession, makeSession, mockUseSession, mockServerSession } from '@/tests/utils';
 
 // Client component test (useSession)
 mockUseSession(makeSession({ authMethod: 'api-token', accessToken: 'token_123' }));
@@ -144,11 +144,17 @@ mockUnauthenticatedSession();
 // or
 mockLoadingSession();
 
-// Cleanup: handled automatically in jest.setup.ts (no manual afterEach needed)
+// No-token edge cases (simulate missing accessToken)
+mockUseSessionWithoutToken();
+mockServerSession(makeSessionWithoutToken());
+
+// Cleanup: handled automatically in jest.setup.ts for tests using the standard Jest config.
 
 Notes:
 - Prefer alias imports: `@/tests/utils` for test helpers (lint-enforced).
 - Client tests avoid importing server-only `next-auth` by wrapping requires inside helpers.
+- In normal unit/integration tests you do NOT need to call `clearSessionMocks` in `afterEach`; the global hook in `jest.setup.ts` already does this (lint-enforced).
+- Only add a manual `afterEach(clearSessionMocks)` if you run tests with a custom Jest setup that does not load `jest.setup.ts`, or if you deliberately bypass the global auth mock helpers.
 ```
 
 Benefits:

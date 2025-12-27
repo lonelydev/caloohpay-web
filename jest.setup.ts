@@ -44,7 +44,7 @@ if (!global.Response) {
 // Note: Do not re-export test utilities from setup; import directly from '@/tests/utils'.
 
 // Ensure auth mocks are reset between tests
-import { clearSessionMocks } from '@/tests/utils/authMock';
+import { clearSessionMocks } from '@/tests/utils';
 
 afterEach(() => {
   clearSessionMocks();

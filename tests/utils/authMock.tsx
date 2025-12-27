@@ -27,6 +27,16 @@ export function makeSession(partial?: Partial<Session>): Session {
 }
 
 /**
+ * Create a Session object without an accessToken to test edge cases
+ */
+export function makeSessionWithoutToken(partial?: Partial<Session>): Session {
+  const session = makeSession(partial);
+  // Explicitly remove accessToken to simulate missing token scenarios
+  delete (session as any).accessToken;
+  return session;
+}
+
+/**
  * Render a component wrapped with NextAuth SessionProvider supplying the given session
  */
 export function renderWithSession(ui: React.ReactElement, session?: Session) {
@@ -52,6 +62,13 @@ export function mockUseSession(
   } else {
     jest.spyOn(mod, 'useSession').mockReturnValue({ data, status });
   }
+}
+
+/**
+ * Convenience: mock authenticated client state but without an accessToken
+ */
+export function mockUseSessionWithoutToken() {
+  mockUseSession(makeSessionWithoutToken(), 'authenticated');
 }
 
 /**
@@ -82,6 +99,19 @@ export function mockServerSession(session?: Session) {
 }
 
 /**
+ * Convenience: mock authenticated server/API state but without an accessToken
+ */
+export function mockServerSessionWithoutToken() {
+  const mod: any = require('next-auth');
+  const data = makeSessionWithoutToken();
+  if (mod.getServerSession && jest.isMockFunction(mod.getServerSession)) {
+    mod.getServerSession.mockResolvedValue(data);
+  } else {
+    jest.spyOn(mod, 'getServerSession').mockResolvedValue(data);
+  }
+}
+
+/**
  * Convenience: mock unauthenticated server/API state (session=null)
  */
 export function mockServerSessionUnauthenticated() {
@@ -104,7 +134,10 @@ export function clearSessionMocks() {
     // Wrap in try/catch so client-only tests don't fail on this require.
 
     serverMod = require('next-auth');
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Failed to require next-auth in clearSessionMocks:', error);
+    }
     serverMod = null;
   }
   if (reactMod.useSession && jest.isMockFunction(reactMod.useSession)) {

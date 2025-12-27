@@ -38,13 +38,18 @@ const eslintConfig = defineConfig([
                 './tests/utils/**',
                 'tests/utils/**'
               ],
-              message: 'Use alias @/tests/utils for test helpers',
+              message: 'Use the barrel export @/tests/utils to maintain consistent import patterns',
             },
           ],
           paths: [
             {
               name: '@/tests/utils/authMock',
-              message: 'Import from @/tests/utils (barrel) instead of specific file',
+              message: 'Use the barrel export @/tests/utils (not @/tests/utils/authMock) to keep imports consistent',
+            },
+            {
+              name: '@/tests/utils',
+              importNames: ['clearSessionMocks'],
+              message: 'Global cleanup runs in jest.setup.ts; do not import clearSessionMocks in tests',
             },
           ],
         },
