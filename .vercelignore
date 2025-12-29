@@ -1,0 +1,45 @@
+# Test files
+tests/
+e2e/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/__tests__/
+test-results/
+playwright-report/
+coverage/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Development files
+.vscode/
+.idea/
+.husky/
+.git/
+
+# Config files not needed in production
+jest.config.ts
+jest.setup.ts
+playwright.config.ts
+commitlint.config.js
+.eslintrc.js
+.prettierrc
+
+# Environment files (set via Vercel dashboard)
+.env
+.env.local
+.env*.local
+.env.example
+
+# Build artifacts
+.next/
+out/
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*

@@ -206,9 +206,31 @@ npm run test:coverage # Run tests with coverage
 
 ## 🚀 Deployment
 
-This application is designed to be deployed on AWS Amplify with automatic CI/CD from GitHub.
+### Vercel (Recommended - Free Tier)
 
-See the [Deployment Guide](./docs/deployment.md) for detailed instructions.
+Deploy to Vercel for **$0/month** hosting:
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy
+vercel
+```
+
+**Features**:
+
+- ✅ Free tier: 100GB bandwidth, unlimited requests
+- ✅ Built-in DDoS protection
+- ✅ Automatic HTTPS
+- ✅ Global CDN
+- ✅ Zero configuration for Next.js
+
+📖 **Complete Guide**: [docs/deployment/vercel.md](./docs/deployment/vercel.md)
+
+### Alternative: AWS Amplify
+
+See the [AWS Deployment Guide](./docs/deployment.md) for instructions.
 
 ## 🤝 Contributing
 
