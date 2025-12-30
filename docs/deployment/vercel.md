@@ -91,8 +91,8 @@ NEXT_PUBLIC_ENABLE_DARK_MODE=true
 NEXT_PUBLIC_ENABLE_CSV_EXPORT=true
 NEXT_PUBLIC_ENABLE_ANALYTICS=false
 
-# API Configuration
-API_TIMEOUT=30000
+# API Configuration (timeout in milliseconds)
+NEXT_PUBLIC_API_TIMEOUT=30000
 ```
 
 ### Generating NEXTAUTH_SECRET
@@ -339,7 +339,7 @@ openssl rand -base64 32
 **Slow API responses**:
 
 - Check PagerDuty API rate limits (960 req/min)
-- Verify API_TIMEOUT is set (default: 30000ms)
+- Increase `NEXT_PUBLIC_API_TIMEOUT` if requests timeout (default: 30000ms)
 - Use SWR caching to reduce API calls
 
 ## Rollback

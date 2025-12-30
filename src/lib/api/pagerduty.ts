@@ -9,6 +9,9 @@ export class PagerDutyClient {
   private client: AxiosInstance;
 
   constructor(apiToken: string) {
+    // Use environment variable for timeout, default to 30 seconds
+    const timeout = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10) || 30000;
+
     this.client = axios.create({
       baseURL: 'https://api.pagerduty.com',
       headers: {
@@ -16,7 +19,7 @@ export class PagerDutyClient {
         Authorization: `Token token=${apiToken}`,
         'Content-Type': 'application/json',
       },
-      timeout: 30000,
+      timeout,
     });
   }
 

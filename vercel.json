@@ -14,7 +14,7 @@
     "NEXT_PUBLIC_ENABLE_DARK_MODE": "true",
     "NEXT_PUBLIC_ENABLE_CSV_EXPORT": "true",
     "NEXT_PUBLIC_ENABLE_ANALYTICS": "false",
-    "API_TIMEOUT": "30000"
+    "NEXT_PUBLIC_API_TIMEOUT": "30000"
   },
   "headers": [
     {
