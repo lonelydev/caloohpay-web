@@ -33,7 +33,11 @@ This guide walks you through deploying CalOohPay Web to Vercel's free tier, whic
    - Select your `caloohpay-web` repository
    - Click "Import"
 
-3. **Configure environment variables** (see [Environment Variables](#environment-variables) section below)
+3. **Configure environment variables** (IMPORTANT - Do this before deploying):
+   - After clicking Import, you'll see the configuration screen
+   - Click "Environment Variables" section
+   - Add each required variable (see [Environment Variables](#environment-variables) section below)
+   - ⚠️ **Must add at minimum**: `NEXTAUTH_SECRET` and `NEXTAUTH_URL`
 
 4. **Deploy**:
    - Click "Deploy"
