@@ -10,6 +10,7 @@
     "PAGERDUTY_CLIENT_SECRET": "@pagerduty_client_secret",
     "NEXTAUTH_URL": "@nextauth_url",
     "NEXTAUTH_SECRET": "@nextauth_secret",
+    "NEXT_PUBLIC_APP_URL": "@next_public_app_url",
     "NEXT_PUBLIC_APP_NAME": "CalOohPay Web",
     "NEXT_PUBLIC_ENABLE_DARK_MODE": "true",
     "NEXT_PUBLIC_ENABLE_CSV_EXPORT": "true",
