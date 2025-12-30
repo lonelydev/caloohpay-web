@@ -21,22 +21,35 @@ const PagerDutyProvider: OAuthConfig<{
   type: 'oauth' as const,
   version: '2.0',
   authorization: {
-    url: 'https://app.pagerduty.com/oauth/authorize',
+    url: 'https://app.pagerduty.com/global/oauth/authorize',
     params: {
-      scope: 'read write', // Required scopes for schedule access
+      scope: 'read openid', // Add openid scope for OIDC
       response_type: 'code',
     },
   },
-  token: 'https://app.pagerduty.com/oauth/token',
-  userinfo: 'https://api.pagerduty.com/users/me',
+  token: 'https://app.pagerduty.com/global/oauth/token',
+  userinfo: 'https://app.pagerduty.com/global/oauth/userinfo',
+  issuer: 'https://app.pagerduty.com/global/oauth/anonymous',
+  jwks_endpoint: 'https://app.pagerduty.com/global/oauth/anonymous/jwks',
+  idToken: true,
+  checks: ['state'],
   clientId: process.env.NEXT_PUBLIC_PAGERDUTY_CLIENT_ID,
   clientSecret: process.env.PAGERDUTY_CLIENT_SECRET,
-  profile(profile: { user: { id: string; name: string; email: string; avatar_url: string } }) {
+  async profile(profile: { user_id: string }, tokens: { access_token?: string }) {
+    // PagerDuty OIDC returns user_id directly in the profile
+    // We need to fetch full user details from the REST API
+    const response = await fetch(`https://api.pagerduty.com/users/${profile.user_id}`, {
+      headers: {
+        Authorization: `Bearer ${tokens.access_token}`,
+        Accept: 'application/vnd.pagerduty+json;version=2',
+      },
+    });
+    const data = await response.json();
     return {
-      id: profile.user.id,
-      name: profile.user.name,
-      email: profile.user.email,
-      image: profile.user.avatar_url,
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      image: data.user.avatar_url,
     };
   },
 };
@@ -191,7 +204,7 @@ export const authOptions: AuthOptions = {
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    const url = 'https://app.pagerduty.com/oauth/token';
+    const url = 'https://identity.pagerduty.com/oauth/token';
 
     const response = await fetch(url, {
       method: 'POST',

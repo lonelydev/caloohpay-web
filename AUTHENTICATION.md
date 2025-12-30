@@ -100,10 +100,11 @@ sequenceDiagram
 4. **Authorization Code Exchange**
    - PagerDuty redirects back with authorization code
    - NextAuth callback handler receives the code
-   - Backend exchanges code for tokens via POST to `https://app.pagerduty.com/oauth/token`
+   - Backend exchanges code for tokens via POST to `https://app.pagerduty.com/global/oauth/token`
 
 5. **User Profile Fetch**
-   - NextAuth fetches user profile from `https://api.pagerduty.com/users/me`
+   - NextAuth fetches user profile via OIDC userinfo endpoint
+   - Then calls `https://api.pagerduty.com/users/{user_id}` for full details
    - Extracts user ID, name, email, and avatar
 
 6. **JWT Creation**
@@ -341,7 +342,7 @@ Token refresh happens automatically in the JWT callback:
 ```typescript
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    const response = await fetch('https://app.pagerduty.com/oauth/token', {
+    const response = await fetch('https://identity.pagerduty.com/oauth/token', {
       method: 'POST',
       body: new URLSearchParams({
         client_id: process.env.NEXT_PUBLIC_PAGERDUTY_CLIENT_ID!,
