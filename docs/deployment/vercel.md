@@ -228,9 +228,11 @@ Every pull request gets its own preview URL:
 
 The app includes an automated health check at `/api/health`:
 
-- ✅ Runs every 5 minutes via Vercel Cron
+- ✅ Runs hourly via Vercel Cron (on the hour)
 - ✅ Returns 200 OK when healthy, 503 when unhealthy
 - ✅ Includes uptime, environment, and system status
+
+⚠️ **Note**: Vercel Hobby (free) tier allows 1 cron job with max hourly frequency. Upgrade to Pro for more frequent checks.
 
 **Test locally** (with `npm run dev` running):
 
