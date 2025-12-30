@@ -342,7 +342,7 @@ Token refresh happens automatically in the JWT callback:
 ```typescript
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    const response = await fetch('https://identity.pagerduty.com/oauth/token', {
+    const response = await fetch('https://app.pagerduty.com/global/oauth/token', {
       method: 'POST',
       body: new URLSearchParams({
         client_id: process.env.NEXT_PUBLIC_PAGERDUTY_CLIENT_ID!,

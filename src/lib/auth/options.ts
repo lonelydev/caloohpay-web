@@ -24,7 +24,7 @@ const PagerDutyProvider: OAuthConfig<{
   authorization: {
     url: `${PAGERDUTY_URLS.OAUTH_BASE}/authorize`,
     params: {
-      scope: 'read openid', // Add openid scope for OIDC
+      scope: 'read openid', // Changed from 'read write' to 'read openid' for OIDC - write scope not needed as app only reads data
       response_type: 'code',
     },
   },
@@ -205,7 +205,7 @@ export const authOptions: AuthOptions = {
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    const url = `${PAGERDUTY_URLS.IDENTITY_BASE}/token`;
+    const url = `${PAGERDUTY_URLS.OAUTH_BASE}/token`;
 
     const response = await fetch(url, {
       method: 'POST',
