@@ -41,7 +41,7 @@ A modern web application that automates the calculation of out-of-hours (OOH) on
 - **Testing**: [Jest](https://jestjs.io/), [React Testing Library](https://testing-library.com/), [Playwright](https://playwright.dev/)
 - **Code Quality**: [ESLint](https://eslint.org/), [Prettier](https://prettier.io/)
 - **Git Hooks**: [Husky](https://typicode.github.io/husky/)
-- **Deployment**: [AWS Amplify](https://aws.amazon.com/amplify/)
+- **Deployment**: [Vercel](https://vercel.com/)
 
 ## 🚀 Quick Start
 
@@ -206,9 +206,27 @@ npm run test:coverage # Run tests with coverage
 
 ## 🚀 Deployment
 
-This application is designed to be deployed on AWS Amplify with automatic CI/CD from GitHub.
+### Vercel (Recommended - Free Tier)
 
-See the [Deployment Guide](./docs/deployment.md) for detailed instructions.
+Deploy to Vercel for **$0/month** hosting:
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy
+vercel
+```
+
+**Features**:
+
+- ✅ Free tier: 100GB bandwidth, unlimited requests
+- ✅ Built-in DDoS protection
+- ✅ Automatic HTTPS
+- ✅ Global CDN
+- ✅ Zero configuration for Next.js
+
+📖 **Complete Guide**: [docs/deployment/vercel.md](./docs/deployment/vercel.md)
 
 ## 🤝 Contributing
 
