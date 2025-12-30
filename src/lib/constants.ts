@@ -75,6 +75,15 @@ export const API_ENDPOINTS = {
 } as const;
 
 /**
+ * PagerDuty API Base URLs
+ */
+export const PAGERDUTY_URLS = {
+  OAUTH_BASE: 'https://app.pagerduty.com/global/oauth',
+  API_BASE: 'https://api.pagerduty.com',
+  IDENTITY_BASE: 'https://identity.pagerduty.com/oauth',
+} as const;
+
+/**
  * Route paths
  */
 export const ROUTES = {

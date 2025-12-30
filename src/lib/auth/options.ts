@@ -2,6 +2,7 @@ import { AuthOptions, DefaultUser } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
 import { OAuthConfig } from 'next-auth/providers/oauth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { PAGERDUTY_URLS } from '@/lib/constants';
 
 declare module 'next-auth' {
   interface User extends DefaultUser {
@@ -21,16 +22,16 @@ const PagerDutyProvider: OAuthConfig<{
   type: 'oauth' as const,
   version: '2.0',
   authorization: {
-    url: 'https://app.pagerduty.com/global/oauth/authorize',
+    url: `${PAGERDUTY_URLS.OAUTH_BASE}/authorize`,
     params: {
       scope: 'read openid', // Add openid scope for OIDC
       response_type: 'code',
     },
   },
-  token: 'https://app.pagerduty.com/global/oauth/token',
-  userinfo: 'https://app.pagerduty.com/global/oauth/userinfo',
-  issuer: 'https://app.pagerduty.com/global/oauth/anonymous',
-  jwks_endpoint: 'https://app.pagerduty.com/global/oauth/anonymous/jwks',
+  token: `${PAGERDUTY_URLS.OAUTH_BASE}/token`,
+  userinfo: `${PAGERDUTY_URLS.OAUTH_BASE}/userinfo`,
+  issuer: `${PAGERDUTY_URLS.OAUTH_BASE}/anonymous`,
+  jwks_endpoint: `${PAGERDUTY_URLS.OAUTH_BASE}/anonymous/jwks`,
   idToken: true,
   checks: ['state'],
   clientId: process.env.NEXT_PUBLIC_PAGERDUTY_CLIENT_ID,
@@ -38,7 +39,7 @@ const PagerDutyProvider: OAuthConfig<{
   async profile(profile: { user_id: string }, tokens: { access_token?: string }) {
     // PagerDuty OIDC returns user_id directly in the profile
     // We need to fetch full user details from the REST API
-    const response = await fetch(`https://api.pagerduty.com/users/${profile.user_id}`, {
+    const response = await fetch(`${PAGERDUTY_URLS.API_BASE}/users/${profile.user_id}`, {
       headers: {
         Authorization: `Bearer ${tokens.access_token}`,
         Accept: 'application/vnd.pagerduty+json;version=2',
@@ -75,7 +76,7 @@ const PagerDutyAPITokenProvider = CredentialsProvider({
 
     try {
       // Verify the API token by fetching the user's profile
-      const response = await fetch('https://api.pagerduty.com/users/me', {
+      const response = await fetch(`${PAGERDUTY_URLS.API_BASE}/users/me`, {
         headers: {
           Authorization: `Token token=${credentials.apiToken}`,
           Accept: 'application/vnd.pagerduty+json;version=2',
@@ -204,7 +205,7 @@ export const authOptions: AuthOptions = {
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
-    const url = 'https://identity.pagerduty.com/oauth/token';
+    const url = `${PAGERDUTY_URLS.IDENTITY_BASE}/token`;
 
     const response = await fetch(url, {
       method: 'POST',
