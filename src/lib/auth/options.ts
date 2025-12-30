@@ -15,7 +15,9 @@ declare module 'next-auth' {
  * Documentation: https://developer.pagerduty.com/docs/app-integration-development/oauth-2-functionality/
  */
 const PagerDutyProvider: OAuthConfig<{
-  user: { id: string; name: string; email: string; avatar_url: string };
+  user_id: string;
+  account_id: string;
+  subdomain: string;
 }> = {
   id: 'pagerduty',
   name: 'PagerDuty',
