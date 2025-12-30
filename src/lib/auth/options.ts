@@ -37,21 +37,46 @@ const PagerDutyProvider: OAuthConfig<{
   clientId: process.env.NEXT_PUBLIC_PAGERDUTY_CLIENT_ID,
   clientSecret: process.env.PAGERDUTY_CLIENT_SECRET,
   async profile(profile: { user_id: string }, tokens: { access_token?: string }) {
-    // PagerDuty OIDC returns user_id directly in the profile
-    // We need to fetch full user details from the REST API
-    const response = await fetch(`${PAGERDUTY_URLS.API_BASE}/users/${profile.user_id}`, {
-      headers: {
-        Authorization: `Bearer ${tokens.access_token}`,
-        Accept: 'application/vnd.pagerduty+json;version=2',
-      },
-    });
-    const data = await response.json();
-    return {
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      image: data.user.avatar_url,
-    };
+    try {
+      // PagerDuty OIDC returns user_id directly in the profile
+      // We need to fetch full user details from the REST API
+      if (!profile?.user_id) {
+        throw new Error('Missing user_id in OIDC profile');
+      }
+
+      if (!tokens?.access_token) {
+        throw new Error('Missing access_token for profile fetch');
+      }
+
+      const response = await fetch(`${PAGERDUTY_URLS.API_BASE}/users/${profile.user_id}`, {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`,
+          Accept: 'application/vnd.pagerduty+json;version=2',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user profile: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data?.user) {
+        throw new Error('Invalid user profile response from PagerDuty API');
+      }
+
+      return {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        image: data.user.avatar_url,
+      };
+    } catch (error) {
+      console.error('Error fetching PagerDuty user profile:', error);
+      throw new Error(
+        `Failed to retrieve user profile: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   },
 };
 
