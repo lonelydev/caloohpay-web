@@ -8,6 +8,7 @@
   "env": {
     "NEXT_PUBLIC_PAGERDUTY_CLIENT_ID": "@pagerduty_client_id",
     "PAGERDUTY_CLIENT_SECRET": "@pagerduty_client_secret",
+    "NEXTAUTH_URL": "@nextauth_url",
     "NEXTAUTH_SECRET": "@nextauth_secret",
     "NEXT_PUBLIC_APP_NAME": "CalOohPay Web",
     "NEXT_PUBLIC_ENABLE_DARK_MODE": "true",
@@ -45,5 +46,10 @@
       "permanent": true
     }
   ],
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/health",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

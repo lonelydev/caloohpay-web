@@ -72,14 +72,16 @@ Configure these in Vercel Dashboard → Project → Settings → Environment Var
 NEXT_PUBLIC_PAGERDUTY_CLIENT_ID=your_pagerduty_client_id
 PAGERDUTY_CLIENT_SECRET=your_pagerduty_client_secret
 
-# NextAuth (CRITICAL - Generate new secret!)
+# NextAuth (CRITICAL)
 NEXTAUTH_SECRET=<generate-with-openssl-rand-base64-32>
-NEXTAUTH_URL=https://your-project.vercel.app
+NEXTAUTH_URL=https://your-project.vercel.app  # Required for custom domains
 
 # App Configuration
 NEXT_PUBLIC_APP_URL=https://your-project.vercel.app
 NEXT_PUBLIC_APP_NAME=CalOohPay Web
 ```
+
+⚠️ **Note**: `NEXTAUTH_URL` auto-detects on Vercel, but set it explicitly when using a custom domain.
 
 ### Optional Variables (with defaults)
 
@@ -222,10 +224,50 @@ Every pull request gets its own preview URL:
 
 ## Monitoring & Alerts
 
+### Health Check Endpoint (Configured in vercel.json)
+
+The app includes an automated health check at `/api/health`:
+
+- ✅ Runs every 5 minutes via Vercel Cron
+- ✅ Returns 200 OK when healthy, 503 when unhealthy
+- ✅ Includes uptime, environment, and system status
+
+**Test locally** (with `npm run dev` running):
+
+```bash
+# GET request (JSON response)
+curl http://localhost:3000/api/health | jq .
+
+# HEAD request (lightweight)
+curl -I http://localhost:3000/api/health
+```
+
+**Test production**:
+
+```bash
+curl https://your-project.vercel.app/api/health
+```
+
+**Response**:
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-12-29T23:45:00.000Z",
+  "uptime": 3600,
+  "environment": "production",
+  "version": "0.1.0",
+  "checks": {
+    "server": "ok"
+  }
+}
+```
+
 ### Built-in Monitoring (Free)
 
 - Vercel Dashboard → Analytics
 - Real-time logs: Dashboard → Deployments → Select deployment → Runtime Logs
+- Cron job logs: Dashboard → Deployments → Cron tab
 
 ### Cost Alerts
 
@@ -233,12 +275,28 @@ Every pull request gets its own preview URL:
 2. Set bandwidth alert at 80GB (80% of free tier)
 3. Get email notification before hitting limit
 
-### Error Monitoring (Optional)
+⚠️ **Note**: Usage alerts must be configured in the Vercel Dashboard - they cannot be defined in vercel.json.
 
-Free tier integrations:
+### External Monitoring (Optional)
+
+**Free uptime monitors**:
+
+- [UptimeRobot](https://uptimerobot.com) (50 monitors free)
+- [Pingdom](https://www.pingdom.com) (Free tier available)
+- [Better Uptime](https://betteruptime.com) (10 monitors free)
+
+Configure to monitor: `https://your-project.vercel.app/api/health`
+
+**Free error tracking**:
 
 - [Sentry](https://sentry.io) (5K errors/month free)
 - [LogRocket](https://logrocket.com) (1K sessions/month free)
+
+To integrate Sentry, add to `vercel.json` env:
+
+```json
+"NEXT_PUBLIC_SENTRY_DSN": "@sentry_dsn"
+```
 
 ## Troubleshooting
 

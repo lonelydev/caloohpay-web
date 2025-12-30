@@ -41,7 +41,7 @@ A modern web application that automates the calculation of out-of-hours (OOH) on
 - **Testing**: [Jest](https://jestjs.io/), [React Testing Library](https://testing-library.com/), [Playwright](https://playwright.dev/)
 - **Code Quality**: [ESLint](https://eslint.org/), [Prettier](https://prettier.io/)
 - **Git Hooks**: [Husky](https://typicode.github.io/husky/)
-- **Deployment**: [AWS Amplify](https://aws.amazon.com/amplify/)
+- **Deployment**: [Vercel](https://vercel.com/)
 
 ## 🚀 Quick Start
 
@@ -227,10 +227,6 @@ vercel
 - ✅ Zero configuration for Next.js
 
 📖 **Complete Guide**: [docs/deployment/vercel.md](./docs/deployment/vercel.md)
-
-### Alternative: AWS Amplify
-
-See the [AWS Deployment Guide](./docs/deployment.md) for instructions.
 
 ## 🤝 Contributing
 
