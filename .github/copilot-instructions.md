@@ -300,15 +300,35 @@ When completing a task:
 
 ## Test-Driven Development (TDD) Approach
 
-**This project follows strict TDD practices to ensure testable, maintainable code.**
+**This project follows pragmatic TDD practices focused on user behavior and real-world scenarios.**
 
 ### Core TDD Principles
 
 1. **Test First**: Write tests BEFORE implementation
-2. **Pure Components**: Components receive data via props, emit changes via callbacks
-3. **Separated Concerns**: Logic, styling, and presentation are separate
-4. **Dependency Injection**: Mock dependencies for isolated testing
-5. **No Side Effects in Components**: Use hooks for side effects (fetching, routing, etc.)
+2. **User-Centric**: Test from the user's perspective, not implementation details
+3. **Pragmatic Coverage**: Focus on critical behaviors, not exhaustive edge cases
+4. **Pure Components**: Components receive data via props, emit changes via callbacks
+5. **Separated Concerns**: Logic, styling, and presentation are separate
+6. **Dependency Injection**: Mock at integration boundaries (API calls, external services)
+7. **No Side Effects in Components**: Use hooks for side effects (fetching, routing, etc.)
+
+### Pragmatic Testing Philosophy
+
+**DO Test:**
+
+- Core user workflows (login, form submission, navigation)
+- Critical business logic (payment calculations, rate persistence)
+- Accessibility fundamentals (labels, keyboard nav, heading hierarchy)
+- Integration points (store updates, localStorage, API calls)
+- Error states that users will encounter
+
+**DON'T Test:**
+
+- Implementation details (state variable names, function names)
+- Library internals (React Hook Form validation, MUI rendering)
+- Every possible edge case (focus on likely scenarios)
+- Redundant behaviors already tested by child components
+- Trivial rendering (if child component tests cover it, skip in parent)
 
 ### Component Structure Pattern
 
@@ -348,31 +368,29 @@ export const MyComponent = () => (
 
 ### Testing Patterns
 
-#### 1. **Unit Test Structure**
+#### 1. **Unit Test Structure - Behavior Grouping**
 
 ```typescript
-describe('Component', () => {
-  describe('rendering', () => {
-    it('should render with required props', () => {
-      /* ... */
-    });
+describe('ComponentName', () => {
+  describe('Page Rendering', () => {
+    // Core rendering: page loads, key elements present
   });
 
-  describe('interactions', () => {
-    it('should call onChange when value changes', () => {
-      /* ... */
-    });
+  describe('User Workflows', () => {
+    // User actions: clicking, typing, form submission
   });
 
-  describe('validation', () => {
-    it('should show error message for invalid input', () => {
-      /* ... */
-    });
+  describe('Accessibility', () => {
+    // A11y essentials: labels, keyboard nav, headings
+  });
+
+  describe('Integration', () => {
+    // Integration with hooks, stores, external systems
   });
 });
 ```
 
-#### 2. **Component Contract (Props)**
+#### 2. **Page Component Contract (Props)**
 
 ```typescript
 // Always export prop types
@@ -475,24 +493,37 @@ src/hooks/
    }
    ```
 
-2. **Write Integration Test**
+2. **Write Pragmatic Integration Tests**
 
    ```typescript
    // app/settings/page.test.tsx
-   it('should save settings to store', () => {
-     render(<SettingsPage />);
-     userEvent.type(weekdayInput, '60');
-     userEvent.click(saveButton);
-     expect(useSettings().weekdayRate).toBe(60);
+   describe('Page Rendering', () => {
+     it('should render with form and heading', () => {
+       render(<SettingsPage />);
+       expect(screen.getByRole('heading', { name: /settings/i })).toBeInTheDocument();
+       expect(screen.getByRole('spinbutton', { name: /weekday/i })).toBeInTheDocument();
+     });
+   });
+
+   describe('User Workflows', () => {
+     it('should persist changes to store on save', async () => {
+       const user = userEvent.setup();
+       render(<SettingsPage />);
+       await user.type(screen.getByRole('spinbutton'), '60');
+       await user.click(screen.getByRole('button', { name: /save/i }));
+       expect(localStorage.getItem('settings')).toContain('60');
+     });
    });
    ```
 
-3. **Write Unit Tests for Dependencies**
+3. **Write Unit Tests for Critical Logic Only**
 
    ```typescript
    // lib/stores/__tests__/settingsStore.test.ts
    it('should persist to localStorage', () => {
-     /* ... */
+     const store = getSettingsStore.getState();
+     store.setWeekdayRate(60);
+     expect(localStorage.getItem('settings')).toContain('60');
    });
    ```
 
@@ -505,6 +536,13 @@ src/hooks/
    - Extract constants
    - Extract helper functions
    - Improve naming based on test readability
+
+### Key Testing Principles
+
+- **Favor integration tests** over unit tests for page components (test the whole user workflow)
+- **Test 1-2 representative workflows** instead of every button/input/edge case
+- **Skip testing obvious rendering** (e.g., "should render a button" when the workflow test clicks it)
+- **Group by user behavior** not by component internals (Page Rendering, User Workflows, Accessibility)
 
 ### Accessibility Testing
 
