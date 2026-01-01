@@ -1,0 +1,133 @@
+import React, { useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Box, Button, CircularProgress } from '@mui/material';
+import { RateInput } from './RateInput';
+import * as styles from './SettingsForm.styles';
+
+// Zod validation schema
+const settingsFormSchema = z.object({
+  weekdayRate: z
+    .number()
+    .min(25, 'Rate must be between 25 and 200')
+    .max(200, 'Rate must be between 25 and 200'),
+  weekendRate: z
+    .number()
+    .min(25, 'Rate must be between 25 and 200')
+    .max(200, 'Rate must be between 25 and 200'),
+});
+
+export type SettingsFormData = z.infer<typeof settingsFormSchema>;
+
+export interface SettingsFormProps {
+  initialValues: SettingsFormData;
+  onSubmit: (data: SettingsFormData) => void | Promise<void>;
+  isLoading?: boolean;
+}
+
+export const SettingsForm = React.memo(
+  ({ initialValues, onSubmit, isLoading = false }: SettingsFormProps) => {
+    const {
+      handleSubmit,
+      watch,
+      setValue,
+      formState: { errors },
+    } = useForm<SettingsFormData>({
+      resolver: zodResolver(settingsFormSchema),
+      defaultValues: initialValues,
+      mode: 'onBlur',
+    });
+
+    const weekdayRate = watch('weekdayRate');
+    const weekendRate = watch('weekendRate');
+
+    const handleWeekdayChange = useCallback(
+      (value: number) => {
+        setValue('weekdayRate', value);
+      },
+      [setValue]
+    );
+
+    const handleWeekendChange = useCallback(
+      (value: number) => {
+        setValue('weekendRate', value);
+      },
+      [setValue]
+    );
+
+    const handleReset = useCallback(() => {
+      setValue('weekdayRate', initialValues.weekdayRate);
+      setValue('weekendRate', initialValues.weekendRate);
+    }, [setValue, initialValues]);
+
+    const handleCancel = useCallback(() => {
+      setValue('weekdayRate', initialValues.weekdayRate);
+      setValue('weekendRate', initialValues.weekendRate);
+    }, [setValue, initialValues]);
+
+    return (
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={styles.formStyles}>
+        <Box sx={styles.fieldsContainerStyles}>
+          <RateInput
+            label="Weekday Rate (£)"
+            value={weekdayRate}
+            onChange={handleWeekdayChange}
+            error={errors.weekdayRate?.message}
+            disabled={isLoading}
+            min={25}
+            max={200}
+          />
+          <RateInput
+            label="Weekend Rate (£)"
+            value={weekendRate}
+            onChange={handleWeekendChange}
+            error={errors.weekendRate?.message}
+            disabled={isLoading}
+            min={25}
+            max={200}
+          />
+        </Box>
+
+        <Box sx={styles.buttonsContainerStyles}>
+          <Button
+            type="button"
+            variant="outlined"
+            color="primary"
+            onClick={handleReset}
+            disabled={isLoading}
+            sx={styles.resetButtonStyles}
+          >
+            Restore Defaults
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={isLoading}
+            sx={styles.submitButtonStyles}
+          >
+            Save
+          </Button>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={handleCancel}
+            disabled={isLoading}
+            sx={styles.cancelButtonStyles}
+          >
+            Cancel
+          </Button>
+        </Box>
+
+        {isLoading && (
+          <Box sx={styles.loadingSpinnerStyles}>
+            <CircularProgress size={24} role="progressbar" />
+          </Box>
+        )}
+      </Box>
+    );
+  }
+);
+
+SettingsForm.displayName = 'SettingsForm';
