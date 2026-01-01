@@ -239,5 +239,49 @@ describe('settingsStore', () => {
       expect(state.weekdayRate).toBe(60);
       expect(state.weekendRate).toBe(90);
     });
+
+    it('should enforce minimum rate boundary (25)', () => {
+      // Values below 25 should be rejected and defaults used
+      localStorage.setItem('settings', JSON.stringify({ weekdayRate: 24, weekendRate: 10 }));
+      act(() => {
+        reloadSettingsFromStorage();
+      });
+      const state = getSettingsStore.getState();
+      expect(state.weekdayRate).toBe(50);
+      expect(state.weekendRate).toBe(75);
+    });
+
+    it('should accept minimum rate boundary (25)', () => {
+      // Exactly 25 should be valid
+      localStorage.setItem('settings', JSON.stringify({ weekdayRate: 25, weekendRate: 25 }));
+      act(() => {
+        reloadSettingsFromStorage();
+      });
+      const state = getSettingsStore.getState();
+      expect(state.weekdayRate).toBe(25);
+      expect(state.weekendRate).toBe(25);
+    });
+
+    it('should enforce maximum rate boundary (200)', () => {
+      // Values above 200 should be rejected and defaults used
+      localStorage.setItem('settings', JSON.stringify({ weekdayRate: 201, weekendRate: 250 }));
+      act(() => {
+        reloadSettingsFromStorage();
+      });
+      const state = getSettingsStore.getState();
+      expect(state.weekdayRate).toBe(50);
+      expect(state.weekendRate).toBe(75);
+    });
+
+    it('should accept maximum rate boundary (200)', () => {
+      // Exactly 200 should be valid
+      localStorage.setItem('settings', JSON.stringify({ weekdayRate: 200, weekendRate: 200 }));
+      act(() => {
+        reloadSettingsFromStorage();
+      });
+      const state = getSettingsStore.getState();
+      expect(state.weekdayRate).toBe(200);
+      expect(state.weekendRate).toBe(200);
+    });
   });
 });

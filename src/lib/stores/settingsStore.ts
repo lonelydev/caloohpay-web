@@ -14,10 +14,10 @@ export interface SettingsState {
   reset: () => void;
 }
 
-// Validation helper
+// Validation helper - must match form validation constraints
 const isValidRate = (value: unknown): boolean => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
-  return typeof num === 'number' && !isNaN(num) && num > 0;
+  return typeof num === 'number' && !isNaN(num) && num >= 25 && num <= 200;
 };
 
 // Helper to load from localStorage with validation
