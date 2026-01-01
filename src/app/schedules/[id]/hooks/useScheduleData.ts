@@ -6,7 +6,6 @@ import { DateTime } from 'luxon';
 import { OnCallPeriod, OnCallUser, OnCallPaymentsCalculator } from '@/lib/caloohpay';
 import { scheduleDetailFetcher, type ScheduleResponse } from '@/lib/api/fetchers';
 import type { User, ScheduleEntry } from '@/lib/types';
-import type { UserSchedule } from '@/app/schedules/[id]/components/OnCallSchedule.types';
 import { getCurrentRates } from '@/lib/utils/ratesUtils';
 
 /**

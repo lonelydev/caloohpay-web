@@ -2,7 +2,7 @@
  * Tests for rate management utilities
  */
 
-import { getCurrentRates, getDefaultRates, type PaymentRates } from '@/lib/utils/ratesUtils';
+import { getCurrentRates, getDefaultRates } from '@/lib/utils/ratesUtils';
 import { getSettingsStore } from '@/lib/stores';
 import { PAYMENT_RATES } from '@/lib/constants';
 

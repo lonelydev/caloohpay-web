@@ -81,8 +81,6 @@ describe('useDateRangeNavigation', () => {
   it('handles multiple month navigations', () => {
     const { result } = renderHook(() => useDateRangeNavigation());
 
-    const initial = result.current.currentMonthDisplay;
-
     act(() => {
       result.current.handleNextMonth();
       result.current.handleNextMonth();
