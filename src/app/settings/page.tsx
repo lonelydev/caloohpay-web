@@ -83,8 +83,17 @@ export default function SettingsPage() {
         <SettingsForm initialValues={initialValues} onSubmit={handleSubmit} isLoading={isLoading} />
 
         {/* Information Box */}
-        <Box sx={{ mt: 4, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-          <Typography variant="body2" color="textSecondary">
+        <Box
+          sx={{
+            mt: 4,
+            p: 2,
+            backgroundColor: (theme) =>
+              theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
+            borderRadius: 1,
+            border: (theme) => `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
             <strong>Note:</strong> These rates are used to calculate your on-call compensation.
             Changes will be applied to new calculations immediately. Weekday rates apply
             Monday–Thursday, and weekend rates apply Friday–Sunday.
