@@ -141,7 +141,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🧪 Testing
 
-See [docs/testing.md](./docs/testing.md) for comprehensive testing guidance, including:
+See [docs/TESTING.md](./docs/TESTING.md) for comprehensive testing guidance, including:
 
 - How to run unit, E2E, seeded, and unauth tests
 - Test structure and best practices

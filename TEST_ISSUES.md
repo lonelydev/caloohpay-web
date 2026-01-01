@@ -1,10 +1,10 @@
 # Test Issues & Gaps
 
-**This document has been consolidated into [docs/testing.md](docs/testing.md#known-test-issues--gaps).**
+**This document has been consolidated into [docs/TESTING.md](docs/TESTING.md#known-test-issues--gaps).**
 
-For comprehensive information on testing, including known issues, coverage gaps, and recommendations, please refer to the main [Testing Guide](docs/testing.md).
+For comprehensive information on testing, including known issues, coverage gaps, and recommendations, please refer to the main [Testing Guide](docs/TESTING.md).
 
-This file is maintained for historical reference. All future test-related documentation should be added to [docs/testing.md](docs/testing.md).
+This file is maintained for historical reference. All future test-related documentation should be added to [docs/TESTING.md](docs/TESTING.md).
 
 ```typescript
 describe('GET /api/schedules/[id]', () => {

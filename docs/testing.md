@@ -16,7 +16,7 @@ CalOohPay has comprehensive test coverage across unit, integration, and end-to-e
 
 ## Test Structure
 
-```
+```console
 tests/
 ├── unit/                           # Unit tests for components and utilities
 │   ├── app/
@@ -183,25 +183,238 @@ webServer: {
 
 ## E2E Auth Seeding
 
-Seeded authentication enables running E2E tests as an already-authenticated user using NextAuth’s JWT session strategy.
+Seeded authentication enables running E2E tests as an already-authenticated user using NextAuth's JWT session strategy.
 
-- **Toggle**: Controlled by `ENABLE_TEST_SESSION_SEED`.
-- **Env vars**:
-  - `ENABLE_TEST_SESSION_SEED=true` to enable seeding.
-  - `NEXTAUTH_SECRET` must be set (used by NextAuth JWT encoder).
-- **How it works**:
-  - Global setup hits the test-only endpoint at `/api/test/session` to set a valid NextAuth session cookie, then saves storage state to `tests/e2e/.auth/state.json`.
-  - The endpoint is gated and returns 404 when seeding is disabled.
-- **Playwright projects**:
-  - Seeded projects: `chromium (seeded)`, `firefox (seeded)`, `webkit (seeded)` use `storageState` and set the required env vars.
-  - Unauthenticated projects: `chromium (unauth)`, `firefox (unauth)`, `webkit (unauth)` run with seeding disabled.
-- **Run examples**:
-  - Seeded: `npm run test:e2e -- --project="chromium (seeded)"`
-  - Unauth: `npm run test:e2e -- --project="chromium (unauth)"`
-- **CI usage**:
-  - Provide `NEXTAUTH_SECRET` via CI secrets.
-  - Run both seeded and unauth projects to cover authenticated flows and login/redirect behavior.
-  - Example: `npm run test:e2e` (executes all configured projects).
+### How Playwright Knows Which Tests to Run
+
+**TL;DR**: The `ENABLE_TEST_SESSION_SEED` environment variable controls everything. Different project configurations (seeded vs unauth) use different storage states.
+
+### 1. Environment Variable Control (`ENABLE_TEST_SESSION_SEED`)
+
+All three layers check this environment variable:
+
+**Layer 1: Shell Scripts** (`scripts/e2e-*.sh`)
+
+```bash
+# Seeded: ENABLE_TEST_SESSION_SEED=true
+export ENABLE_TEST_SESSION_SEED=true
+export NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-e2e-secret}
+
+# Unauth: ENABLE_TEST_SESSION_SEED=false
+export ENABLE_TEST_SESSION_SEED=false
+```
+
+**Layer 2: Global Setup** (`tests/e2e/global-setup.ts`)
+
+```typescript
+export default async function globalSetup(config: FullConfig) {
+  if (process.env.ENABLE_TEST_SESSION_SEED !== 'true') {
+    return; // Skip seeding in unauth mode
+  }
+  // Otherwise, create authenticated session...
+}
+```
+
+**Layer 3: Individual Test Files** (`tests/e2e/*.spec.ts`)
+
+```typescript
+const SEEDED = process.env.ENABLE_TEST_SESSION_SEED === 'true';
+
+test.describe('Authentication Flow', () => {
+  test.skip(SEEDED, 'Skipped when session is seeded');
+  test('should display login page...', async ({ page }) => {
+    // Unauthenticated flow tests - only runs when SEEDED=false
+  });
+});
+```
+
+### 2. Playwright Project Configuration
+
+Different **Playwright projects** are configured in `playwright.config.ts`:
+
+```typescript
+projects: [
+  // SEEDED PROJECTS - Use pre-authenticated session
+  {
+    name: 'chromium (seeded)',
+    use: {
+      ...devices['Desktop Chrome'],
+      storageState: 'tests/e2e/.auth/state.json', // Load auth session
+    },
+  },
+
+  // UNAUTH PROJECTS - No authentication
+  {
+    name: 'chromium (unauth)',
+    use: {
+      ...devices['Desktop Chrome'],
+      storageState: undefined, // No session
+    },
+  },
+];
+```
+
+**Key difference**:
+
+- **Seeded projects** load `storageState: 'tests/e2e/.auth/state.json'` (created during global setup)
+- **Unauth projects** use `storageState: undefined` (tests start unauthenticated)
+
+### 3. Session Seeding Flow (Seeded Mode Only)
+
+When `ENABLE_TEST_SESSION_SEED=true`:
+
+```
+1. Shell script sets ENABLE_TEST_SESSION_SEED=true
+   ↓
+2. Playwright runs global-setup.ts (if ENABLE_TEST_SESSION_SEED=true)
+   ↓
+3. Global setup calls /api/test/session to create authenticated session
+   ↓
+4. Session cookie is saved to tests/e2e/.auth/state.json
+   ↓
+5. Seeded projects load this state file (browser now authenticated)
+   ↓
+6. Tests in seeded projects run as authenticated user
+```
+
+### 4. Where NEXTAUTH_SECRET is Used
+
+**In the seeding process** (`/api/test/session`):
+
+```typescript
+// src/app/api/test/session/route.ts
+if (process.env.ENABLE_TEST_SESSION_SEED !== 'true') {
+  return NextResponse.json({ error: 'Not Found' }, { status: 404 });
+}
+
+const secret = process.env.NEXTAUTH_SECRET;
+if (!secret) {
+  return NextResponse.json({ error: 'Missing NEXTAUTH_SECRET' }, { status: 500 });
+}
+
+// Use NEXTAUTH_SECRET to encode JWT session token
+const token = await encode({
+  token: jwtPayload,
+  secret, // ← NEXTAUTH_SECRET used here
+  maxAge: 30 * 24 * 60 * 60,
+});
+
+// Set as HTTP-only cookie
+res.headers.append('Set-Cookie', `next-auth.session-token=${token}; ...`);
+```
+
+**Three ways NEXTAUTH_SECRET is set**:
+
+1. **Seeded shell script**: Provides default
+
+   ```bash
+   export NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-e2e-secret}
+   ```
+
+2. **Environment override**: User can provide their own
+
+   ```bash
+   NEXTAUTH_SECRET=my-secret npm run test:e2e:seeded
+   ```
+
+3. **CI/CD secrets**: GitHub Actions injects via secrets
+   ```yaml
+   env:
+     NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+   ```
+
+### Complete Execution Flow
+
+**Running seeded tests**:
+
+```bash
+npm run test:e2e:seeded
+# ↓ calls ./scripts/e2e-seeded.sh
+# ├─ sets ENABLE_TEST_SESSION_SEED=true
+# ├─ sets NEXTAUTH_SECRET=dev-e2e-secret
+# └─ calls npx playwright test --project="chromium (seeded)" ...
+#    ├─ Playwright runs global-setup.ts
+#    │  └─ Calls GET /api/test/session
+#    │     └─ Creates JWT with NEXTAUTH_SECRET
+#    │        └─ Saves to tests/e2e/.auth/state.json
+#    └─ Seeded projects load state.json
+#       └─ Tests run with authenticated session
+```
+
+**Running unauth tests**:
+
+```bash
+npm run test:e2e:unauth
+# ↓ calls ./scripts/e2e-unauth.sh
+# ├─ sets ENABLE_TEST_SESSION_SEED=false
+# └─ calls npx playwright test --project="chromium (unauth)" ...
+#    ├─ Playwright skips global-setup.ts
+#    │  (ENABLE_TEST_SESSION_SEED check returns early)
+#    └─ Unauth projects load no storage state
+#       └─ Tests run unauthenticated
+#          └─ test.skip(true, ...) skips login tests that only make sense in seeded mode
+```
+
+### Test Filtering by Mode
+
+**In test files**:
+
+```typescript
+const SEEDED = process.env.ENABLE_TEST_SESSION_SEED === 'true';
+
+// Method 1: Skip entire suite in seeded mode
+test.describe('Authentication Flow', () => {
+  test.skip(SEEDED, 'Skipped when session is seeded');
+  test('should display login page...', async ({ page }) => {
+    // Only runs in unauth mode
+  });
+});
+
+// Method 2: Skip specific test
+test('login button works', async ({ page }) => {
+  test.skip(SEEDED, 'Login button not visible when authenticated');
+  // Test code...
+});
+
+// Method 3: Conditional logic (less common)
+test('schedule page loads', async ({ page }) => {
+  if (SEEDED) {
+    // Authenticated flow
+  } else {
+    // Unauthenticated flow
+  }
+});
+```
+
+### Debug: How to Check Your Mode
+
+During test runs, look for:
+
+**Seeded mode indicators**:
+
+- ✅ `Global setup started` (global-setup.ts ran)
+- ✅ GET `/api/test/session 200` (session created)
+- ✅ `[chromium (seeded)]` in test names
+- ✅ `tests/e2e/.auth/state.json` exists
+
+**Unauth mode indicators**:
+
+- ✅ No `Global setup started` message
+- ✅ No session endpoint calls
+- ✅ `[chromium (unauth)]` in test names
+- ✅ `tests/e2e/.auth/state.json` not created
+
+### Summary
+
+| Component                  | Seeded Mode                  | Unauth Mode              |
+| -------------------------- | ---------------------------- | ------------------------ |
+| `ENABLE_TEST_SESSION_SEED` | `true`                       | `false`                  |
+| `NEXTAUTH_SECRET`          | Required (used for JWT)      | Not used                 |
+| Global setup runs          | ✅ Yes (creates session)     | ❌ No (returns early)    |
+| Project `storageState`     | `tests/e2e/.auth/state.json` | `undefined`              |
+| Browser auth state         | Authenticated                | Unauthenticated          |
+| Tests skipped              | Login/auth flow tests        | Some authenticated tests |
+| Use case                   | Test authenticated features  | Test login/redirects     |
 
 ### Quick Reference
 
@@ -218,25 +431,18 @@ Seeded authentication enables running E2E tests as an already-authenticated user
 
 **Note**: Shell scripts (`scripts/e2e-*.sh`) automatically set required environment variables and accept pass-through arguments.
 
-### Performance Tips
+# Kill if necessary
 
-If E2E tests are running slowly or timing out:
+kill -9 <PID>
 
-1. **Kill stale dev servers**
-
-   ```bash
-   # Check for running dev servers
-   lsof -i :3000
-   # Kill if necessary
-   kill -9 <PID>
-   ```
+````
 
 2. **Run single browser instead of all three**
 
-   ```bash
-   # Instead of npm run test:e2e:seeded (runs all 3 browsers)
-   npm run test:e2e:seeded -- --project="chromium (seeded)"
-   ```
+```bash
+# Instead of npm run test:e2e:seeded (runs all 3 browsers)
+npm run test:e2e:seeded -- --project="chromium (seeded)"
+````
 
 3. **Run specific test file instead of full suite**
 

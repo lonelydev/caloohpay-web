@@ -295,7 +295,7 @@ Before submitting a PR:
 2. **Run E2E tests**: `npm run test:e2e:seeded` (faster for development)
 3. **Check coverage**: `npm run test:coverage` (target >80%)
 
-For comprehensive testing guidance, see [docs/testing.md](docs/testing.md), which covers:
+For comprehensive testing guidance, see [docs/TESTING.md](docs/TESTING.md), which covers:
 
 - How to run specific tests (unit, E2E, seeded, unauth)
 - Writing effective tests (TDD approach, pragmatic coverage)

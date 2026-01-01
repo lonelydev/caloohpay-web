@@ -31,7 +31,7 @@ Technical architecture and design documentation:
 - **[System Architecture](./architecture.md)** - Complete system architecture, design decisions, data flow patterns, and technical rationale
 - **[Search Architecture](./search-architecture.md)** - Progressive search implementation with instant local results and parallel API search
 - **[Styling Architecture](./styling-architecture.md)** - MUI styling patterns, styled components, and layout constants
-- **[Testing Guide](./testing.md)** - Comprehensive testing guide with 114 tests covering unit, integration, and E2E tests
+- **[Testing Guide](./TESTING.md)** - Comprehensive testing guide with 114 tests covering unit, integration, and E2E tests
 
 ## 🚀 Quick Start
 

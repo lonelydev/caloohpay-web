@@ -1,6 +1,6 @@
 # Calendar View Testing Guide
 
-**This guide has been moved to [docs/testing.md](docs/testing.md#calendar-view-testing-guide).**
+**This guide has been moved to [docs/TESTING.md](docs/TESTING.md#calendar-view-testing-guide).**
 
 Please refer to that document for:
 
@@ -9,4 +9,4 @@ Please refer to that document for:
 - Testing checklist
 - Known issues and recommendations
 
-All testing guidance, including calendar view testing, is now consolidated in the main [Testing Guide](docs/testing.md).
+All testing guidance, including calendar view testing, is now consolidated in the main [Testing Guide](docs/TESTING.md).

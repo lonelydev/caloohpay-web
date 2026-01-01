@@ -118,7 +118,7 @@ npm run type-check       # Check TypeScript types
 
 # Testing
 
-See [docs/testing.md](docs/testing.md) for comprehensive testing guidance.
+See [docs/TESTING.md](docs/TESTING.md) for comprehensive testing guidance.
 
 Quick commands:
 npm test                 # Run unit tests
