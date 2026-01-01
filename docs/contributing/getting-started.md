@@ -483,7 +483,7 @@ Once approved:
 
 1. Create page component in `src/app/[route]/page.tsx`
 2. Add route protection in `src/middleware.ts` if needed
-3. Update navigation in `src/components/common/Header.tsx`
+3. Update navigation in `src/components/common/NavigationLinks.tsx` or add menu item in `UserMenu.tsx`
 
 ### Creating an API Route
 

@@ -40,7 +40,15 @@ src/components/
 │   └── ScheduleCard.styles.ts    # Styled components
 ├── payments/   # Payment calculation and export UI
 ├── ui/         # Reusable UI primitives
-└── common/     # Shared layouts (Header, Footer, ErrorBoundary)
+└── common/     # Shared layouts and navigation
+    ├── Header.tsx              # Main header (composition)
+    ├── Header.styles.ts        # Separated styles
+    ├── Logo.tsx                # App logo and branding
+    ├── NavigationLinks.tsx     # Auth-aware navigation
+    ├── ThemeToggle.tsx         # Dark mode toggle
+    ├── UserMenu.tsx            # User menu with settings/sign out
+    ├── Footer.tsx              # App footer
+    └── ErrorBoundary.tsx       # Error boundary
 ```
 
 ### Progressive Search Pattern
