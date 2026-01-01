@@ -100,6 +100,3 @@ export const reloadSettingsFromStorage = () => {
     weekendRate: stored.weekendRate ?? DEFAULTS.weekendRate,
   });
 };
-
-// For React hooks usage
-export const useSettings = getSettingsStore;

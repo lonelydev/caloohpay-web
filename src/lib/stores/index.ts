@@ -1,2 +1,2 @@
-export { getSettingsStore, reloadSettingsFromStorage, useSettings } from './settingsStore';
+export { getSettingsStore, reloadSettingsFromStorage } from './settingsStore';
 export type { SettingsState } from './settingsStore';
