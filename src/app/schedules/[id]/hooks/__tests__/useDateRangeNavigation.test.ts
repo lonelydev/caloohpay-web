@@ -23,8 +23,7 @@ describe('useDateRangeNavigation', () => {
   it('navigates to previous month', () => {
     const { result } = renderHook(() => useDateRangeNavigation());
 
-    const initialDateRange = result.current.dateRange;
-    const initialSince = DateTime.fromISO(initialDateRange.since);
+    const initialSince = DateTime.fromISO(result.current.dateRange.since);
 
     act(() => {
       result.current.handlePreviousMonth();
