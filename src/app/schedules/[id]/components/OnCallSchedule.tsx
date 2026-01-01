@@ -5,6 +5,7 @@ import { Box, Card, CardContent, Typography, Chip, Stack, Divider, Alert } from 
 import { Person, Work, WorkOff, Wallet } from '@mui/icons-material';
 import { DateTime } from 'luxon';
 import { PAYMENT_RATES } from '@/lib/constants';
+import { getCurrentRates } from '@/lib/utils/ratesUtils';
 import { Loading } from '@/components/common';
 import * as styles from './OnCallSchedule.styles';
 import type { OnCallScheduleProps } from './OnCallSchedule.types';
@@ -17,6 +18,9 @@ const PeriodEntry = memo<{
   entry: OnCallScheduleProps['userSchedules'][0]['entries'][0];
   timeZone: string;
 }>(({ entry, timeZone }) => {
+  // Get current rates for tooltip display
+  const rates = getCurrentRates();
+
   const start = DateTime.fromISO(
     typeof entry.start === 'string' ? entry.start : entry.start.toISOString(),
     {
@@ -59,7 +63,7 @@ const PeriodEntry = memo<{
               label={`${entry.weekdayDays} WD`}
               size="small"
               color="default"
-              title={`${entry.weekdayDays} weekday${entry.weekdayDays > 1 ? 's' : ''} × ${PAYMENT_RATES.CURRENCY_SYMBOL}${PAYMENT_RATES.WEEKDAY}`}
+              title={`${entry.weekdayDays} weekday${entry.weekdayDays > 1 ? 's' : ''} × ${PAYMENT_RATES.CURRENCY_SYMBOL}${rates.weekdayRate}`}
             />
           )}
           {entry.weekendDays > 0 && (
@@ -67,7 +71,7 @@ const PeriodEntry = memo<{
               label={`${entry.weekendDays} WE`}
               size="small"
               color="secondary"
-              title={`${entry.weekendDays} weekend${entry.weekendDays > 1 ? 's' : ''} × ${PAYMENT_RATES.CURRENCY_SYMBOL}${PAYMENT_RATES.WEEKEND}`}
+              title={`${entry.weekendDays} weekend${entry.weekendDays > 1 ? 's' : ''} × ${PAYMENT_RATES.CURRENCY_SYMBOL}${rates.weekendRate}`}
             />
           )}
           <Chip
