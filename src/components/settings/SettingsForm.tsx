@@ -44,15 +44,15 @@ export const SettingsForm = React.memo(
     const weekendRate = watch('weekendRate');
 
     const handleWeekdayChange = useCallback(
-      (value: number) => {
-        setValue('weekdayRate', value);
+      (value: number | '') => {
+        setValue('weekdayRate', value as number, { shouldValidate: true });
       },
       [setValue]
     );
 
     const handleWeekendChange = useCallback(
-      (value: number) => {
-        setValue('weekendRate', value);
+      (value: number | '') => {
+        setValue('weekendRate', value as number, { shouldValidate: true });
       },
       [setValue]
     );

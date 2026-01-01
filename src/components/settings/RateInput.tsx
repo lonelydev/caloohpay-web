@@ -5,7 +5,7 @@ import { inputStyles, errorTextStyles } from './RateInput.styles';
 export interface RateInputProps {
   label: string;
   value: number | string;
-  onChange: (value: number) => void;
+  onChange: (value: number | '') => void;
   error?: string;
   min?: number;
   max?: number;
@@ -36,7 +36,15 @@ export const RateInput = React.memo(
     const hasError = !!error;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const numValue = parseFloat(e.target.value);
+      const inputValue = e.target.value;
+
+      // Allow empty input (user clearing the field) - let form validation handle it
+      if (inputValue === '') {
+        onChange('');
+        return;
+      }
+
+      const numValue = parseFloat(inputValue);
       if (!isNaN(numValue)) {
         onChange(numValue);
       }
