@@ -6,6 +6,14 @@ import { Header, Footer } from '@/components/common';
 import { SettingsForm, type SettingsFormData } from '@/components/settings';
 import { useSettings } from '@/hooks';
 import { getSettingsStore } from '@/lib/stores';
+import {
+  containerStyles,
+  headerSectionStyles,
+  pageTitleStyles,
+  alertStyles,
+  loadingContainerStyles,
+  infoBoxStyles,
+} from './page.styles';
 
 export default function SettingsPage() {
   const settings = useSettings();
@@ -47,10 +55,10 @@ export default function SettingsPage() {
   return (
     <>
       <Header />
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <Container maxWidth="sm" sx={containerStyles}>
         {/* Page Header */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h1" component="h1" sx={{ mb: 1, fontSize: '2rem' }}>
+        <Box sx={headerSectionStyles}>
+          <Typography variant="h1" component="h1" sx={pageTitleStyles}>
             Settings
           </Typography>
           <Typography variant="body1" color="textSecondary">
@@ -60,21 +68,21 @@ export default function SettingsPage() {
 
         {/* Success Message */}
         {showSuccess && (
-          <Alert severity="success" sx={{ mb: 3 }} onClose={() => setShowSuccess(false)}>
+          <Alert severity="success" sx={alertStyles} onClose={() => setShowSuccess(false)}>
             Settings saved successfully!
           </Alert>
         )}
 
         {/* Error Message */}
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          <Alert severity="error" sx={alertStyles} onClose={() => setError(null)}>
             {error}
           </Alert>
         )}
 
         {/* Loading Indicator */}
         {isLoading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <Box sx={loadingContainerStyles}>
             <CircularProgress size={32} />
           </Box>
         )}
@@ -83,16 +91,7 @@ export default function SettingsPage() {
         <SettingsForm initialValues={initialValues} onSubmit={handleSubmit} isLoading={isLoading} />
 
         {/* Information Box */}
-        <Box
-          sx={{
-            mt: 4,
-            p: 2,
-            backgroundColor: (theme) =>
-              theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
-            borderRadius: 1,
-            border: (theme) => `1px solid ${theme.palette.divider}`,
-          }}
-        >
+        <Box sx={infoBoxStyles}>
           <Typography variant="body2" color="text.secondary">
             <strong>Note:</strong> These rates are used to calculate your on-call compensation.
             Changes will be applied to new calculations immediately. Weekday rates apply
