@@ -78,21 +78,95 @@ npm test -- --testNamePattern="progressive search"
 
 ### E2E Tests
 
+#### Seeded Tests (Authenticated)
+
+Run tests with pre-seeded NextAuth JWT session:
+
 ```bash
-# Run all E2E tests
+# Run all seeded tests (all 3 browsers: chromium, firefox, webkit)
+npm run test:e2e:seeded
+
+# Run seeded tests in UI mode (interactive)
+npm run test:e2e:seeded:ui
+
+# Run seeded tests for specific file
+npm run test:e2e:seeded -- tests/e2e/settings.spec.ts
+
+# Run seeded tests for single browser
+npm run test:e2e:seeded -- --project="chromium (seeded)"
+```
+
+#### Unauth Tests (Unauthenticated)
+
+Run tests without authentication to test login and redirect flows:
+
+```bash
+# Run all unauth tests (all 3 browsers)
+npm run test:e2e:unauth
+
+# Run unauth tests in UI mode (interactive)
+npm run test:e2e:unauth:ui
+
+# Run unauth tests for specific file
+npm run test:e2e:unauth -- tests/e2e/auth.spec.ts
+
+# Run unauth tests for single browser
+npm run test:e2e:unauth -- --project="chromium (unauth)"
+```
+
+#### Basic E2E (All Projects)
+
+```bash
+# Run all configured projects (seeded + unauth)
 npm run test:e2e
 
-# Run with UI (interactive mode)
+# Run with UI
 npm run test:e2e:ui
 
-# Run specific browser
-npm run test:e2e -- --project=chromium
-
-# View test report
+# View HTML report of last run
 npm run test:e2e:report
 ```
 
+#### Shell Script Wrappers
+
+For advanced usage, shell scripts are available and automatically set environment variables:
+
+```bash
+# Seeded with custom args
+./scripts/e2e-seeded.sh tests/e2e/settings.spec.ts
+
+# Unauth with custom args
+./scripts/e2e-unauth.sh tests/e2e/auth.spec.ts
+```
+
 ## Playwright Configuration
+
+### Timeouts
+
+Playwright is configured with explicit timeouts to prevent hanging tests:
+
+```typescript
+// playwright.config.ts
+timeout: 30000,              // 30s per test
+globalTimeout: 30 * 60 * 1000, // 5 min total per test file
+actionTimeout: 10000,        // 10s per action (click, type, etc)
+webServer: {
+  timeout: 120 * 1000,       // 2 min for server startup
+}
+```
+
+**Why these timeouts?**
+
+- **Test timeout (30s)**: Catches hanging tests early; most tests finish in <10s
+- **Action timeout (10s)**: Prevents individual actions (click, goto, etc) from blocking indefinitely
+- **Global timeout (5min)**: Ensures test file completes or fails rather than hanging forever
+- **Server startup (2min)**: Allows Next.js dev server time to compile on first run
+
+If tests timeout:
+
+1. Check if your localhost:3000 dev server is running (see [Performance Tips](#performance-tips) below)
+2. Ensure API responses are fast enough (<2s each)
+3. Check for network issues (slow requests to PagerDuty API, etc)
 
 ### Log Filtering
 
@@ -143,6 +217,51 @@ Seeded authentication enables running E2E tests as an already-authenticated user
 | Shell wrapper (unauth) | `./scripts/e2e-unauth.sh`                           | Auto-set                                      |
 
 **Note**: Shell scripts (`scripts/e2e-*.sh`) automatically set required environment variables and accept pass-through arguments.
+
+### Performance Tips
+
+If E2E tests are running slowly or timing out:
+
+1. **Kill stale dev servers**
+
+   ```bash
+   # Check for running dev servers
+   lsof -i :3000
+   # Kill if necessary
+   kill -9 <PID>
+   ```
+
+2. **Run single browser instead of all three**
+
+   ```bash
+   # Instead of npm run test:e2e:seeded (runs all 3 browsers)
+   npm run test:e2e:seeded -- --project="chromium (seeded)"
+   ```
+
+3. **Run specific test file instead of full suite**
+
+   ```bash
+   npm run test:e2e:seeded -- tests/e2e/settings.spec.ts
+   ```
+
+4. **Use UI mode for debugging slow tests**
+
+   ```bash
+   npm run test:e2e:seeded:ui
+   # Then navigate to specific test and step through with Playwright Inspector
+   ```
+
+5. **Check localhost:3000 is reachable**
+
+   ```bash
+   curl http://localhost:3000
+   # Should get HTML response, not connection refused
+   ```
+
+6. **Network issues with PagerDuty API**
+   - Tests make real HTTP calls to PagerDuty API in E2E tests
+   - Slow network or rate limits will cause tests to hang
+   - Check `/api/schedules` endpoint logs for 429 (Too Many Requests) errors
 
 ## Progressive Search Test Coverage
 
