@@ -17,7 +17,7 @@ export default defineConfig({
   /* Test timeout: 30s per test (reasonable for slow networks) */
   timeout: 30000,
   /* Global timeout: 5 minutes total per test file */
-  globalTimeout: 30 * 60 * 1000,
+  globalTimeout: 5 * 60 * 1000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
