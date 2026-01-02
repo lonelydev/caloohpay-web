@@ -16,7 +16,7 @@ CalOohPay has comprehensive test coverage across unit, integration, and end-to-e
 
 ## Test Structure
 
-```console
+```bash
 tests/
 ├── unit/                           # Unit tests for components and utilities
 │   ├── app/
