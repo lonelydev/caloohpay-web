@@ -40,7 +40,15 @@ src/components/
 │   └── ScheduleCard.styles.ts    # Styled components
 ├── payments/   # Payment calculation and export UI
 ├── ui/         # Reusable UI primitives
-└── common/     # Shared layouts (Header, Footer, ErrorBoundary)
+└── common/     # Shared layouts and navigation
+    ├── Header.tsx              # Main header (composition)
+    ├── Header.styles.ts        # Separated styles
+    ├── Logo.tsx                # App logo and branding
+    ├── NavigationLinks.tsx     # Auth-aware navigation
+    ├── ThemeToggle.tsx         # Dark mode toggle
+    ├── UserMenu.tsx            # User menu with settings/sign out
+    ├── Footer.tsx              # App footer
+    └── ErrorBoundary.tsx       # Error boundary
 ```
 
 ### Progressive Search Pattern
@@ -140,6 +148,21 @@ npm run type-check       # TypeScript validation (no emit)
 - Format: Date, User, Schedule, Weekday Hours, Weekend Hours, Total Payment
 - Compatible with Google Sheets and Excel
 
+### Payment Calculations
+
+- **Centralized Rate Management**: [src/lib/utils/ratesUtils.ts](src/lib/utils/ratesUtils.ts)
+  - Use `getCurrentRates()` to get user-customized rates from settings store
+  - Use `getDefaultRates()` for displaying default values in UI
+  - Never hardcode payment rates or access PAYMENT_RATES directly in calculations
+- **Calculator Integration**: Pass rates to OnCallPaymentsCalculator constructor
+  ```typescript
+  import { getCurrentRates } from '@/lib/utils/ratesUtils';
+  const rates = getCurrentRates();
+  const calculator = new OnCallPaymentsCalculator(rates.weekdayRate, rates.weekendRate);
+  ```
+- **Rate Customization**: Users can override default rates (£50/£75) in Settings page
+- **Store Persistence**: Custom rates persist in localStorage across sessions
+
 ## Performance Patterns
 
 ### Memoization Strategy
@@ -194,7 +217,9 @@ npm run type-check       # TypeScript validation (no emit)
 
 - **DO NOT modify** - payment logic lives in `caloohpay` npm package
 - To change rates/rules: Update the upstream package, then `npm update caloohpay`
-- Constants (rates, hours) in [src/lib/constants.ts](src/lib/constants.ts) are for display only
+- **User-customizable rates**: Retrieved via `getCurrentRates()` from [src/lib/utils/ratesUtils.ts](src/lib/utils/ratesUtils.ts)
+- **Default rates**: Constants in [src/lib/constants.ts](src/lib/constants.ts) for display only
+- **Adding calculations**: Always use `getCurrentRates()` and pass to OnCallPaymentsCalculator
 
 ## Deployment
 
@@ -218,3 +243,370 @@ npm run type-check       # TypeScript validation (no emit)
 - Types: [src/lib/types/index.ts](src/lib/types/index.ts) - API response types
 - NextAuth config: [src/lib/auth/options.ts](src/lib/auth/options.ts) - auth providers
 - Utils: [src/lib/utils/scheduleUtils.ts](src/lib/utils/scheduleUtils.ts) - date/time helpers
+
+## Code Quality Gates (MANDATORY)
+
+**Every code change must pass these quality gates before work is considered complete:**
+
+### 1. **TypeScript Compilation** ✅
+
+- **Command**: `npm run type-check`
+- **Requirement**: ZERO TypeScript errors
+- **When**: Run AFTER every file change or before committing
+- **Failure Action**: Fix type errors immediately - do not proceed to tests until tsc passes
+- **Common Issues**:
+  - Missing type exports: `export interface` or `export type`
+  - Incorrect imports: Use named imports for interfaces, not `default`
+  - Generic type mismatches: Verify template arguments
+
+### 2. **Test Suite** ✅
+
+- **Command**: `npm test -- --testPathPatterns="<pattern>"`
+- **Requirement**: ALL relevant tests passing (100%)
+- **Timing**:
+  1. Run tests for files you changed
+  2. Run full store/hook/component tests for feature areas
+  3. Run `npm test` for complete suite before final commit
+- **Failure Action**: Fix failing tests before declaring task complete
+- **Pattern Matching Examples**:
+  - RateInput tests: `npm test -- --testPathPatterns=RateInput`
+  - Store + Hook tests: `npm test -- --testPathPatterns="settingsStore|useSettings"`
+  - All settings: `npm test -- --testPathPatterns="settings"`
+
+### 3. **Test Rerun After Type Fixes**
+
+- **Sequence**: TypeScript errors → Fix → Rerun tests
+- **Why**: Type fixes sometimes require code reorganization that affects tests
+- **Procedure**:
+  ```bash
+  npm run type-check      # Step 1: Check types
+  # Fix any errors
+  npm test -- --testPathPatterns=<file>  # Step 2: Rerun tests for affected file
+  npm run type-check      # Step 3: Verify types still pass
+  ```
+
+### 4. **Coverage Tracking**
+
+- **Target**: >80% coverage for new code
+- **Command**: `npm run test:coverage`
+- **Review**: Check `coverage/lcov-report/` for gaps
+- **Exclude**: `.test.ts`, `.stories.tsx`, type definitions
+
+### 4. **Full Test Suite Validation** ✅
+
+- **Command**: `npm test` (run complete suite before committing)
+- **Requirement**: Ensure ALL tests pass, not just new/modified tests
+- **Why**: Refactored code can have unintended side effects on existing tests
+- **When**:
+  1. After all changes are complete
+  2. Before committing code
+  3. Before creating pull requests
+- **Output Check**: Look for "Test Suites: X passed" and "Tests: X passed" with no failures
+
+### 5. **Linting & Formatting**
+
+- **Auto-run**: Pre-commit hooks handle `eslint` and `prettier`
+- **Manual**: `npm run lint:fix` to fix style issues
+- **Requirement**: No linting errors in changed files
+
+### Quality Gate Checklist Template
+
+When completing a task:
+
+```
+[ ] npm run type-check → 0 errors
+[ ] npm test -- --testPathPatterns=<file> → all passing
+[ ] npm test -- --testPathPatterns=<feature> → all passing (if multi-file)
+[ ] npm test → complete suite passing (no broken existing tests)
+[ ] npm run test:coverage → review coverage report
+[ ] Manual review: No console.logs or debug code left
+[ ] Commit message follows conventional commits
+```
+
+## Test-Driven Development (TDD) Approach
+
+**This project follows pragmatic TDD practices focused on user behavior and real-world scenarios.**
+
+### Core TDD Principles
+
+1. **Test First**: Write tests BEFORE implementation
+2. **User-Centric**: Test from the user's perspective, not implementation details
+3. **Pragmatic Coverage**: Focus on critical behaviors, not exhaustive edge cases
+4. **Pure Components**: Components receive data via props, emit changes via callbacks
+5. **Separated Concerns**: Logic, styling, and presentation are separate
+6. **Dependency Injection**: Mock at integration boundaries (API calls, external services)
+7. **No Side Effects in Components**: Use hooks for side effects (fetching, routing, etc.)
+
+### Pragmatic Testing Philosophy
+
+**DO Test:**
+
+- Core user workflows (login, form submission, navigation)
+- Critical business logic (payment calculations, rate persistence)
+- Accessibility fundamentals (labels, keyboard nav, heading hierarchy)
+- Integration points (store updates, localStorage, API calls)
+- Error states that users will encounter
+
+**DON'T Test:**
+
+- Implementation details (state variable names, function names)
+- Library internals (React Hook Form validation, MUI rendering)
+- Every possible edge case (focus on likely scenarios)
+- Redundant behaviors already tested by child components
+- Trivial rendering (if child component tests cover it, skip in parent)
+
+### Component Structure Pattern
+
+```
+src/components/feature/
+├── Component.tsx              # Pure component (minimal logic)
+├── Component.test.tsx         # Unit tests (written first)
+├── Component.styles.ts        # MUI sx objects (if needed)
+├── Component.constants.ts     # Magic strings/numbers (if any)
+└── index.ts                   # Barrel export
+```
+
+**Never mix styles into components**. Use separate `.styles.ts` files:
+
+```typescript
+// ❌ DON'T
+export const MyComponent = () => (
+  <Box sx={{ padding: 2, backgroundColor: '#fff' }}>
+    Content
+  </Box>
+);
+
+// ✅ DO
+// MyComponent.styles.ts
+export const containerStyles = {
+  padding: 2,
+  backgroundColor: '#fff',
+};
+
+// MyComponent.tsx
+export const MyComponent = () => (
+  <Box sx={containerStyles}>
+    Content
+  </Box>
+);
+```
+
+### Testing Patterns
+
+#### 1. **Unit Test Structure - Behavior Grouping**
+
+```typescript
+describe('ComponentName', () => {
+  describe('Page Rendering', () => {
+    // Core rendering: page loads, key elements present
+  });
+
+  describe('User Workflows', () => {
+    // User actions: clicking, typing, form submission
+  });
+
+  describe('Accessibility', () => {
+    // A11y essentials: labels, keyboard nav, headings
+  });
+
+  describe('Integration', () => {
+    // Integration with hooks, stores, external systems
+  });
+});
+```
+
+#### 2. **Page Component Contract (Props)**
+
+```typescript
+// Always export prop types
+interface MyComponentProps {
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+}
+
+// Make components accept callbacks, not handlers with side effects
+// ✅ Good: receives onChange callback
+// ❌ Bad: directly calls API or updates state
+```
+
+#### 3. **Hook Testing Pattern**
+
+```typescript
+// Test hooks in isolation, separate from components
+import { renderHook, act } from '@testing-library/react';
+
+describe('useSettings', () => {
+  it('should return default settings on first call', () => {
+    const { result } = renderHook(() => useSettings());
+    expect(result.current.weekdayRate).toBe(50);
+  });
+
+  it('should update when store changes', () => {
+    const { result, rerender } = renderHook(() => useSettings());
+    // Update store...
+    rerender();
+    expect(result.current.weekdayRate).toBe(60);
+  });
+});
+```
+
+#### 4. **Store Testing Pattern**
+
+```typescript
+// Keep stores pure - test synchronously
+describe('settingsStore', () => {
+  beforeEach(() => {
+    // Clear localStorage
+    localStorage.clear();
+  });
+
+  it('should initialize with defaults', () => {
+    const settings = getSettingsStore().getState();
+    expect(settings.weekdayRate).toBe(50);
+  });
+
+  it('should persist to localStorage', () => {
+    const store = getSettingsStore();
+    act(() => store.setState({ weekdayRate: 60 }));
+    expect(localStorage.getItem('settings')).toContain('60');
+  });
+});
+```
+
+### File Organization Rules
+
+**For stores/state:**
+
+```
+src/lib/stores/
+├── settingsStore.ts           # Pure store (no side effects)
+├── __tests__/
+│   └── settingsStore.test.ts  # Tests written first
+└── index.ts                   # Barrel export
+```
+
+**For components:**
+
+```
+src/components/settings/
+├── RateInput.tsx
+├── RateInput.test.tsx         # Test the component interface
+├── RateInput.styles.ts        # All styling here
+└── index.ts
+```
+
+**For hooks:**
+
+```
+src/hooks/
+├── useSettings.ts             # Hook logic only
+├── __tests__/
+│   └── useSettings.test.ts    # Test with renderHook
+└── index.ts
+```
+
+### TDD Workflow for Features
+
+1. **Define Types First**
+
+   ```typescript
+   // types/index.ts
+   interface UserSettings {
+     weekdayRate: number;
+     weekendRate: number;
+   }
+   ```
+
+2. **Write Pragmatic Integration Tests**
+
+   ```typescript
+   // app/settings/page.test.tsx
+   describe('Page Rendering', () => {
+     it('should render with form and heading', () => {
+       render(<SettingsPage />);
+       expect(screen.getByRole('heading', { name: /settings/i })).toBeInTheDocument();
+       expect(screen.getByRole('spinbutton', { name: /weekday/i })).toBeInTheDocument();
+     });
+   });
+
+   describe('User Workflows', () => {
+     it('should persist changes to store on save', async () => {
+       const user = userEvent.setup();
+       render(<SettingsPage />);
+       await user.type(screen.getByRole('spinbutton'), '60');
+       await user.click(screen.getByRole('button', { name: /save/i }));
+       expect(localStorage.getItem('settings')).toContain('60');
+     });
+   });
+   ```
+
+3. **Write Unit Tests for Critical Logic Only**
+
+   ```typescript
+   // lib/stores/__tests__/settingsStore.test.ts
+   it('should persist to localStorage', () => {
+     const store = getSettingsStore.getState();
+     store.setWeekdayRate(60);
+     expect(localStorage.getItem('settings')).toContain('60');
+   });
+   ```
+
+4. **Implement Components**
+   - Start with pure presentation components
+   - Add logic only when tests demand it
+   - Keep components under 150 lines
+
+5. **Refactor for Clarity**
+   - Extract constants
+   - Extract helper functions
+   - Improve naming based on test readability
+
+### Key Testing Principles
+
+- **Favor integration tests** over unit tests for page components (test the whole user workflow)
+- **Test 1-2 representative workflows** instead of every button/input/edge case
+- **Skip testing obvious rendering** (e.g., "should render a button" when the workflow test clicks it)
+- **Group by user behavior** not by component internals (Page Rendering, User Workflows, Accessibility)
+
+### Accessibility Testing
+
+All components must include accessibility tests:
+
+```typescript
+import { axe, toHaveNoViolations } from 'jest-axe';
+
+describe('RateInput accessibility', () => {
+  it('should have no accessibility violations', async () => {
+    const { container } = render(<RateInput label="Rate" />);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it('should have proper label association', () => {
+    const { getByText, getByRole } = render(<RateInput label="Weekday Rate" />);
+    const input = getByRole('textbox');
+    expect(getByText('Weekday Rate')).toHaveAttribute('for', input.id);
+  });
+});
+```
+
+### Common Pitfalls to Avoid
+
+❌ **Don't:**
+
+- Mix styles and component logic
+- Use `screen.debug()` in tests (clean up after test execution)
+- Mock `useRouter` in unit tests (test routing in E2E)
+- Create components with side effects directly
+- Test implementation details (test behavior instead)
+- Skip testing error states and edge cases
+
+✅ **Do:**
+
+- Keep components small and focused (single responsibility)
+- Test behavior and user interactions
+- Use `render` + `userEvent` for component testing
+- Mock at the integration boundary (API calls, stores)
+- Write tests that would catch real bugs
+- Test accessibility from the start

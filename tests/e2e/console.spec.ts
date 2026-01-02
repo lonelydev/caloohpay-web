@@ -208,9 +208,6 @@ test.describe('Console Errors and Warnings', () => {
     const themeToggle = page.getByRole('button', { name: /toggle theme/i });
     await themeToggle.click();
 
-    // Wait a bit for any async effects
-    await page.waitForTimeout(500);
-
     const errors = consoleMessages.filter((msg) => msg.type === 'error');
     const warnings = consoleMessages.filter((msg) => msg.type === 'warning');
 

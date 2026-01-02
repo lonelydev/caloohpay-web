@@ -241,8 +241,8 @@ test.describe('Calendar View E2E Tests', () => {
     const nextButton = page.getByRole('button', { name: 'Next month' });
     await nextButton.click();
 
-    // Month should change
-    await page.waitForTimeout(500); // Wait for animation
+    // Month should change - wait for title to change
+    await page.locator('.fc-toolbar-title').waitFor({ state: 'attached' });
     const titleAfter = await page.locator('.fc-toolbar-title').textContent();
 
     expect(titleBefore).not.toBe(titleAfter);
@@ -315,8 +315,8 @@ test.describe('Calendar View E2E Tests', () => {
     const nextMonthButton = page.getByRole('button', { name: /next/i }).first();
     await nextMonthButton.click();
 
-    // Wait for new data to load
-    await page.waitForTimeout(1000);
+    // Wait for calendar to re-render with new data
+    await page.locator('.fc-daygrid').waitFor({ state: 'attached' });
 
     // Should still be in calendar view
     const calendar = page.locator('.fc');

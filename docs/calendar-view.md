@@ -314,7 +314,7 @@ npm run test:coverage
 
 - [Search Architecture](./search-architecture.md) - Progressive search implementation
 - [Styling Architecture](./styling-architecture.md) - MUI theming and styling
-- [Testing Guide](./testing.md) - Testing strategies and best practices
+- [Testing Guide](./TESTING.md) - Testing strategies and best practices
 - [Architecture Overview](./architecture.md) - Overall system architecture
 
 ## Support

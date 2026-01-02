@@ -23,21 +23,19 @@ describe('useDateRangeNavigation', () => {
   it('navigates to previous month', () => {
     const { result } = renderHook(() => useDateRangeNavigation());
 
-    const initialMonth = result.current.currentMonthDisplay;
+    const initialSince = DateTime.fromISO(result.current.dateRange.since);
 
     act(() => {
       result.current.handlePreviousMonth();
     });
 
-    expect(result.current.currentMonthDisplay).not.toBe(initialMonth);
+    const newSince = DateTime.fromISO(result.current.dateRange.since);
 
-    // Verify it's one month earlier
-    const initialSince = DateTime.fromISO(result.current.dateRange.since);
-    const newSince = DateTime.fromISO(
-      DateTime.fromISO(initialMonth, { zone: 'UTC' }).minus({ months: 1 }).toISODate() || ''
-    );
-
-    expect(initialSince.month).toBeLessThanOrEqual(DateTime.now().month);
+    // Verify it's exactly one month earlier
+    const expectedSince = initialSince.minus({ months: 1 });
+    expect(newSince.year).toBe(expectedSince.year);
+    expect(newSince.month).toBe(expectedSince.month);
+    expect(newSince.day).toBe(1); // Should be first day of month
   });
 
   it('navigates to next month', () => {
@@ -81,8 +79,6 @@ describe('useDateRangeNavigation', () => {
 
   it('handles multiple month navigations', () => {
     const { result } = renderHook(() => useDateRangeNavigation());
-
-    const initial = result.current.currentMonthDisplay;
 
     act(() => {
       result.current.handleNextMonth();

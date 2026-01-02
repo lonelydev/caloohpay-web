@@ -1,11 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import OnCallSchedule from '../OnCallSchedule';
 import type { OnCallScheduleProps } from '../OnCallSchedule.types';
+import * as ratesUtils from '@/lib/utils/ratesUtils';
 
 // Mock the Loading component
 jest.mock('@/components/common', () => ({
   ...jest.requireActual('@/components/common'),
   Loading: () => <div data-testid="loading-component">Loading...</div>,
+}));
+
+// Mock the ratesUtils module
+jest.mock('@/lib/utils/ratesUtils', () => ({
+  getCurrentRates: jest.fn(),
+  getDefaultRates: jest.fn(),
 }));
 
 describe('OnCallSchedule', () => {
@@ -43,6 +50,15 @@ describe('OnCallSchedule', () => {
     timeZone: 'Europe/London',
     isLoading: false,
   };
+
+  beforeEach(() => {
+    // Reset mocks and set default return values
+    jest.clearAllMocks();
+    (ratesUtils.getCurrentRates as jest.Mock).mockReturnValue({
+      weekdayRate: 50,
+      weekendRate: 75,
+    });
+  });
 
   it('renders loading state when isLoading is true', () => {
     render(<OnCallSchedule {...defaultProps} isLoading={true} />);

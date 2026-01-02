@@ -309,7 +309,7 @@ export default function SchedulesPage() {
 
           {/* Schedules Grid with Loading Overlay */}
           <Box
-            sx={(theme) => ({
+            sx={{
               position: 'relative',
               // Fixed height to prevent pagination controls from shifting
               // Responsive height based on breakpoint grid layout
@@ -318,7 +318,7 @@ export default function SchedulesPage() {
                 sm: `calc(8 * 250px + 7 * 24px)`, // 8 rows (2 columns)
                 md: `calc(4 * 250px + 3 * 24px)`, // 4 rows (4 columns)
               },
-            })}
+            }}
           >
             {/* Loading Overlay - Always render, visibility controlled by 'open' */}
             <Backdrop

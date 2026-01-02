@@ -464,7 +464,14 @@ Located in `src/components/common/`:
 - **Card**: Reusable card container
 - **ErrorBoundary**: Error catching and display
 - **ErrorDisplay**: Error message component
-- **Header**: Navigation bar with auth status
+- **Header**: Main navigation header (modular composition)
+  - Sub-components: Logo, NavigationLinks, ThemeToggle, UserMenu
+  - Styles: Separated in `Header.styles.ts`
+  - Pattern: Focused sub-components for better testability
+- **Logo**: Application branding with icon and text
+- **NavigationLinks**: Authentication-aware navigation buttons
+- **ThemeToggle**: Dark/light mode toggle button
+- **UserMenu**: User authentication menu (avatar, settings, sign out)
 - **Footer**: App footer
 - **Loading**: Loading spinner
 
