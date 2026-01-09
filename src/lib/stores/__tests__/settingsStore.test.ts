@@ -43,17 +43,21 @@ describe('settingsStore', () => {
   });
 
   describe('updating rates', () => {
-    it('should update weekday rate', () => {
+    it('should update weekday rate and return true', () => {
+      let result = false;
       act(() => {
-        getSettingsStore.getState().setWeekdayRate(60);
+        result = getSettingsStore.getState().setWeekdayRate(60);
       });
+      expect(result).toBe(true);
       expect(getSettingsStore.getState().weekdayRate).toBe(60);
     });
 
-    it('should update weekend rate', () => {
+    it('should update weekend rate and return true', () => {
+      let result = false;
       act(() => {
-        getSettingsStore.getState().setWeekendRate(90);
+        result = getSettingsStore.getState().setWeekendRate(90);
       });
+      expect(result).toBe(true);
       expect(getSettingsStore.getState().weekendRate).toBe(90);
     });
 
@@ -69,6 +73,93 @@ describe('settingsStore', () => {
       });
       expect(getSettingsStore.getState().weekdayRate).toBe(65);
       expect(getSettingsStore.getState().weekendRate).toBe(95);
+    });
+  });
+
+  describe('rate validation in setters', () => {
+    it('should reject negative weekday rate and return false', () => {
+      let result = false;
+      act(() => {
+        result = getSettingsStore.getState().setWeekdayRate(-50);
+      });
+      expect(result).toBe(false);
+      expect(getSettingsStore.getState().weekdayRate).toBe(50); // unchanged
+    });
+
+    it('should reject negative weekend rate and return false', () => {
+      let result = false;
+      act(() => {
+        result = getSettingsStore.getState().setWeekendRate(-75);
+      });
+      expect(result).toBe(false);
+      expect(getSettingsStore.getState().weekendRate).toBe(75); // unchanged
+    });
+
+    it('should reject NaN and return false', () => {
+      let result = false;
+      act(() => {
+        result = getSettingsStore.getState().setWeekdayRate(NaN);
+      });
+      expect(result).toBe(false);
+      expect(getSettingsStore.getState().weekdayRate).toBe(50); // unchanged
+    });
+
+    it('should reject rates below minimum (25) and return false', () => {
+      let result = false;
+      act(() => {
+        result = getSettingsStore.getState().setWeekdayRate(24);
+      });
+      expect(result).toBe(false);
+      expect(getSettingsStore.getState().weekdayRate).toBe(50); // unchanged
+    });
+
+    it('should accept minimum boundary rate (25) and return true', () => {
+      let result = false;
+      act(() => {
+        result = getSettingsStore.getState().setWeekdayRate(25);
+      });
+      expect(result).toBe(true);
+      expect(getSettingsStore.getState().weekdayRate).toBe(25);
+    });
+
+    it('should reject rates above maximum (200) and return false', () => {
+      let result = false;
+      act(() => {
+        result = getSettingsStore.getState().setWeekdayRate(201);
+      });
+      expect(result).toBe(false);
+      expect(getSettingsStore.getState().weekdayRate).toBe(50); // unchanged
+    });
+
+    it('should accept maximum boundary rate (200) and return true', () => {
+      let result = false;
+      act(() => {
+        result = getSettingsStore.getState().setWeekdayRate(200);
+      });
+      expect(result).toBe(true);
+      expect(getSettingsStore.getState().weekdayRate).toBe(200);
+    });
+
+    it('should not persist invalid rate to localStorage', () => {
+      act(() => {
+        getSettingsStore.getState().setWeekdayRate(300);
+      });
+      const saved = JSON.parse(localStorage.getItem('settings') || '{}');
+      expect(saved.weekdayRate).not.toBe(300);
+    });
+
+    it('should persist valid rate to localStorage before rejecting next invalid update', () => {
+      act(() => {
+        getSettingsStore.getState().setWeekdayRate(60);
+      });
+      const savedAfterValid = JSON.parse(localStorage.getItem('settings') || '{}');
+      expect(savedAfterValid.weekdayRate).toBe(60);
+
+      act(() => {
+        getSettingsStore.getState().setWeekdayRate(300);
+      });
+      const savedAfterInvalid = JSON.parse(localStorage.getItem('settings') || '{}');
+      expect(savedAfterInvalid.weekdayRate).toBe(60); // still the old valid value
     });
   });
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { isValidRate } from '@/lib/utils/ratesUtils';
 
 const DEFAULTS = {
   weekdayRate: 50,
@@ -8,16 +9,29 @@ const DEFAULTS = {
 export interface SettingsState {
   weekdayRate: number;
   weekendRate: number;
-  setWeekdayRate: (rate: number) => void;
-  setWeekendRate: (rate: number) => void;
+  setWeekdayRate: (rate: number) => boolean;
+  setWeekendRate: (rate: number) => boolean;
   getDefaults: () => typeof DEFAULTS;
   reset: () => void;
 }
 
-// Validation helper - must match form validation constraints
-const isValidRate = (value: unknown): boolean => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  return typeof num === 'number' && !isNaN(num) && num >= 25 && num <= 200;
+/**
+ * Validates rate and provides logging for rejected values
+ *
+ * @param rate - The rate to validate
+ * @param type - The type of rate ('weekday' or 'weekend') for error messages
+ * @returns True if valid, false otherwise
+ *
+ * @remarks
+ * Logs a warning when a rate is rejected, helping developers identify
+ * invalid update attempts in their code.
+ */
+const validateAndLogRate = (rate: number, type: 'weekday' | 'weekend'): boolean => {
+  if (!isValidRate(rate)) {
+    console.warn(`Invalid ${type} rate: ${rate}. Rate must be between 25 and 200.`);
+    return false;
+  }
+  return true;
 };
 
 // Helper to load from localStorage with validation
@@ -69,17 +83,25 @@ export const getSettingsStore = create<SettingsState>((set, get) => {
     weekendRate: stored.weekendRate ?? DEFAULTS.weekendRate,
 
     setWeekdayRate: (rate: number) => {
+      if (!validateAndLogRate(rate, 'weekday')) {
+        return false;
+      }
       const current = get();
       const newState = { weekdayRate: rate, weekendRate: current.weekendRate };
       persistToStorage(newState);
       set(newState);
+      return true;
     },
 
     setWeekendRate: (rate: number) => {
+      if (!validateAndLogRate(rate, 'weekend')) {
+        return false;
+      }
       const current = get();
       const newState = { weekdayRate: current.weekdayRate, weekendRate: rate };
       persistToStorage(newState);
       set(newState);
+      return true;
     },
 
     getDefaults: () => DEFAULTS,

@@ -5,18 +5,31 @@ import { z } from 'zod';
 import { Box, Button, CircularProgress } from '@mui/material';
 import { RateInput } from './RateInput';
 import { PAYMENT_RATES } from '@/lib/constants';
+import { RATE_VALIDATION } from '@/lib/utils/ratesUtils';
 import * as styles from './SettingsForm.styles';
 
-// Zod validation schema
+// Zod validation schema - uses centralized validation constants
 const settingsFormSchema = z.object({
   weekdayRate: z
     .number()
-    .min(25, 'Rate must be between 25 and 200')
-    .max(200, 'Rate must be between 25 and 200'),
+    .min(
+      RATE_VALIDATION.MIN,
+      `Rate must be between ${RATE_VALIDATION.MIN} and ${RATE_VALIDATION.MAX}`
+    )
+    .max(
+      RATE_VALIDATION.MAX,
+      `Rate must be between ${RATE_VALIDATION.MIN} and ${RATE_VALIDATION.MAX}`
+    ),
   weekendRate: z
     .number()
-    .min(25, 'Rate must be between 25 and 200')
-    .max(200, 'Rate must be between 25 and 200'),
+    .min(
+      RATE_VALIDATION.MIN,
+      `Rate must be between ${RATE_VALIDATION.MIN} and ${RATE_VALIDATION.MAX}`
+    )
+    .max(
+      RATE_VALIDATION.MAX,
+      `Rate must be between ${RATE_VALIDATION.MIN} and ${RATE_VALIDATION.MAX}`
+    ),
 });
 
 export type SettingsFormData = z.infer<typeof settingsFormSchema>;
