@@ -15,7 +15,7 @@ export const GridContainer = styled(Box)({
  * Global styles for AG Grid cells - applied as a styled component
  * instead of dangerouslySetInnerHTML
  */
-export const GridStyleWrapper = styled(Box)(({ theme }) => ({
+export const GridStyleWrapper = styled(Box)({
   height: '100%',
   width: '100%',
   
@@ -26,4 +26,4 @@ export const GridStyleWrapper = styled(Box)(({ theme }) => ({
   '& .ag-header-cell': {
     borderRight: `1px solid var(--ag-border-color)`,
   },
-}));
+});
