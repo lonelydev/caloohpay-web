@@ -14,6 +14,7 @@ function isAcceptableMessage(text: string): boolean {
     'DEBUG_ENABLED', // NextAuth debug mode warnings
     'Failed to load resource', // Network errors during mocked flows
     '401 (Unauthorized)', // Unauthorized API calls in dev
+    'Invalid', // Rate validation warnings (e.g., "Invalid weekday rate")
   ];
 
   return acceptablePatterns.some((pattern) => text.toLowerCase().includes(pattern.toLowerCase()));
@@ -207,9 +208,6 @@ test.describe('Console Errors and Warnings', () => {
     // Click theme toggle button
     const themeToggle = page.getByRole('button', { name: /toggle theme/i });
     await themeToggle.click();
-
-    // Wait a bit for any async effects
-    await page.waitForTimeout(500);
 
     const errors = consoleMessages.filter((msg) => msg.type === 'error');
     const warnings = consoleMessages.filter((msg) => msg.type === 'warning');

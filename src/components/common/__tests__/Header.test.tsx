@@ -52,7 +52,20 @@ describe('Header', () => {
     expect(screen.getByText('Schedules')).toBeInTheDocument();
   });
 
-  it('should not show Schedules link when not authenticated', () => {
+  it('should show Settings in user menu when authenticated', () => {
+    mockUseSession(makeSession());
+
+    render(<Header />);
+
+    // Open the user menu
+    const accountButton = screen.getByLabelText(/account menu/i);
+    fireEvent.click(accountButton);
+
+    // Settings should be in the dropdown menu as a link
+    expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument();
+  });
+
+  it('should not show Schedules when not authenticated', () => {
     (useSession as jest.Mock).mockReturnValue({
       data: null,
       status: 'unauthenticated',
