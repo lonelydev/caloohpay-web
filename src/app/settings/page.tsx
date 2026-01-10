@@ -5,7 +5,7 @@ import { Container, Box, Typography, Alert, CircularProgress } from '@mui/materi
 import { Header, Footer } from '@/components/common';
 import { SettingsForm, type SettingsFormData } from '@/components/settings';
 import { useSettings } from '@/hooks';
-import { getSettingsStore } from '@/lib/stores';
+import { getSettingsStore, reloadSettingsFromStorage } from '@/lib/stores';
 import {
   containerStyles,
   headerSectionStyles,
@@ -21,6 +21,11 @@ export default function SettingsPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Ensure store is synced with localStorage on mount (for page reloads)
+  useEffect(() => {
+    reloadSettingsFromStorage();
+  }, []);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -38,8 +43,15 @@ export default function SettingsPage() {
       setError(null);
 
       // Update store with new values
-      getSettingsStore.getState().setWeekdayRate(data.weekdayRate);
-      getSettingsStore.getState().setWeekendRate(data.weekendRate);
+      const weekdaySuccess = getSettingsStore.getState().setWeekdayRate(data.weekdayRate);
+      const weekendSuccess = getSettingsStore.getState().setWeekendRate(data.weekendRate);
+
+      // Check if both updates succeeded
+      if (!weekdaySuccess || !weekendSuccess) {
+        setError('Failed to save one or more settings. Please check your input values.');
+        setIsLoading(false);
+        return;
+      }
 
       // Show success message
       setShowSuccess(true);

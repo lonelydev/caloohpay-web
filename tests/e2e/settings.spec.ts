@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 
+const SEEDED = process.env.ENABLE_TEST_SESSION_SEED === 'true';
+
 test.describe('Settings Page', () => {
+  test.skip(!SEEDED, 'Settings page requires authentication; only run in seeded mode.');
+
   test.beforeEach(async ({ page }) => {
     // Navigate to settings page (assumes authenticated session)
     await page.goto('/settings');

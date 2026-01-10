@@ -14,6 +14,7 @@ function isAcceptableMessage(text: string): boolean {
     'DEBUG_ENABLED', // NextAuth debug mode warnings
     'Failed to load resource', // Network errors during mocked flows
     '401 (Unauthorized)', // Unauthorized API calls in dev
+    'Invalid', // Rate validation warnings (e.g., "Invalid weekday rate")
   ];
 
   return acceptablePatterns.some((pattern) => text.toLowerCase().includes(pattern.toLowerCase()));
