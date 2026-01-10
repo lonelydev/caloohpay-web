@@ -41,11 +41,13 @@ export default function MultiSchedulePaymentPage() {
   const initializationRef = useRef(false);
 
   // Initialize month and load from localStorage only once on mount
+  // This effect synchronizes React state with external systems (localStorage)
   useEffect(() => {
     if (initializationRef.current) return;
     initializationRef.current = true;
 
     // Initialize month on client side to avoid hydration mismatch
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedMonth(DateTime.now().startOf('month'));
 
     // Load from local storage
@@ -73,7 +75,7 @@ export default function MultiSchedulePaymentPage() {
     setInitialLoading(false);
   }, []);
 
-  // Save to local storage
+  // Save to local storage - synchronizing React state to external system
   useEffect(() => {
     if (!initialLoading) {
       const ids = selectedSchedules.map((s) => s.id);
@@ -123,10 +125,12 @@ export default function MultiSchedulePaymentPage() {
     }
   );
 
-  // Hydrate selectedSchedules with metadata from report - using callback pattern
+  // Hydrate selectedSchedules with metadata from report
+  // This effect synchronizes React state with external API data
   useEffect(() => {
     if (!reportData?.reports) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedSchedules((prev) => {
       const newSchedules = [...prev];
       let changed = false;
