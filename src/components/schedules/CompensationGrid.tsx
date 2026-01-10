@@ -13,6 +13,7 @@ import {
 import { ScheduleCompensationReport } from '@/lib/types/multi-schedule';
 import { Box, Chip, useTheme } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { GridStyleWrapper } from './CompensationGrid.styles';
 
 // Register all community features
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -253,20 +254,7 @@ const CompensationGrid: React.FC<CompensationGridProps> = ({ reports }) => {
   }, [isDark]);
 
   return (
-    <Box sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            /* Force vertical borders for grid-line effect */
-            .ag-theme-quartz .ag-cell {
-                border-right: 1px solid var(--ag-border-color);
-            }
-            .ag-header-cell {
-                border-right: 1px solid var(--ag-border-color);
-            }
-        `,
-        }}
-      />
+    <GridStyleWrapper>
       <AgGridReact
         theme={gridTheme}
         rowData={rowData}
@@ -278,7 +266,7 @@ const CompensationGrid: React.FC<CompensationGridProps> = ({ reports }) => {
         rowHeight={48}
         animateRows={true}
       />
-    </Box>
+    </GridStyleWrapper>
   );
 };
 

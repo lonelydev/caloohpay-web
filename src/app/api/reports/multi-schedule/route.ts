@@ -10,7 +10,7 @@ import {
 import { User, PagerDutySchedule } from '@/lib/types';
 import { DateTime } from 'luxon';
 import { OnCallPeriod } from '@/lib/caloohpay';
-import { PAYMENT_RATES } from '@/lib/constants';
+import { getDefaultRates } from '@/lib/utils/ratesUtils';
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -98,10 +98,11 @@ export async function POST(req: NextRequest) {
       });
     });
 
-    const activeRates = rates || {
-      weekdayRate: PAYMENT_RATES.WEEKDAY,
-      weekendRate: PAYMENT_RATES.WEEKEND,
-    };
+    // Use rates from request body (provided by client via getCurrentRates())
+    // or fall back to default rates if not provided.
+    // Note: Server-side API routes cannot access client-side localStorage/Zustand,
+    // so rates must be passed in the request body from the client.
+    const activeRates = rates || getDefaultRates();
 
     Object.entries(userIntervals).forEach(([userId, intervals]) => {
       // Get all unique time points
@@ -116,53 +117,32 @@ export async function POST(req: NextRequest) {
       for (let i = 0; i < sortedPoints.length - 1; i++) {
         const segStart = DateTime.fromMillis(sortedPoints[i]);
         const segEnd = DateTime.fromMillis(sortedPoints[i + 1]);
-        const midPoint = segStart.plus({ milliseconds: 1 }); // Sample strictly inside
 
-        // Find active schedules for this segment
+        // Find active schedules for this segment by checking direct overlap
+        // We treat segments as [segStart, segEnd) and intervals as overlapping if:
+        // interval.start < segEnd && interval.end > segStart
         const activeSchedules = intervals.filter(
-          (interval) => interval.start <= midPoint && interval.end >= midPoint
+          (interval) => interval.start < segEnd && interval.end > segStart
         );
 
         if (activeSchedules.length > 0) {
-          // NOTE: OnCallPeriod requires JS Date
-          // We assume consistent timezone usage for simplicity here (or use UTC and rely on OnCallPeriod internals)
-          // Ideally use the Schedule's timezone, but with multiple schedules, they might differ.
-          // Caloohpay logic might be sensitive to timezone.
-          // We use the first schedule's timezone for calculation context or UTC?
-          // "Using Time-zone" is per schedule.
-          // If overlapping schedules have different timezones, "Weekday" is ambiguous.
-          // Requirement: "The admins must be able to see... Using Time-zone".
-          // Assumption: Payments are based on the schedule's local time? Or User's?
-          // Usually On-Call is "Local Time" of the schedule.
-          // If User is in Sched A (London 9am) and Sched B (NY 4am).
-          // This segment is 1 hour.
-          // We should calculate points *per schedule context*?
-          // But we need to divide by N.
-          // We calculate "Global Availability".
-          // Let's assume standardized calculation (e.g. UTC or primary schedule).
-          // For now, use the timezone of the FIRST active schedule for this segment.
-
-          const timezone = scheduleMetadata[activeSchedules[0].scheduleId].time_zone || 'UTC';
-          const period = new OnCallPeriod(segStart.toJSDate(), segEnd.toJSDate(), timezone);
-
-          // Attribution
-          // Note: OnCallPeriod returns "number of days" (float usually?).
-          // Checking caloohpay docs/code would confirm if it returns partial days (hours/24).
-          // "numberOfOohWeekDays" usually returns full days or float.
-          // Let's assume it returns float representing portion.
-
-          const weekdayContrib = period.numberOfOohWeekDays / activeSchedules.length;
-          const weekendContrib = period.numberOfOohWeekends / activeSchedules.length;
+          // NOTE: OnCallPeriod requires JS Date and timezone.
+          // We calculate weekday/weekend contribution per schedule, using each schedule's own timezone.
+          // This avoids ambiguity when overlapping schedules use different timezones.
+          // OnCallPeriod returns fractional "days" of OOH weekday/weekend time for the given interval.
 
           activeSchedules.forEach((active) => {
             const sId = active.scheduleId;
+            const timezone = scheduleMetadata[sId]?.time_zone || 'UTC';
+            const period = new OnCallPeriod(segStart.toJSDate(), segEnd.toJSDate(), timezone);
+
+            // Split the contribution evenly across all active schedules in this segment
+            const weekdayContrib = period.numberOfOohWeekDays / activeSchedules.length;
+            const weekendContrib = period.numberOfOohWeekends / activeSchedules.length;
+
             userCompResults[userId][sId].weekday += weekdayContrib;
             userCompResults[userId][sId].weekend += weekendContrib;
             userCompResults[userId][sId].userInfo = active.userInfo; // Capture info
-
-            // Flag overlap if N > 1?
-            // We want to know if *this employee* has overlap.
-            // We can mark it in the final object.
           });
         }
       }
