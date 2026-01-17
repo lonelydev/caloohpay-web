@@ -75,7 +75,7 @@ npm install
 
 This will install all required packages, including:
 
-- Next.js 14 (React framework)
+- Next.js 16 (React framework)
 - NextAuth.js v5 (Authentication)
 - Tailwind CSS (Styling)
 - Luxon (Date/time handling)
@@ -168,7 +168,7 @@ caloohpay-web/
 
 ### Key Directories
 
-- **`src/app/`**: Next.js 14 App Router pages and API routes
+- **`src/app/`**: Next.js 16 App Router pages and API routes
 - **`src/components/`**: Reusable React components
 - **`src/lib/`**: Business logic, calculations, and utilities
 - **`tests/e2e/`**: End-to-end tests with Playwright
@@ -347,7 +347,7 @@ const schedule: any = { ... };
 - Use functional components with hooks
 - Keep components small and focused
 - Extract reusable logic to custom hooks
-- Use Server Components by default (Next.js 14)
+- Use Server Components by default (Next.js 16)
 
 ```typescript
 // Server Component (default)

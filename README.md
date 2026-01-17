@@ -30,7 +30,7 @@ A modern web application that automates the calculation of out-of-hours (OOH) on
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 14](https://nextjs.org/) with App Router
+- **Framework**: [Next.js 16](https://nextjs.org/) with App Router
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **UI Library**: [Material UI v5](https://mui.com/)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)

@@ -1,5 +1,5 @@
 ---
-description: 'Custom instructions for CalOohPay Web - Next.js 14 TypeScript project with Material-UI, NextAuth.js, and PagerDuty integration'
+description: 'Custom instructions for CalOohPay Web - Next.js 16 TypeScript project with Material-UI, NextAuth.js, and PagerDuty integration'
 applyTo: '**/*.{ts,tsx,js,jsx,json,md}'
 ---
 
@@ -7,11 +7,11 @@ applyTo: '**/*.{ts,tsx,js,jsx,json,md}'
 
 ## Project Overview
 
-CalOohPay automates out-of-hours (OOH) on-call compensation calculations for PagerDuty schedules. Built with Next.js 14 (App Router), TypeScript, Material-UI, and NextAuth.js. The core payment calculation logic uses the official [caloohpay npm package](https://www.npmjs.com/package/caloohpay).
+CalOohPay automates out-of-hours (OOH) on-call compensation calculations for PagerDuty schedules. Built with Next.js 16 (App Router), TypeScript, Material-UI, and NextAuth.js. The core payment calculation logic uses the official [caloohpay npm package](https://www.npmjs.com/package/caloohpay).
 
 ### Technology Stack
 
-- **Framework**: Next.js 14 with App Router (React Server Components + Client Components)
+- **Framework**: Next.js 16 with App Router (React Server Components + Client Components)
 - **Language**: TypeScript 5.x with strict mode enabled
 - **UI Library**: Material-UI v7 (Emotion CSS-in-JS)
 - **Styling**: Tailwind CSS 4.x + MUI `sx` prop (no styled-components)
@@ -72,7 +72,7 @@ src/components/
     └── ErrorBoundary.tsx       # Error boundary
 ```
 
-### Next.js 14 App Router Conventions
+### Next.js 16 App Router Conventions
 
 - **Server Components (default)**: Use for pages, layouts, and data-fetching components
   - No client-side state, hooks, or event handlers

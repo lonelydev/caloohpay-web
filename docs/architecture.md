@@ -100,7 +100,7 @@ graph TB
 
 ### Core Framework
 
-- **Next.js 14**: React framework with App Router
+- **Next.js 16**: React framework with App Router
   - Server-side rendering (SSR)
   - API routes
   - File-based routing
@@ -143,7 +143,7 @@ graph TB
 
 ### Next.js App Router Structure
 
-CaloohPay uses Next.js 14's App Router architecture:
+CaloohPay uses Next.js 16's App Router architecture:
 
 ```console
 src/app/
@@ -892,7 +892,7 @@ test('user can view schedule list', async ({ page }) => {
 
 ## Design Decisions
 
-### 1. Next.js 14 App Router vs Pages Router
+### 1. Next.js 16 App Router vs Pages Router
 
 **Decision**: Use App Router
 
