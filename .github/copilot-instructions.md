@@ -1,8 +1,27 @@
+---
+description: 'Custom instructions for CalOohPay Web - Next.js 16 TypeScript project with Material-UI, NextAuth.js, and PagerDuty integration'
+applyTo: '**/*.{ts,tsx,js,jsx,json,md}'
+---
+
 # CalOohPay Web - AI Agent Instructions
 
 ## Project Overview
 
-CalOohPay automates out-of-hours (OOH) on-call compensation calculations for PagerDuty schedules. Built with Next.js 14 (App Router), TypeScript, Material-UI, and NextAuth.js. The core payment calculation logic uses the official [caloohpay npm package](https://www.npmjs.com/package/caloohpay).
+CalOohPay automates out-of-hours (OOH) on-call compensation calculations for PagerDuty schedules. Built with Next.js 16 (App Router), TypeScript, Material-UI, and NextAuth.js. The core payment calculation logic uses the official [caloohpay npm package](https://www.npmjs.com/package/caloohpay).
+
+### Technology Stack
+
+- **Framework**: Next.js 16 with App Router (React Server Components + Client Components)
+- **Language**: TypeScript 5.x with strict mode enabled
+- **UI Library**: Material-UI v7 (Emotion CSS-in-JS)
+- **Styling**: Tailwind CSS 4.x + MUI `sx` prop (no styled-components)
+- **Authentication**: NextAuth.js v4 with dual auth (OAuth 2.0 + API Token)
+- **State Management**: Zustand for client state, SWR for server state
+- **Forms**: React Hook Form v7 with Zod validation
+- **Date/Time**: Luxon (ISO8601, timezone-aware operations)
+- **API Integration**: PagerDuty API via `@pagerduty/pdjs` + Axios
+- **Testing**: Jest + React Testing Library (unit), Playwright (E2E)
+- **Code Quality**: ESLint, Prettier, Husky, commitlint
 
 **Current Branch**: `feat/multi-sched-payment-calculator` - Adding multi-schedule grid view for admin-level compensation reporting across multiple schedules. See [product-specs/multi-schedule-payment-calculation.md](product-specs/multi-schedule-payment-calculation.md) for feature requirements.
 
@@ -53,6 +72,68 @@ src/components/
     └── ErrorBoundary.tsx       # Error boundary
 ```
 
+### Next.js 16 App Router Conventions
+
+- **Server Components (default)**: Use for pages, layouts, and data-fetching components
+  - No client-side state, hooks, or event handlers
+  - Can directly access databases, secrets, and server-only APIs
+  - Automatically cached and streamed to client
+- **Client Components**: Mark with `'use client'` directive at top of file
+  - Required for: `useState`, `useEffect`, `useContext`, event handlers, browser APIs
+  - Examples: forms, interactive UI, authentication UI, theme toggles
+- **Route structure**: `src/app/[route]/page.tsx` for pages, `layout.tsx` for layouts
+- **API routes**: `src/app/api/[route]/route.ts` with named exports (`GET`, `POST`, etc.)
+- **Metadata**: Export `metadata` object or `generateMetadata()` for SEO
+- **Environment variables**:
+  - Server-only: Access directly in Server Components
+  - Client-side: Must use `NEXT_PUBLIC_` prefix
+- **Images**: Use `next/image` with `alt` text (required for accessibility)
+- **Links**: Use `next/link` for client-side navigation (never `<a>` for internal routes)
+
+### TypeScript Best Practices (Strict Mode)
+
+- **Never use `any`**: Use `unknown` and narrow with type guards
+- **Prefer interfaces over type aliases** for objects
+
+  ```typescript
+  // ✅ Good
+  interface UserSettings {
+    weekdayRate: number;
+    weekendRate: number;
+  }
+
+  // ❌ Avoid (except for unions, intersections)
+  type UserSettings = {
+    weekdayRate: number;
+  };
+  ```
+
+- **Use `as const` for constant objects** to infer literal types
+  ```typescript
+  export const ROUTES = {
+    HOME: '/',
+    SCHEDULES: '/schedules',
+  } as const;
+  ```
+- **Extend third-party types properly**:
+  - NextAuth: Extend in `src/types/next-auth.d.ts`
+  - Use declaration merging for module augmentation
+- **Type API responses explicitly**: Define interfaces in `src/lib/types/index.ts`
+- **Use generic constraints** when writing reusable utilities
+  ```typescript
+  function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+    return obj[key];
+  }
+  ```
+- **Prefer named exports** over default exports (easier to refactor, better for tree-shaking)
+- **Use discriminated unions** for complex state
+  ```typescript
+  type AsyncData<T> =
+    | { status: 'loading' }
+    | { status: 'error'; error: Error }
+    | { status: 'success'; data: T };
+  ```
+
 ### Progressive Search Pattern
 
 - **Instant local results**: Filter cached schedules client-side (0ms)
@@ -102,6 +183,32 @@ npm run type-check       # TypeScript validation (no emit)
 - **ESLint**: `npm run lint:fix` for auto-fixes
 - **Prettier**: `npm run format` (already runs in pre-commit)
 
+### Security Best Practices
+
+- **Never commit secrets**: Use environment variables for all sensitive data
+- **Environment variables**:
+  - Server-only secrets: Store without `NEXT_PUBLIC_` prefix (never exposed to client)
+  - Client-safe values: Use `NEXT_PUBLIC_` prefix only when needed in browser
+  - Generate secure secrets: `openssl rand -base64 32` for NEXTAUTH_SECRET
+- **API security**:
+  - Always validate auth tokens before API calls
+  - Use NextAuth session validation in API routes: `await getServerSession(authOptions)`
+  - Never expose PagerDuty tokens in client-side code
+  - Implement rate limiting for public endpoints
+- **Input validation**:
+  - Use Zod schemas to validate all user inputs
+  - Sanitize user input before rendering (React does this automatically for text)
+  - Validate API responses before using data
+- **XSS prevention**:
+  - Never use `dangerouslySetInnerHTML` without sanitization
+  - Use HTML entities for rendering user-generated content
+  - Material-UI components handle escaping automatically
+- **Authentication**:
+  - Protect routes with Next.js middleware ([middleware.ts](middleware.ts))
+  - Session tokens are httpOnly cookies (not accessible to client JS)
+  - Implement CSRF protection via NextAuth (built-in)
+- **Dependencies**: Run `npm audit` regularly, update vulnerable packages promptly
+
 ## Critical Integration Points
 
 ### PagerDuty API Client
@@ -135,25 +242,196 @@ npm run type-check       # TypeScript validation (no emit)
 - Timezone-aware: Store schedules in original timezone, display in user's TZ
 - Don't use native Date objects - Luxon handles DST and timezone shifts
 
+### Accessibility (A11y) Requirements
+
+All UI components must meet WCAG 2.1 Level AA standards:
+
+- **Semantic HTML**: Use proper HTML elements (`<button>`, `<nav>`, `<main>`, etc.)
+- **ARIA labels**: Add `aria-label` or `aria-labelledby` for icons and unlabeled interactive elements
+  ```typescript
+  <IconButton aria-label="Delete schedule">
+    <DeleteIcon />
+  </IconButton>
+  ```
+- **Form labels**: Always associate labels with inputs
+  ```typescript
+  <TextField label="Weekday Rate" id="weekday-rate" />
+  ```
+- **Keyboard navigation**:
+  - All interactive elements must be keyboard accessible (Tab, Enter, Space)
+  - Implement focus states for all interactive elements
+  - Use `onKeyDown` handlers where needed
+- **Focus management**:
+  - Visible focus indicators (Material-UI handles this by default)
+  - Trap focus in modals/dialogs
+  - Restore focus after closing modals
+- **Color contrast**: Ensure 4.5:1 ratio for text, 3:1 for UI components
+- **Alt text**: Required for all images (`<Image alt="..." />`)
+- **Heading hierarchy**: Use proper heading levels (h1 → h2 → h3), never skip levels
+- **Testing**: Include `jest-axe` tests for all new components
+
+  ```typescript
+  import { axe, toHaveNoViolations } from 'jest-axe';
+
+  it('should have no accessibility violations', async () => {
+    const { container } = render(<Component />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+  ```
+
 ### TypeScript Patterns
 
+- **Strict type checking**: All code must pass `npm run type-check` with zero errors
 - Use `as const` for constant objects ([src/lib/constants.ts](src/lib/constants.ts))
 - Type API responses explicitly ([src/lib/types/index.ts](src/lib/types/index.ts))
 - Extend NextAuth types in [src/types/next-auth.d.ts](src/types/next-auth.d.ts)
-- No `any` types - use `unknown` and narrow with type guards
+- **Never use `any` types** - use `unknown` and narrow with type guards
+
+  ```typescript
+  // ❌ Bad
+  const data: any = await response.json();
+
+  // ✅ Good
+  const data: unknown = await response.json();
+  if (isValidResponse(data)) {
+    // data is now narrowed to ValidResponse type
+  }
+  ```
+
+- **Prefer named exports** for better refactoring and tree-shaking
+- **Use type predicates** for runtime type guards
+  ```typescript
+  function isSchedule(value: unknown): value is Schedule {
+    return typeof value === 'object' && value !== null && 'id' in value;
+  }
+  ```
+- **Generic constraints** for reusable utilities
+  ```typescript
+  function mapById<T extends { id: string }>(items: T[]): Map<string, T> {
+    return new Map(items.map((item) => [item.id, item]));
+  }
+  ```
+
+### React Component Patterns
+
+- **Functional components only** - No class components
+- **Hooks Rules**:
+  - Only call hooks at the top level (never in conditionals, loops, or nested functions)
+  - Only call hooks from React functions (components or custom hooks)
+  - Custom hooks must start with `use` prefix
+- **Component file structure**:
+
+  ```typescript
+  'use client'; // Only if needed (useState, useEffect, event handlers)
+
+  import { useState } from 'react';
+  import { Box, Button } from '@mui/material';
+  import { containerStyles } from './Component.styles';
+
+  interface ComponentProps {
+    value: string;
+    onChange: (value: string) => void;
+  }
+
+  export function Component({ value, onChange }: ComponentProps) {
+    // Component logic
+  }
+  ```
+
+- **Prop types**: Always export interface for component props
+- **Event handlers**: Use `handle` prefix (e.g., `handleClick`, `handleChange`)
+- **Memoization**:
+  - Use `React.memo()` for components with stable props to prevent re-renders
+  - Use `useCallback()` for event handlers passed as props
+  - Use `useMemo()` for expensive computations
+- **Conditional rendering**: Prefer early returns over nested ternaries
+
+  ```typescript
+  // ✅ Good
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage error={error} />;
+  return <Content data={data} />;
+
+  // ❌ Avoid
+  return isLoading ? <LoadingSpinner /> : error ? <ErrorMessage /> : <Content />;
+  ```
+
+- **State management**:
+  - Local state: `useState` for component-specific state
+  - Global state: Zustand stores for shared state across components
+  - Server state: SWR hooks for API data with caching
+  - Form state: React Hook Form with Zod validation
 
 ### Material-UI Patterns
 
-- Use `sx` prop for styling (not styled-components)
+- **Use `sx` prop for styling** (not styled-components, except in `.styles.ts` files)
+
+  ```typescript
+  // ✅ Good - inline for simple styles
+  <Box sx={{ padding: 2, display: 'flex' }}>
+
+  // ✅ Good - extract to .styles.ts for complex styles
+  import { containerStyles } from './Component.styles';
+  <Box sx={containerStyles}>
+  ```
+
+- **Separate styles**: Extract complex styles to `Component.styles.ts` files
 - Theme context: [src/context/ThemeContext.tsx](src/context/ThemeContext.tsx)
 - Dark mode: Automatically switches based on system preference + manual toggle
-- Responsive: Use MUI breakpoints (`theme.breakpoints.down('sm')`)
+- **Responsive design**: Use MUI breakpoints
+  ```typescript
+  sx={{
+    width: { xs: '100%', sm: '80%', md: '60%' },
+    padding: { xs: 1, md: 2 },
+  }}
+  ```
+- **Accessibility**: Always include `aria-label` or visible labels for interactive elements
+- Use MUI icons from `@mui/icons-material`
 
 ### CSV Export
 
 - Located in [src/lib/utils/csvExport.ts](src/lib/utils/csvExport.ts)
 - Format: Date, User, Schedule, Weekday Hours, Weekend Hours, Total Payment
 - Compatible with Google Sheets and Excel
+
+### Error Handling
+
+- **API errors**: Always wrap API calls in try-catch blocks
+  ```typescript
+  try {
+    const response = await pagerdutyClient.get('/schedules');
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        // Redirect to login
+      } else if (error.response?.status === 429) {
+        // Rate limit exceeded
+      }
+    }
+    throw error; // Re-throw for upstream handling
+  }
+  ```
+- **User-facing errors**: Display friendly error messages
+
+  ```typescript
+  const [error, setError] = useState<string | null>(null);
+
+  // Show error to user
+  {error && <Alert severity="error">{error}</Alert>}
+  ```
+
+- **Error boundaries**: Use `ErrorBoundary` component for catching React errors
+- **Loading states**: Always show loading indicators for async operations
+  ```typescript
+  if (isLoading) return <CircularProgress />;
+  if (error) return <ErrorMessage error={error} />;
+  return <DataDisplay data={data} />;
+  ```
+- **Validation errors**: Display field-level errors with React Hook Form
+  ```typescript
+  {errors.email && <FormHelperText error>{errors.email.message}</FormHelperText>}
+  ```
 
 ### Payment Calculations
 
