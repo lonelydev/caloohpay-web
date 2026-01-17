@@ -15,6 +15,8 @@ function isAcceptableMessage(text: string): boolean {
     'Failed to load resource', // Network errors during mocked flows
     '401 (Unauthorized)', // Unauthorized API calls in dev
     'Invalid', // Rate validation warnings (e.g., "Invalid weekday rate")
+    'vercel-scripts.com', // Vercel analytics script loading failures (expected in dev/test)
+    'va.vercel-scripts.com', // Vercel analytics script loading failures (expected in dev/test)
   ];
 
   return acceptablePatterns.some((pattern) => text.toLowerCase().includes(pattern.toLowerCase()));
