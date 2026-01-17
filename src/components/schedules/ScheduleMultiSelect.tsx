@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Autocomplete, TextField, CircularProgress, Chip, Box, Typography } from '@mui/material';
 import { PagerDutySchedule } from '@/lib/types';
 import useSWR from 'swr';
@@ -20,7 +20,6 @@ export default function ScheduleMultiSelect({
 }: ScheduleMultiSelectProps) {
   const { data: session } = useSession();
   const [inputValue, setInputValue] = useState('');
-  const [options, setOptions] = useState<PagerDutySchedule[]>([]);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [open, setOpen] = useState(false);
 
@@ -38,33 +37,33 @@ export default function ScheduleMultiSelect({
     ([url, token]) => fetcher(url, token)
   );
 
-  useEffect(() => {
-    if (data?.schedules) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOptions(() => {
-        // Keep existing options if they are selected/valued
-        const selectedIds = new Set(value.map((v) => v.id));
-        const newOpts = [...value]; // Ensure selected are always in options
-
-        data.schedules.forEach((s: PagerDutySchedule) => {
-          if (!selectedIds.has(s.id)) {
-            newOpts.push(s);
-          }
-        });
-
-        // Deduplicate by ID
-        const uniqueOpts: PagerDutySchedule[] = [];
-        const seenIds = new Set();
-        newOpts.forEach((o) => {
-          if (!seenIds.has(o.id)) {
-            uniqueOpts.push(o);
-            seenIds.add(o.id);
-          }
-        });
-
-        return uniqueOpts;
-      });
+  // Derive options from data and value using useMemo instead of useEffect with setState
+  const options = useMemo(() => {
+    if (!data?.schedules) {
+      return value; // Return selected values as options when no search results
     }
+
+    // Keep existing options if they are selected/valued
+    const selectedIds = new Set(value.map((v) => v.id));
+    const newOpts = [...value]; // Ensure selected are always in options
+
+    data.schedules.forEach((s: PagerDutySchedule) => {
+      if (!selectedIds.has(s.id)) {
+        newOpts.push(s);
+      }
+    });
+
+    // Deduplicate by ID
+    const uniqueOpts: PagerDutySchedule[] = [];
+    const seenIds = new Set();
+    newOpts.forEach((o) => {
+      if (!seenIds.has(o.id)) {
+        uniqueOpts.push(o);
+        seenIds.add(o.id);
+      }
+    });
+
+    return uniqueOpts;
   }, [data, value]);
 
   return (

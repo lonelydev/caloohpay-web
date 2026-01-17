@@ -170,8 +170,9 @@ test.describe('Pagination Controls Stability', () => {
     const initialHeight = initialBox!.height;
 
     // Navigate to last page (likely fewer cards)
+    const responsePromise = page.waitForResponse((resp) => resp.url().includes('/api/schedules'));
     await page.getByRole('button', { name: /last/i }).first().click();
-    await page.waitForLoadState('networkidle');
+    await responsePromise;
 
     // Get grid height on last page
     const finalBox = await gridContainer.boundingBox();
@@ -193,20 +194,24 @@ test.describe('Pagination Controls Stability', () => {
     await expect(paginationStack).toBeVisible();
 
     // Navigate and check visibility
+    const responsePromise = page.waitForResponse((resp) => resp.url().includes('/api/schedules'));
     await page.getByRole('button', { name: /next/i }).first().click();
 
     // Should remain visible during loading
     await expect(paginationStack).toBeVisible();
 
     // Wait for load
-    await page.waitForLoadState('networkidle');
+    await responsePromise;
 
     // Should remain visible after load
     await expect(paginationStack).toBeVisible();
 
     // Navigate to last page
+    const lastResponsePromise = page.waitForResponse((resp) =>
+      resp.url().includes('/api/schedules')
+    );
     await page.getByRole('button', { name: /last/i }).first().click();
-    await page.waitForLoadState('networkidle');
+    await lastResponsePromise;
 
     // Should remain visible on last page
     await expect(paginationStack).toBeVisible();
@@ -225,8 +230,9 @@ test.describe('Pagination Controls Stability', () => {
     const firstHeight = firstCardBox!.height;
 
     // Navigate to another page
+    const responsePromise = page.waitForResponse((resp) => resp.url().includes('/api/schedules'));
     await page.getByRole('button', { name: /next/i }).first().click();
-    await page.waitForLoadState('networkidle');
+    await responsePromise;
 
     // Get first card dimensions on page 2
     const secondCard = page.locator('[role="article"]').first();
@@ -240,8 +246,11 @@ test.describe('Pagination Controls Stability', () => {
     expect(Math.abs(secondHeight - firstHeight)).toBeLessThanOrEqual(1);
 
     // Navigate to last page (might have fewer cards)
+    const lastResponsePromise = page.waitForResponse((resp) =>
+      resp.url().includes('/api/schedules')
+    );
     await page.getByRole('button', { name: /last/i }).first().click();
-    await page.waitForLoadState('networkidle');
+    await lastResponsePromise;
 
     // Get first card dimensions on last page
     const lastCard = page.locator('[role="article"]').first();

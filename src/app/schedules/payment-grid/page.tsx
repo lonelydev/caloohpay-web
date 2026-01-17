@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Container, Box, Button, Stack, Typography, Alert } from '@mui/material';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Container, Box, Button, Stack, Typography, Alert, Snackbar } from '@mui/material';
 import { Header, Footer, Loading, ErrorDisplay } from '@/components/common';
 import ScheduleMultiSelect from '@/components/schedules/ScheduleMultiSelect';
 import MonthNavigation from '@/components/schedules/MonthNavigation';
@@ -36,25 +36,26 @@ export default function MultiSchedulePaymentPage() {
   const [selectedMonth, setSelectedMonth] = useState<DateTime | null>(null);
   const [selectedSchedules, setSelectedSchedules] = useState<PagerDutySchedule[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const initializationRef = useRef(false);
 
-  // Initialize month on client side to avoid hydration mismatch
+  // Initialize month and load from localStorage only once on mount
+  // This effect synchronizes React state with external systems (localStorage)
   useEffect(() => {
+    if (initializationRef.current) return;
+    initializationRef.current = true;
+
+    // Initialize month on client side to avoid hydration mismatch
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedMonth(DateTime.now().startOf('month'));
-  }, []);
 
-  // Load from local storage
-  useEffect(() => {
+    // Load from local storage
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const ids = JSON.parse(stored);
         if (Array.isArray(ids) && ids.length > 0) {
-          // We initially only have IDs. proper objects will come from report or we need to hydrate.
-          // For UI consistency, we can temporarily show IDs or empty until report loads.
-          // Strategy: Report request will happen based on these IDs.
-          // We'll set a flag or temporary placeholders.
-
           const placeholders = ids.map(
             (id: string) =>
               ({
@@ -65,7 +66,6 @@ export default function MultiSchedulePaymentPage() {
                 final_schedule: { name: '', rendered_schedule_entries: [] },
               }) as PagerDutySchedule
           );
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setSelectedSchedules(placeholders);
         }
       }
@@ -75,7 +75,7 @@ export default function MultiSchedulePaymentPage() {
     setInitialLoading(false);
   }, []);
 
-  // Save to local storage
+  // Save to local storage - synchronizing React state to external system
   useEffect(() => {
     if (!initialLoading) {
       const ids = selectedSchedules.map((s) => s.id);
@@ -125,42 +125,40 @@ export default function MultiSchedulePaymentPage() {
     }
   );
 
-  // Hydrate selectedSchedules with metadata from report if available (corrects the "Loading..." names)
+  // Hydrate selectedSchedules with metadata from report
+  // This effect synchronizes React state with external API data
   useEffect(() => {
-    if (reportData?.reports) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedSchedules((prev) => {
-        // Check if we need to update any metadata
-        const newSchedules = [...prev];
-        let changed = false;
+    if (!reportData?.reports) return;
 
-        reportData.reports.forEach((r) => {
-          // Safety check for metadata
-          if (!r.metadata || !r.metadata.id) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedSchedules((prev) => {
+      const newSchedules = [...prev];
+      let changed = false;
 
-          const idx = newSchedules.findIndex((s) => s.id === r.metadata.id);
-          if (idx !== -1) {
-            if (
-              newSchedules[idx].name === 'Loading...' ||
-              newSchedules[idx].name !== r.metadata.name
-            ) {
-              newSchedules[idx] = {
-                ...newSchedules[idx],
-                name: r.metadata.name,
-                html_url: r.metadata.html_url,
-                time_zone: r.metadata.time_zone,
-              };
-              changed = true;
-            }
+      reportData.reports.forEach((r) => {
+        if (!r.metadata || !r.metadata.id) return;
+
+        const idx = newSchedules.findIndex((s) => s.id === r.metadata.id);
+        if (idx !== -1) {
+          if (
+            newSchedules[idx].name === 'Loading...' ||
+            newSchedules[idx].name !== r.metadata.name
+          ) {
+            newSchedules[idx] = {
+              ...newSchedules[idx],
+              name: r.metadata.name,
+              html_url: r.metadata.html_url,
+              time_zone: r.metadata.time_zone,
+            };
+            changed = true;
           }
-        });
-        return changed ? newSchedules : prev;
+        }
       });
-    }
+      return changed ? newSchedules : prev;
+    });
   }, [reportData]);
 
-  const handleCopy = () => {
-    // Very specific logic needed to construct CSV/Table string from all reports
+  const handleCopy = useCallback(() => {
     if (!reportData?.reports) return;
 
     let text = '';
@@ -173,10 +171,18 @@ export default function MultiSchedulePaymentPage() {
       text += `\n`;
     });
 
-    navigator.clipboard.writeText(text).then(() => {
-      alert('Copied to clipboard!'); // Replace with Toast if available
-    });
-  };
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setSnackbarMessage('Copied to clipboard!');
+        setSnackbarOpen(true);
+      })
+      .catch((error) => {
+        console.error('Failed to copy text to clipboard', error);
+        setSnackbarMessage('Failed to copy to clipboard');
+        setSnackbarOpen(true);
+      });
+  }, [reportData]);
 
   if (!selectedMonth) {
     return <Loading />;
@@ -254,6 +260,13 @@ export default function MultiSchedulePaymentPage() {
         )}
       </Container>
       <Footer />
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   );
 }

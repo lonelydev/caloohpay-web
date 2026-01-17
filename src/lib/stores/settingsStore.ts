@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { isValidRate } from '@/lib/utils/ratesUtils';
+import { isValidRate } from '@/lib/utils/validation';
 
 const DEFAULTS = {
   weekdayRate: 50,

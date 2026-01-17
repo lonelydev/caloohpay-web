@@ -90,20 +90,23 @@ export class PagerDutyClient {
     until: string,
     timezone?: string
   ): Promise<PagerDutySchedule[]> {
-    const promises = scheduleIds.map((scheduleId) =>
-      this.getSchedule(scheduleId, since, until, timezone)
-        .then((schedule) => ({ status: 'fulfilled' as const, value: schedule }))
-        .catch((error) => {
-          console.error(`Failed to fetch schedule ${scheduleId}:`, error);
-          return { status: 'rejected' as const, reason: error };
-        })
+    const results = await Promise.allSettled(
+      scheduleIds.map((scheduleId) =>
+        this.getSchedule(scheduleId, since, until, timezone)
+      )
     );
 
-    const results = await Promise.all(promises);
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to fetch schedule ${scheduleIds[index]}:`, result.reason);
+      }
+    });
 
     return results
       .filter(
-        (result): result is { status: 'fulfilled'; value: PagerDutySchedule } =>
+        (
+          result
+        ): result is PromiseFulfilledResult<PagerDutySchedule> =>
           result.status === 'fulfilled'
       )
       .map((result) => result.value);

@@ -115,12 +115,12 @@ describe('Multi-Schedule Report API', () => {
 
     // 1 hour overlapping.
     // OnCallPeriod Logic (mocked/real):
-    // 1 hour overlap on Thursday (Jan 1 2026). Weekday.
-    // `numberOfOohWeekDays` for 1 hour approx 1/24? Or usage of "OOH hours".
-    // The API uses `period.numberOfOohWeekDays`.
-    // If `OnCallPeriod` correctly calculates "0.0416" days.
-    // Then `weekdayContrib` = 0.0416 / 2 = 0.0208.
-    // Pay S1 = 0.0208 * 100 = 2.08.
+    // 1 hour overlap on Saturday (Jan 3 2026). Weekend.
+    // For 1 hour of OOH time, this is approximately 1/24 of a day (~0.0416 days).
+    // The overlapping OOH time is split evenly between the two schedules.
+    // Each schedule therefore gets about half of the OOH time (~0.0208 days).
+    // With the configured rates, that would give S1 around 2.08 in compensation.
+    // (Exact values may differ slightly due to rounding.)
 
     const emp1 = reportS1.employees[0];
     const emp2 = reportS2.employees[0];
