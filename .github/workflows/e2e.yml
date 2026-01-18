@@ -2,8 +2,30 @@ name: E2E Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+    paths:
+      - '**.ts'
+      - '**.tsx'
+      - '**.js'
+      - '**.jsx'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'playwright.config.ts'
+      - 'next.config.ts'
+      - 'tsconfig.json'
+      - '.github/workflows/e2e.yml'
   pull_request:
+    paths:
+      - '**.ts'
+      - '**.tsx'
+      - '**.js'
+      - '**.jsx'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'playwright.config.ts'
+      - 'next.config.ts'
+      - 'tsconfig.json'
+      - '.github/workflows/e2e.yml'
 
 jobs:
   seeded:
