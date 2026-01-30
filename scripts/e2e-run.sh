@@ -2,19 +2,20 @@
 set -euo pipefail
 
 # Shared E2E test runner - called by both seeded and unauth scripts
-# Usage: e2e-run.sh <seed-mode> <project1> <project2> <project3> [additional-args...]
+# Usage: e2e-run.sh <seed-mode> <project-args...> [additional-args...]
 #   seed-mode: "true" for seeded tests, "false" for unauth tests
-#   projects: three default project flags to use
+#   project-args: one or more --project flags (e.g., --project="chromium (seeded)")
+#   additional-args: any other playwright arguments
 
 SEED_MODE="$1"
 shift
 
-PROJECT1="$1"
-PROJECT2="$2"
-PROJECT3="$3"
-shift 3
-
-PROJECTS=("$PROJECT1" "$PROJECT2" "$PROJECT3")
+# Collect all --project arguments into PROJECTS array
+PROJECTS=()
+while [[ $# -gt 0 ]] && [[ "$1" == --project=* ]]; do
+  PROJECTS+=("$1")
+  shift
+done
 
 # Set environment variables
 export ENABLE_TEST_SESSION_SEED="$SEED_MODE"
@@ -41,12 +42,12 @@ done
 
 # Check if user specified custom projects or other flags
 if [[ "$@" == *"--project"* ]]; then
-  # User provided custom projects, use them as-is
+  # User provided additional custom projects, use them as-is
   npx playwright test "$@"
 elif [[ "$@" == *"--ui"* ]]; then
-  # UI mode with default projects (exclude --ui from arguments)
+  # UI mode with collected projects (exclude --ui from arguments)
   npx playwright test --ui "${PROJECTS[@]}" "${filtered_args[@]}"
 else
-  # Standard run with default projects
+  # Standard run with collected projects
   npx playwright test "${PROJECTS[@]}" "$@"
 fi
