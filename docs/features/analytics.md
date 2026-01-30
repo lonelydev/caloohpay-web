@@ -203,7 +203,7 @@ All components follow WCAG 2.1 Level AA standards:
 - ARIA labels where appropriate
 - Keyboard navigable (via MUI components)
 - Color contrast compliant
-- **Non-blocking modals** that don't obscure visualizations
+- **Accessible help dialogs** using MUI Dialog (focus-trapped with backdrop)
 
 ## Recent Enhancements
 
