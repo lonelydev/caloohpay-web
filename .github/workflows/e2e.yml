@@ -29,8 +29,12 @@ on:
 
 jobs:
   seeded:
-    name: Seeded E2E (auth)
+    name: Seeded E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,17 +51,16 @@ jobs:
             exit 1
           fi
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-      - name: Run Seeded E2E
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run Seeded E2E (${{ matrix.browser }})
         env:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-        run: |
-          ./scripts/e2e-seeded.sh
-      - name: Upload Playwright Report
+        run: ./scripts/e2e-seeded.sh ${{ matrix.browser }}
+      - name: Upload Playwright Report (${{ matrix.browser }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: seeded-playwright-report
+          name: seeded-playwright-report-${{ matrix.browser }}
           path: playwright-report
 
   unauth:

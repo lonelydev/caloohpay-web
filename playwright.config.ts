@@ -19,7 +19,7 @@ export default defineConfig({
   /* Global timeout: 5 minutes total per test file */
   globalTimeout: 5 * 60 * 1000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'list',
+  reporter: 'line',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -87,7 +87,7 @@ export default defineConfig({
     timeout: 120 * 1000, // 2 minute timeout for server startup
     // Suppress NextAuth JWT decryption warnings (expected in tests with mocked auth)
     stderr: 'pipe',
-    stdout: 'pipe',
+    stdout: 'ignore',
     // Pass through test-related environment variables to dev server
     env: {
       ENABLE_TEST_SESSION_SEED: process.env.ENABLE_TEST_SESSION_SEED || '',
