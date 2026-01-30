@@ -195,17 +195,26 @@ export class PagerDutyClient {
   /**
    * Fetches incidents for a schedule within a date range
    * Used for interruption correlation with time-to-resolve data
+   * 
+   * @param scheduleId - The schedule ID
+   * @param since - Start date (ISO 8601)
+   * @param until - End date (ISO 8601)
+   * @param userIds - Optional array of user IDs to filter incidents (if not provided, will fetch on-calls to derive user IDs)
    */
   async getIncidents(
     scheduleId: string,
     since: string,
-    until: string
+    until: string,
+    userIds?: string[]
   ): Promise<import('@/lib/types').Incident[]> {
-    // First, get all users who were on-call during this period
-    const oncalls = await this.getOnCalls(scheduleId, since, until);
-    const userIds = [...new Set(oncalls.map((oncall) => oncall.user.id))];
+    // If userIds not provided, get all users who were on-call during this period
+    let targetUserIds = userIds;
+    if (!targetUserIds || targetUserIds.length === 0) {
+      const oncalls = await this.getOnCalls(scheduleId, since, until);
+      targetUserIds = [...new Set(oncalls.map((oncall) => oncall.user.id))];
+    }
 
-    if (userIds.length === 0) {
+    if (targetUserIds.length === 0) {
       return [];
     }
 
@@ -218,7 +227,7 @@ export class PagerDutyClient {
     while (hasMore) {
       const response = await this.client.get('/incidents', {
         params: {
-          user_ids: userIds,
+          user_ids: targetUserIds,
           since,
           until,
           limit,
