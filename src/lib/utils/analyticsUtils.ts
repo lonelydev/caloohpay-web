@@ -36,7 +36,7 @@ export function buildFrequencyMatrix(
       const dayOfWeek = current.weekday % 7; // Convert to 0-6 (Sunday-Saturday)
       // Luxon's weekday: 1=Mon...7=Sun. %7 gives 1=Mon...0=Sun.
       // The current code assumes 0-6 is Sun-Sat based on getDayName implementation which usually expects 0=Sun.
-      // Let's stick to existing logic for dayOfWeek to avoid regression, assumming getDayName handles it.
+      // Let's stick to existing logic for dayOfWeek to avoid regression, assuming getDayName handles it.
 
       const hour = current.hour;
       const key = `${dayOfWeek}-${hour}`;
@@ -220,41 +220,41 @@ export function calculateInterruptionCorrelation(
   // Calculate interruption scores from incidents if provided
   if (incidents && incidents.length > 0) {
     incidents.forEach((incident) => {
-      // Find the user this incident was assigned to
-      const assignment = incident.assignments?.[0];
-      if (!assignment) return;
+      // Iterate through all assignments to credit all assignees
+      const assignments = incident.assignments || [];
+      
+      assignments.forEach((assignment) => {
+        const userId = assignment.assignee.id;
+        const userData = userDataMap.get(userId);
+        if (!userData) return;
 
-      const userId = assignment.assignee.id;
-      const userData = userDataMap.get(userId);
-      if (!userData) return;
+        // Calculate time to resolve in hours
+        if (incident.resolved_at && incident.created_at) {
+          const created = DateTime.fromISO(incident.created_at);
+          const resolved = DateTime.fromISO(incident.resolved_at);
+          const hoursToResolve = resolved.diff(created, 'hours').hours;
 
-      // Calculate time to resolve in hours
-      if (incident.resolved_at && incident.created_at) {
-        const created = DateTime.fromISO(incident.created_at);
-        const resolved = DateTime.fromISO(incident.resolved_at);
-        const hoursToResolve = resolved.diff(created, 'hours').hours;
+          // Apply interruption factor based on time to resolve
+          // Short incident (< 12 hours): factor 0.5 (half day interruption)
+          // Medium incident (12-24 hours): factor 1.0 (full day interruption)
+          // Long incident (24-72 hours): factor 2.0 (multiple day interruption)
+          // Very long incident (> 72 hours): factor 3.0 (severe interruption)
+          let interruptionFactor = 0.5; // Default for short incidents
+          if (hoursToResolve < 12) {
+            interruptionFactor = 0.5;
+          } else if (hoursToResolve <= 24) {
+            interruptionFactor = 1.0;
+          } else if (hoursToResolve <= 72) {
+            interruptionFactor = 2.0;
+          } else {
+            }
 
-        // Apply interruption factor based on time to resolve
-        // Short incident (< 12 hours): factor 0.5 (half day interruption)
-        // Medium incident (12-24 hours): factor 1.0 (full day interruption)
-        // Long incident (24-72 hours): factor 2.0 (multiple day interruption)
-        // Very long incident (> 72 hours): factor 3.0 (severe interruption)
-        let interruptionFactor;
-        if (hoursToResolve < 12) {
-          interruptionFactor = 0.5;
-        } else if (hoursToResolve <= 24) {
-          interruptionFactor = 1.0;
-        } else if (hoursToResolve <= 72) {
-          interruptionFactor = 2.0;
+          userData.interruptionScore += interruptionFactor;
         } else {
-          interruptionFactor = 3.0;
+          // If no resolved_at, count as 1 interruption
+          userData.interruptionScore += 1;
         }
-
-        userData.interruptionScore += interruptionFactor;
-      } else {
-        // If no resolved_at, count as 1 interruption
-        userData.interruptionScore += 1;
-      }
+      });
     });
   }
 

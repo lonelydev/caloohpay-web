@@ -39,6 +39,7 @@ export default function ScheduleAnalyticsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Default to last 6 months, but allow user customization
   const [dateRange, setDateRange] = useState(() => {
@@ -53,9 +54,7 @@ export default function ScheduleAnalyticsPage() {
   // Handle date range change from picker
   const handleDateRangeChange = useCallback((since: string, until: string) => {
     setDateRange({ since, until });
-    // Clear existing data to trigger refetch
-    setOncalls([]);
-    setIncidents([]);
+    setRefreshKey((prev) => prev + 1);
   }, []);
 
   // Fetch on-call data when date range changes
@@ -123,16 +122,12 @@ export default function ScheduleAnalyticsPage() {
       }
     };
 
-    // Only fetch if we don't already have data for this date range
-    if (oncalls.length === 0 && !isLoading) {
-      fetchAnalyticsData();
-    }
+    fetchAnalyticsData();
 
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.accessToken, scheduleId, dateRange.since, dateRange.until]);
+  }, [session?.accessToken, scheduleId, dateRange.since, dateRange.until, refreshKey]);
 
   // Transform data for visualizations
   const analyticsData = useMemo(() => {
@@ -218,10 +213,7 @@ export default function ScheduleAnalyticsPage() {
               variant="text"
               size="small"
               startIcon={<Refresh />}
-              onClick={() => {
-                setOncalls([]);
-                setIncidents([]);
-              }}
+              onClick={() => setRefreshKey((prev) => prev + 1)}
               disabled={isLoading}
             >
               Refresh

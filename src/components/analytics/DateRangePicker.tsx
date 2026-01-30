@@ -66,21 +66,25 @@ export function DateRangePicker({
       return;
     }
 
+    // Normalize to full-day range
+    const normalizedSince = sinceDate.startOf('day');
+    const normalizedUntil = untilDate.endOf('day');
+
     // Check if start date is within 2 years
-    if (sinceDate < twoYearsAgo) {
+    if (normalizedSince < twoYearsAgo) {
       setError('Start date cannot be more than 2 years in the past');
       return;
     }
 
     // Check if date range is within 1 year
-    const daysDiff = untilDate.diff(sinceDate, 'days').days;
+    const daysDiff = normalizedUntil.diff(normalizedSince, 'days').days;
     if (daysDiff > 365) {
       setError('Date range cannot exceed 1 year (365 days)');
       return;
     }
 
-    // Apply the date range
-    onDateRangeChange(sinceDate.toISO() || '', untilDate.toISO() || '');
+    // Apply the date range (full calendar days)
+    onDateRangeChange(normalizedSince.toISO() || '', normalizedUntil.toISO() || '');
     handleClose();
   };
 

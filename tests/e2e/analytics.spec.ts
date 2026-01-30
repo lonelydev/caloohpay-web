@@ -21,11 +21,7 @@ test.describe('Analytics Page E2E Tests', () => {
 
   test.beforeEach(async ({ page }) => {
     // Mock schedule detail API
-    await page.route('**/api/schedules/SCHED123*', async (route) => {
-      const url = new URL(route.request().url());
-      const since = url.searchParams.get('since');
-      const until = url.searchParams.get('until');
-
+    await page.route('**/api/schedules/SCHED123**', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -136,8 +132,8 @@ test.describe('Analytics Page E2E Tests', () => {
     await page.goto('/schedules/SCHED123/analytics');
     await page.waitForLoadState('networkidle');
 
-    // Wait for data to load
-    await page.waitForTimeout(1000);
+    // Wait for data to load by checking for chart visibility
+    await expect(page.getByRole('heading', { name: /rotation rhythm/i, level: 6 })).toBeVisible();
 
     // Click on Frequency Matrix tab
     await page.getByRole('tab', { name: /frequency matrix/i }).click();
