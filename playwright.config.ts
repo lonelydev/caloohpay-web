@@ -90,8 +90,8 @@ export default defineConfig({
     stdout: 'pipe',
     // Pass through test-related environment variables to dev server
     env: {
-      ENABLE_TEST_SESSION_SEED: process.env.ENABLE_TEST_SESSION_SEED,
-      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+      ENABLE_TEST_SESSION_SEED: process.env.ENABLE_TEST_SESSION_SEED || '',
+      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || '',
     },
   },
 });
