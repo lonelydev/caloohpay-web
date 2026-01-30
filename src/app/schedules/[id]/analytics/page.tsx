@@ -74,7 +74,8 @@ export default function ScheduleAnalyticsPage() {
       try {
         // Fetch schedule details to get name
         const scheduleResponse = await fetch(
-          `/api/schedules/${scheduleId}?since=${dateRange.since}&until=${dateRange.until}`
+          `/api/schedules/${scheduleId}?since=${dateRange.since}&until=${dateRange.until}`,
+          { credentials: 'include' }
         );
 
         if (!scheduleResponse.ok) {
@@ -89,10 +90,12 @@ export default function ScheduleAnalyticsPage() {
         // Fetch on-call data and incidents in parallel
         const [oncallsResponse, incidentsResponse] = await Promise.all([
           fetch(
-            `/api/analytics/oncalls?schedule_id=${scheduleId}&since=${dateRange.since}&until=${dateRange.until}`
+            `/api/analytics/oncalls?schedule_id=${scheduleId}&since=${dateRange.since}&until=${dateRange.until}`,
+            { credentials: 'include' }
           ),
           fetch(
-            `/api/analytics/incidents?schedule_id=${scheduleId}&since=${dateRange.since}&until=${dateRange.until}`
+            `/api/analytics/incidents?schedule_id=${scheduleId}&since=${dateRange.since}&until=${dateRange.until}`,
+            { credentials: 'include' }
           ).catch(() => null), // Gracefully handle if incidents API fails
         ]);
 
