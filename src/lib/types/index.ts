@@ -186,7 +186,7 @@ export interface ScheduleAnalytics {
     since: string;
     until: string;
   };
-  frequencyMatrix: Map<string, FrequencyMatrixCell>; // Key: `${userId}-${dayOfWeek}-${hour}`
+  frequencyMatrix: FrequencyMatrixCell[]; // Matches analytics page representation
   burdenDistribution: UserBurdenData[];
   interruptionCorrelation: UserInterruptionData[];
 }

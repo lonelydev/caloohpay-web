@@ -16,6 +16,7 @@ import {
   Typography,
   Box,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { Help, Close } from '@mui/icons-material';
 
 interface HelpModalProps {
@@ -23,7 +24,7 @@ interface HelpModalProps {
   description: string | React.ReactNode;
   howToRead?: string | React.ReactNode;
   value?: string | React.ReactNode;
-  iconButtonSx?: object;
+  iconButtonSx?: SxProps<Theme>;
 }
 
 export function HelpModal({ title, description, howToRead, value, iconButtonSx }: HelpModalProps) {

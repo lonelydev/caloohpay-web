@@ -1,5 +1,12 @@
 /**
  * API route for fetching incidents data from PagerDuty
+ * 
+ * Query Parameters:
+ * - schedule_id: The PagerDuty schedule ID
+ * - since: Start date (ISO 8601)
+ * - until: End date (ISO 8601)
+ * - user_ids: (Optional) Comma-separated list of user IDs to filter incidents.
+ *             Providing this avoids a duplicate getOnCalls API call.
  */
 
 import { NextResponse } from 'next/server';
@@ -22,6 +29,7 @@ export async function GET(request: Request) {
     const scheduleId = searchParams.get('schedule_id');
     const since = searchParams.get('since');
     const until = searchParams.get('until');
+    const userIdsParam = searchParams.get('user_ids'); // Optional: comma-separated user IDs
 
     if (!scheduleId || !since || !until) {
       return NextResponse.json(
@@ -48,8 +56,11 @@ export async function GET(request: Request) {
     // Create PagerDuty client
     const client = createPagerDutyClient(session.accessToken, session.authMethod);
 
-    // Fetch incidents for the schedule
-    const incidents = await client.getIncidents(scheduleId, cleanSince, cleanUntil);
+    // Parse user IDs if provided
+    const userIds = userIdsParam ? userIdsParam.split(',').map((id) => id.trim()) : undefined;
+
+    // Fetch incidents for the schedule (passing user IDs if provided to avoid duplicate oncalls fetch)
+    const incidents = await client.getIncidents(scheduleId, cleanSince, cleanUntil, userIds);
 
     return NextResponse.json({ incidents });
   } catch (error) {

@@ -102,9 +102,9 @@ function InterruptionVsPayComponent({ data }: InterruptionVsPayProps) {
                   offset={-40}
                 />
               </XAxis>
-              <YAxis type="number" dataKey="interruptions" name="Hours">
+              <YAxis type="number" dataKey="interruptions" name="Interruptions">
                 <Label
-                  value="On-Call Hours"
+                  value="Interruption Score"
                   angle={-90}
                   position="insideLeft"
                   style={{ textAnchor: 'middle' }}
@@ -119,7 +119,7 @@ function InterruptionVsPayComponent({ data }: InterruptionVsPayProps) {
                         <Typography variant="body2" fontWeight="bold">
                           {data.name}
                         </Typography>
-                        <Typography variant="body2">Hours: {data.interruptions}</Typography>
+                        <Typography variant="body2">Interruptions: {data.interruptions}</Typography>
                         <Typography variant="body2">
                           Pay: {PAYMENT_RATES.CURRENCY_SYMBOL}
                           {data.pay.toFixed(2)}
@@ -137,40 +137,59 @@ function InterruptionVsPayComponent({ data }: InterruptionVsPayProps) {
       )}
 
       {/* Summary statistics */}
-      {data.length > 0 && (
-        <Box sx={styles.summaryContainer}>
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Total Compensation
-            </Typography>
-            <Typography variant="h6">
-              {PAYMENT_RATES.CURRENCY_SYMBOL}
-              {data.reduce((sum, item) => sum + item.totalPay, 0).toFixed(2)}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Total Hours
-            </Typography>
-            <Typography variant="h6">
-              {data.reduce((sum, item) => sum + item.totalInterruptions, 0)}h
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Average Rate
-            </Typography>
-            <Typography variant="h6">
-              {PAYMENT_RATES.CURRENCY_SYMBOL}
-              {(
-                data.reduce((sum, item) => sum + item.totalPay, 0) /
-                data.reduce((sum, item) => sum + item.totalInterruptions, 1)
-              ).toFixed(2)}
-              /h
-            </Typography>
-          </Box>
-        </Box>
-      )}
+      {data.length > 0 &&
+        (() => {
+          const totalCompensation = data.reduce(
+            (sum, item) => sum + item.totalPay,
+            0,
+          );
+          const totalInterruptions = data.reduce(
+            (sum, item) => sum + item.totalInterruptions,
+            0,
+          );
+          const averageRate =
+            totalInterruptions > 0
+              ? totalCompensation / totalInterruptions
+              : null;
+
+          return (
+            <Box sx={styles.summaryContainer}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Total Compensation
+                </Typography>
+                <Typography variant="h6">
+                  {PAYMENT_RATES.CURRENCY_SYMBOL}
+                  {totalCompensation.toFixed(2)}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Total Interruptions
+                </Typography>
+                <Typography variant="h6">
+                  {totalInterruptions}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Average Rate
+                </Typography>
+                <Typography variant="h6">
+                  {averageRate !== null ? (
+                    <>
+                      {PAYMENT_RATES.CURRENCY_SYMBOL}
+                      {averageRate.toFixed(2)}
+                      /interruption
+                    </>
+                  ) : (
+                    'N/A'
+                  )}
+                </Typography>
+              </Box>
+            </Box>
+          );
+        })()}
     </Paper>
   );
 }

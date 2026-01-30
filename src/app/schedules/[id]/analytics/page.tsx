@@ -39,6 +39,7 @@ export default function ScheduleAnalyticsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Default to last 6 months, but allow user customization
   const [dateRange, setDateRange] = useState(() => {
@@ -53,9 +54,7 @@ export default function ScheduleAnalyticsPage() {
   // Handle date range change from picker
   const handleDateRangeChange = useCallback((since: string, until: string) => {
     setDateRange({ since, until });
-    // Clear existing data to trigger refetch
-    setOncalls([]);
-    setIncidents([]);
+    setRefreshKey((prev) => prev + 1);
   }, []);
 
   // Fetch on-call data when date range changes
@@ -87,17 +86,11 @@ export default function ScheduleAnalyticsPage() {
         if (!isMounted) return;
         setScheduleName(scheduleData.schedule?.name || 'Unknown Schedule');
 
-        // Fetch on-call data and incidents in parallel
-        const [oncallsResponse, incidentsResponse] = await Promise.all([
-          fetch(
-            `/api/analytics/oncalls?schedule_id=${scheduleId}&since=${dateRange.since}&until=${dateRange.until}`,
-            { credentials: 'include' }
-          ),
-          fetch(
-            `/api/analytics/incidents?schedule_id=${scheduleId}&since=${dateRange.since}&until=${dateRange.until}`,
-            { credentials: 'include' }
-          ).catch(() => null), // Gracefully handle if incidents API fails
-        ]);
+        // Fetch on-call data first
+        const oncallsResponse = await fetch(
+          `/api/analytics/oncalls?schedule_id=${scheduleId}&since=${dateRange.since}&until=${dateRange.until}`,
+          { credentials: 'include' }
+        );
 
         if (!isMounted) return;
 
@@ -106,12 +99,28 @@ export default function ScheduleAnalyticsPage() {
         }
 
         const oncallsData = await oncallsResponse.json();
-        setOncalls(oncallsData.oncalls || []);
+        const fetchedOncalls = oncallsData.oncalls || [];
+        setOncalls(fetchedOncalls);
 
-        // Set incidents if available
-        if (incidentsResponse && incidentsResponse.ok) {
-          const incidentsData = await incidentsResponse.json();
-          setIncidents(incidentsData.incidents || []);
+        // Extract user IDs from oncalls to avoid duplicate API call in incidents endpoint
+        const userIds = [...new Set(fetchedOncalls.map((oncall: OnCallEntry) => oncall.user.id))];
+
+        // Fetch incidents with user IDs (only if we have users)
+        if (userIds.length > 0) {
+          try {
+            const incidentsResponse = await fetch(
+              `/api/analytics/incidents?schedule_id=${scheduleId}&since=${dateRange.since}&until=${dateRange.until}&user_ids=${userIds.join(',')}`,
+              { credentials: 'include' }
+            );
+
+            if (incidentsResponse.ok) {
+              const incidentsData = await incidentsResponse.json();
+              setIncidents(incidentsData.incidents || []);
+            }
+          } catch (error) {
+            // Gracefully handle if incidents API fails
+            console.warn('Failed to fetch incidents:', error);
+          }
         }
       } catch (err) {
         if (!isMounted) return;
@@ -123,16 +132,12 @@ export default function ScheduleAnalyticsPage() {
       }
     };
 
-    // Only fetch if we don't already have data for this date range
-    if (oncalls.length === 0 && !isLoading) {
-      fetchAnalyticsData();
-    }
+    fetchAnalyticsData();
 
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.accessToken, scheduleId, dateRange.since, dateRange.until]);
+  }, [session?.accessToken, scheduleId, dateRange.since, dateRange.until, refreshKey]);
 
   // Transform data for visualizations
   const analyticsData = useMemo(() => {
@@ -218,10 +223,7 @@ export default function ScheduleAnalyticsPage() {
               variant="text"
               size="small"
               startIcon={<Refresh />}
-              onClick={() => {
-                setOncalls([]);
-                setIncidents([]);
-              }}
+              onClick={() => setRefreshKey((prev) => prev + 1)}
               disabled={isLoading}
             >
               Refresh

@@ -47,12 +47,12 @@ export async function GET(request: Request) {
     }
 
     const MAX_RANGE_DAYS = 90;
-    const MAX_SEGMENTS = 5; // allow up to ~1 year (cover 366 days comfortably)
+    const MAX_SEGMENTS = 4; // allow up to ~1 year (4 x 90-day windows ≈ 360 days)
     const totalDays = end.diff(start, 'days').days;
 
     if (totalDays > MAX_RANGE_DAYS * MAX_SEGMENTS) {
       return NextResponse.json(
-        { error: 'Date range too large. Limit to ~1 year (4 x 90-day windows).' },
+        { error: 'Date range too large. Limit to ~1 year (4 x 90-day windows; ~360 days).' },
         { status: 400 }
       );
     }
