@@ -247,7 +247,8 @@ export function calculateInterruptionCorrelation(
           } else if (hoursToResolve <= 72) {
             interruptionFactor = 2.0;
           } else {
-            }
+            interruptionFactor = 3.0;
+          }
 
           userData.interruptionScore += interruptionFactor;
         } else {
