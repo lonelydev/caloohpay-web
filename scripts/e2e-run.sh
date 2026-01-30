@@ -19,7 +19,16 @@ PROJECTS=("$PROJECT1" "$PROJECT2" "$PROJECT3")
 # Set environment variables
 export ENABLE_TEST_SESSION_SEED="$SEED_MODE"
 if [ "$SEED_MODE" = "true" ]; then
-  export NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-dev-e2e-secret}
+  # If NEXTAUTH_SECRET is not set, try to read from .env.local
+  if [ -z "${NEXTAUTH_SECRET:-}" ] && [ -f ".env.local" ]; then
+    # Extract NEXTAUTH_SECRET from .env.local (properly handle quotes and special chars)
+    NEXTAUTH_SECRET=$(grep -E "^NEXTAUTH_SECRET=" .env.local | head -n 1 | cut -d'=' -f2- | sed 's/^["'\'']//' | sed 's/["'\'']$//')
+    export NEXTAUTH_SECRET
+  fi
+  # Fallback to default if still not set
+  if [ -z "${NEXTAUTH_SECRET:-}" ]; then
+    export NEXTAUTH_SECRET="dev-e2e-secret"
+  fi
 fi
 
 # Filter out --ui from arguments (portable across all shells)

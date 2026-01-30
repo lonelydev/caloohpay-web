@@ -20,24 +20,6 @@ test.describe('Analytics Page E2E Tests', () => {
   test.skip(!SEEDED, 'Skipped in unauthenticated E2E projects.');
 
   test.beforeEach(async ({ page }) => {
-    // Mock authentication session
-    await page.route('**/api/auth/session', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          user: {
-            id: 'test-user',
-            email: 'test@example.com',
-            name: 'Test User',
-          },
-          accessToken: 'mock-token',
-          authMethod: 'oauth',
-          expires: new Date(Date.now() + 86400000).toISOString(),
-        }),
-      });
-    });
-
     // Mock schedule detail API
     await page.route('**/api/schedules/SCHED123', async (route) => {
       const url = new URL(route.request().url());
