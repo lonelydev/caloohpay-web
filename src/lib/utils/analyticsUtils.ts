@@ -239,7 +239,7 @@ export function calculateInterruptionCorrelation(
         // Medium incident (12-24 hours): factor 1.0 (full day interruption)
         // Long incident (24-72 hours): factor 2.0 (multiple day interruption)
         // Very long incident (> 72 hours): factor 3.0 (severe interruption)
-        let interruptionFactor = 1.0;
+        let interruptionFactor;
         if (hoursToResolve < 12) {
           interruptionFactor = 0.5;
         } else if (hoursToResolve <= 24) {
