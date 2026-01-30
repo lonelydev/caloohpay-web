@@ -19,7 +19,10 @@ export default defineConfig({
   /* Global timeout: 5 minutes total per test file */
   globalTimeout: 5 * 60 * 1000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'line',
+  reporter: [
+    ['html', { open: 'never' }], // Generate HTML report for CI artifacts (never auto-open)
+    ['line'], // Console output for CI logs
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
