@@ -31,6 +31,7 @@ jobs:
   seeded:
     name: Seeded E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
+    environment: CI
     strategy:
       matrix:
         browser: [chromium, firefox, webkit]
