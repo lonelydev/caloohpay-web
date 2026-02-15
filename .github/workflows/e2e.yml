@@ -31,6 +31,7 @@ jobs:
   seeded:
     name: Seeded E2E (auth)
     runs-on: ubuntu-latest
+    environment: CI
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
