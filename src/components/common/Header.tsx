@@ -1,13 +1,15 @@
 'use client';
 
 import React from 'react';
-import { AppBar, Box, Container, Toolbar, useScrollTrigger } from '@mui/material';
+import { AppBar, Box, Button, Container, Toolbar, useScrollTrigger } from '@mui/material';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import { Logo } from './Logo';
 import { NavigationLinks } from './NavigationLinks';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { spacerStyles, navigationStyles } from './Header.styles';
+import { ROUTES } from '@/lib/constants';
 
 interface HeaderProps {
   elevation?: number;
@@ -37,6 +39,10 @@ export function Header({ elevation }: HeaderProps) {
         <Container maxWidth="lg">
           <Toolbar disableGutters>
             <Logo />
+
+            <Button color="inherit" component={Link} href={ROUTES.FEATURES} sx={{ ml: 2 }}>
+              Find out More
+            </Button>
 
             <Box sx={spacerStyles} />
 
