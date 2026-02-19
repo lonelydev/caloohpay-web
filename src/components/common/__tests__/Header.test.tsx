@@ -45,6 +45,25 @@ describe('Header', () => {
     expect(screen.getByText('CalOohPay')).toBeInTheDocument();
   });
 
+  it('should show Find out More link regardless of auth state', () => {
+    (useSession as jest.Mock).mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
+
+    render(<Header />);
+    const link = screen.getByRole('link', { name: /find out more/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/features');
+  });
+
+  it('should also show Find out More link when authenticated', () => {
+    mockUseSession(makeSession());
+
+    render(<Header />);
+    expect(screen.getByRole('link', { name: /find out more/i })).toBeInTheDocument();
+  });
+
   it('should show Schedules link when authenticated', () => {
     mockUseSession(makeSession());
 
