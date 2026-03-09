@@ -434,9 +434,9 @@ Contributors will be:
 
 ## 📞 Contact
 
-- **Project Maintainer**: [Your Name](mailto:your.email@example.com)
-- **Issue Tracker**: [GitHub Issues](https://github.com/yourusername/caloohpay-web/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/caloohpay-web/discussions)
+- **Project Maintainer**: [@lonelydev](https://github.com/lonelydev)
+- **Issue Tracker**: [GitHub Issues](https://github.com/lonelydev/caloohpay-web/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/lonelydev/caloohpay-web/discussions)
 
 ---
 
