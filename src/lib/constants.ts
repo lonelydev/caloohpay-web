@@ -101,6 +101,7 @@ export const ROUTES = {
   SCHEDULE_ANALYTICS: (id: string) => `/schedules/${id}/analytics`,
   PAYMENTS: '/payments',
   SETTINGS: '/settings',
+  FEATURES: '/features',
   DOCUMENTATION: 'https://github.com/lonelydev/caloohpay',
 } as const;
 
