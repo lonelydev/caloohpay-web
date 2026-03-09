@@ -29,7 +29,7 @@ describe('Footer', () => {
     render(<Footer />);
     const githubLink = screen.getByRole('link', { name: /source code/i });
     expect(githubLink).toBeInTheDocument();
-    expect(githubLink).toHaveAttribute('href');
+    expect(githubLink).toHaveAttribute('href', 'https://github.com/lonelydev/caloohpay-web');
   });
 
   it('should have proper semantic structure', () => {

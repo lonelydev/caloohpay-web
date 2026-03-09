@@ -49,7 +49,7 @@ A modern web application that automates the calculation of out-of-hours (OOH) on
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/caloohpay-web.git
+git clone https://github.com/lonelydev/caloohpay-web.git
 cd caloohpay-web
 ```
 
@@ -259,8 +259,8 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 If you encounter any issues or have questions:
 
 1. Check the [documentation](./docs/)
-2. Search [existing issues](https://github.com/yourusername/caloohpay-web/issues)
-3. Create a [new issue](https://github.com/yourusername/caloohpay-web/issues/new)
+2. Search [existing issues](https://github.com/lonelydev/caloohpay-web/issues)
+3. Create a [new issue](https://github.com/lonelydev/caloohpay-web/issues/new)
 
 ## 🗺️ Roadmap
 

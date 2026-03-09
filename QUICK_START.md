@@ -211,7 +211,7 @@ npm run type-check
 - 📖 Check the full [README.md](./README.md)
 - 📝 Read the [CONTRIBUTING.md](./CONTRIBUTING.md) guide
 - 📋 Review the [PROJECT_PLAN.md](./PROJECT_PLAN.md)
-- 🐛 Open an [issue](https://github.com/yourusername/caloohpay-web/issues)
+- 🐛 Open an [issue](https://github.com/lonelydev/caloohpay-web/issues)
 
 ## What's Next?
 

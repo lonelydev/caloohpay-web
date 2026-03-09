@@ -135,7 +135,7 @@ export const APP_METADATA = {
   NAME: 'CalOohPay Web',
   VERSION: '0.1.0',
   DESCRIPTION: 'Calculate out-of-hours on-call compensation',
-  REPOSITORY: 'https://github.com/yourusername/caloohpay-web',
+  REPOSITORY: 'https://github.com/lonelydev/caloohpay-web',
 } as const;
 
 /**
