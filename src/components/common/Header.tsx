@@ -40,10 +40,6 @@ export function Header({ elevation }: HeaderProps) {
           <Toolbar disableGutters>
             <Logo />
 
-            <Button color="inherit" component={Link} href={ROUTES.FEATURES} sx={{ ml: 2 }}>
-              Find out More
-            </Button>
-
             <Box sx={spacerStyles} />
 
             <Box sx={navigationStyles}>
