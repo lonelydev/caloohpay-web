@@ -270,6 +270,161 @@ describe('calendarUtils', () => {
       expect(events[0].title).toBe('John Doe');
       expect(events[1].title).toBe('Jane Smith');
     });
+
+    describe('Color Assignment', () => {
+      it('should assign backgroundColor, borderColor, and textColor to events', () => {
+        const entries: ScheduleEntry[] = [
+          {
+            start: '2024-01-01T17:00:00Z',
+            end: '2024-01-02T09:00:00Z',
+            user: mockUser,
+          },
+        ];
+
+        const events = transformToCalendarEvents(entries, timezone);
+
+        expect(events[0]).toHaveProperty('backgroundColor');
+        expect(events[0]).toHaveProperty('borderColor');
+        expect(events[0]).toHaveProperty('textColor');
+        expect(typeof events[0].backgroundColor).toBe('string');
+        expect(typeof events[0].borderColor).toBe('string');
+        expect(typeof events[0].textColor).toBe('string');
+      });
+
+      it('should assign consistent colors to the same user across multiple events', () => {
+        const entries: ScheduleEntry[] = [
+          {
+            start: '2024-01-01T17:00:00Z',
+            end: '2024-01-02T09:00:00Z',
+            user: mockUser,
+          },
+          {
+            start: '2024-01-08T17:00:00Z',
+            end: '2024-01-09T09:00:00Z',
+            user: mockUser,
+          },
+        ];
+
+        const events = transformToCalendarEvents(entries, timezone);
+
+        expect(events[0].backgroundColor).toBe(events[1].backgroundColor);
+        expect(events[0].borderColor).toBe(events[1].borderColor);
+        expect(events[0].textColor).toBe(events[1].textColor);
+      });
+
+      it('should assign different colors to different users', () => {
+        const entries: ScheduleEntry[] = [
+          {
+            start: '2024-01-01T17:00:00Z',
+            end: '2024-01-02T09:00:00Z',
+            user: mockUser,
+          },
+          {
+            start: '2024-01-03T17:00:00Z',
+            end: '2024-01-04T09:00:00Z',
+            user: mockUser2,
+          },
+        ];
+
+        const events = transformToCalendarEvents(entries, timezone);
+
+        const color1 = {
+          bg: events[0].backgroundColor,
+          border: events[0].borderColor,
+          text: events[0].textColor,
+        };
+        const color2 = {
+          bg: events[1].backgroundColor,
+          border: events[1].borderColor,
+          text: events[1].textColor,
+        };
+
+        expect(color1).not.toEqual(color2);
+      });
+
+      it('should use valid hex color format', () => {
+        const entries: ScheduleEntry[] = [
+          {
+            start: '2024-01-01T17:00:00Z',
+            end: '2024-01-02T09:00:00Z',
+            user: mockUser,
+          },
+        ];
+
+        const events = transformToCalendarEvents(entries, timezone);
+        const hexColorRegex = /^#[0-9A-F]{6}$/i;
+
+        expect(events[0].backgroundColor).toMatch(hexColorRegex);
+        expect(events[0].borderColor).toMatch(hexColorRegex);
+        expect(events[0].textColor).toMatch(hexColorRegex);
+      });
+
+      it('should handle users without email by falling back to user ID', () => {
+        const userWithoutEmail: User = {
+          id: 'user-no-email',
+          summary: 'No Email User',
+          name: 'No Email User',
+        };
+
+        const entries: ScheduleEntry[] = [
+          {
+            start: '2024-01-01T17:00:00Z',
+            end: '2024-01-02T09:00:00Z',
+            user: userWithoutEmail,
+          },
+        ];
+
+        const events = transformToCalendarEvents(entries, timezone);
+
+        expect(events[0].backgroundColor).toBeDefined();
+        expect(events[0].borderColor).toBeDefined();
+        expect(events[0].textColor).toBeDefined();
+      });
+
+      it('should assign different colors to different users even when they have no email', () => {
+        // This test specifically catches the bug where sanitizeUserInput returns 'Unknown'
+        // for undefined emails, causing all users without emails to get the same color
+        const user1NoEmail: User = {
+          id: 'user-alice-123',
+          summary: 'Alice',
+          name: 'Alice',
+        };
+
+        const user2NoEmail: User = {
+          id: 'user-bob-456',
+          summary: 'Bob',
+          name: 'Bob',
+        };
+
+        const entries: ScheduleEntry[] = [
+          {
+            start: '2024-01-01T17:00:00Z',
+            end: '2024-01-02T09:00:00Z',
+            user: user1NoEmail,
+          },
+          {
+            start: '2024-01-03T17:00:00Z',
+            end: '2024-01-04T09:00:00Z',
+            user: user2NoEmail,
+          },
+        ];
+
+        const events = transformToCalendarEvents(entries, timezone);
+
+        // Both events should have colors
+        expect(events[0].backgroundColor).toBeDefined();
+        expect(events[1].backgroundColor).toBeDefined();
+
+        const color1Hash = `${events[0].backgroundColor}-${events[0].borderColor}-${events[0].textColor}`;
+        const color2Hash = `${events[1].backgroundColor}-${events[1].borderColor}-${events[1].textColor}`;
+
+        expect(color1Hash).not.toBe(color2Hash);
+
+        const hexColorRegex = /^#[0-9A-F]{6}$/i;
+        expect(events[0].backgroundColor).toMatch(hexColorRegex);
+        expect(events[1].backgroundColor).toMatch(hexColorRegex);
+      });
+    });
   });
 
   describe('groupEventsByUser', () => {

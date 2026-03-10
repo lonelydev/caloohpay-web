@@ -8,15 +8,19 @@ import type { ScheduleEntry, User } from '@/lib/types';
 import he from 'he';
 import { sanitizeUrl } from './urlSanitization';
 import { getCurrentRates } from './ratesUtils';
+import { assignUniqueColours, USER_COLOR_PALETTE } from './userColourAssignment';
 
 /**
- * Extended calendar event with payment details
+ * Extended calendar event with payment details and user-specific colors
  */
 export interface CalendarEvent {
   id: string;
   title: string;
   start: string; // ISO8601 string
   end: string; // ISO8601 string
+  backgroundColor?: string; // User-specific pastel color
+  borderColor?: string; // Border color matching background
+  textColor?: string; // Text color for readability
   extendedProps: {
     user: User;
     duration: number;
@@ -79,9 +83,25 @@ export function transformToCalendarEvents(
   if (!Array.isArray(entries)) {
     throw new Error('Entries must be an array');
   }
+
   // Calculate payments using caloohpay with user-customized rates
   const rates = getCurrentRates();
   const calculator = new OnCallPaymentsCalculator(rates.weekdayRate, rates.weekendRate);
+
+  // First pass: collect all unique user identifiers to assign collision-free colors
+  const userIdentifiers = new Set<string>();
+  for (const entry of entries) {
+    if (entry && entry.user) {
+      // Prefer email for consistency, fall back to ID
+      const identifier = entry.user.email || entry.user.id;
+      if (identifier) {
+        userIdentifiers.add(identifier);
+      }
+    }
+  }
+
+  // Create a color map ensuring no two users in this calendar view get the same color
+  const userColorMap = assignUniqueColours(Array.from(userIdentifiers));
 
   return entries
     .filter((entry) => {
@@ -117,6 +137,10 @@ export function transformToCalendarEvents(
       ]);
       const compensation = calculator.calculateOnCallPayment(onCallUser);
 
+      // Get color from the collision-free map
+      const userIdentifier = entry.user.email || entry.user.id;
+      const userColor = userColorMap.get(userIdentifier) || USER_COLOR_PALETTE[0];
+
       // Sanitize user data to prevent XSS
       const userName = sanitizeUserInput(entry.user.name || entry.user.summary);
       const userSummary = sanitizeUserInput(entry.user.summary);
@@ -130,6 +154,9 @@ export function transformToCalendarEvents(
         title: userName,
         start: startISO,
         end: endISO,
+        backgroundColor: userColor.background,
+        borderColor: userColor.border,
+        textColor: userColor.textColor,
         extendedProps: {
           user: {
             id: userId,

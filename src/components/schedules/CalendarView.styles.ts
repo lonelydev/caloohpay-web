@@ -83,18 +83,22 @@ export const getCalendarStyles = (theme: Theme): SxProps<Theme> => ({
     borderColor: theme.palette.divider,
   },
   '& .fc-event': {
-    backgroundColor: theme.palette.primary.main,
-    borderColor: theme.palette.primary.dark,
+    // Colours are set per-event via backgroundColor/borderColor props
+    // No default background color - each event gets user-specific pastel color
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     '&:hover': {
-      backgroundColor: theme.palette.primary.dark,
+      opacity: 0.85,
       transform: 'scale(1.02)',
     },
   },
   '& .fc-daygrid-event': {
     padding: '2px 4px',
     fontSize: '0.85rem',
+  },
+  '& .fc-event-title': {
+    fontWeight: 600,
+    // Text color is set per-event via textColor prop for optimal readability
   },
   '& .fc-button': {
     textTransform: 'none',

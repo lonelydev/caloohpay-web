@@ -19,6 +19,11 @@ jest.mock('@fullcalendar/react', () => {
             <button
               key={event.id}
               data-testid={`event-${event.id}`}
+              style={{
+                backgroundColor: event.backgroundColor,
+                borderColor: event.borderColor,
+                color: event.textColor,
+              }}
               onClick={() => {
                 eventClick?.({
                   event: { id: event.id },
@@ -340,5 +345,167 @@ describe('CalendarView', () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
     expect(screen.getByTestId('mock-fullcalendar')).toBeInTheDocument();
+  });
+
+  describe('User Color Rendering', () => {
+    it('should render events with backgroundColor, borderColor, and textColor properties', () => {
+      const eventsWithColours: CalendarEvent[] = [
+        {
+          id: 'colored-event-1',
+          title: 'John Doe',
+          start: '2024-01-01T17:00:00Z',
+          end: '2024-01-02T09:00:00Z',
+          backgroundColor: '#90CAF9',
+          borderColor: '#64B5F6',
+          textColor: '#0D47A1',
+          extendedProps: {
+            user: {
+              id: 'user-1',
+              summary: 'John Doe',
+              name: 'John Doe',
+              email: 'john@example.com',
+            },
+            duration: 16,
+            weekdayDays: 1,
+            weekendDays: 0,
+            compensation: 50,
+          },
+        },
+      ];
+
+      renderWithTheme(<CalendarView {...defaultProps} events={eventsWithColours} />);
+
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      const eventButton = screen.getByTestId('event-colored-event-1');
+      expect(eventButton).toHaveStyle('background-color: rgb(144, 202, 249)');
+      expect(eventButton).toHaveStyle('border-color: rgb(100, 181, 246)');
+      expect(eventButton).toHaveStyle('color: rgb(13, 71, 161)');
+    });
+
+    it('should handle multiple events with different user colors', () => {
+      const eventsWithDifferentColours: CalendarEvent[] = [
+        {
+          id: 'colored-event-1',
+          title: 'John Doe',
+          start: '2024-01-01T17:00:00Z',
+          end: '2024-01-02T09:00:00Z',
+          backgroundColor: '#90CAF9',
+          borderColor: '#64B5F6',
+          textColor: '#0D47A1',
+          extendedProps: {
+            user: {
+              id: 'user-1',
+              summary: 'John Doe',
+              name: 'John Doe',
+              email: 'john@example.com',
+            },
+            duration: 16,
+            weekdayDays: 1,
+            weekendDays: 0,
+            compensation: 50,
+          },
+        },
+        {
+          id: 'colored-event-2',
+          title: 'Jane Smith',
+          start: '2024-01-03T17:00:00Z',
+          end: '2024-01-04T09:00:00Z',
+          backgroundColor: '#A5D6A7',
+          borderColor: '#81C784',
+          textColor: '#1B5E20',
+          extendedProps: {
+            user: {
+              id: 'user-2',
+              summary: 'Jane Smith',
+              name: 'Jane Smith',
+              email: 'jane@example.com',
+            },
+            duration: 16,
+            weekdayDays: 1,
+            weekendDays: 0,
+            compensation: 50,
+          },
+        },
+      ];
+
+      renderWithTheme(<CalendarView {...defaultProps} events={eventsWithDifferentColours} />);
+
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    });
+
+    it('should handle events without color properties gracefully', () => {
+      const eventsWithoutColours: CalendarEvent[] = [
+        {
+          id: 'no-color-event',
+          title: 'Test User',
+          start: '2024-01-01T17:00:00Z',
+          end: '2024-01-02T09:00:00Z',
+          // No color properties
+          extendedProps: {
+            user: {
+              id: 'user-test',
+              summary: 'Test User',
+              name: 'Test User',
+            },
+            duration: 16,
+            weekdayDays: 1,
+            weekendDays: 0,
+            compensation: 50,
+          },
+        },
+      ];
+
+      renderWithTheme(<CalendarView {...defaultProps} events={eventsWithoutColours} />);
+
+      expect(screen.getByText('Test User')).toBeInTheDocument();
+    });
+
+    it('should maintain consistent colors when dialog is opened and closed', async () => {
+      const eventsWithColours: CalendarEvent[] = [
+        {
+          id: 'persistent-color-event',
+          title: 'John Doe',
+          start: '2024-01-01T17:00:00Z',
+          end: '2024-01-02T09:00:00Z',
+          backgroundColor: '#90CAF9',
+          borderColor: '#64B5F6',
+          textColor: '#0D47A1',
+          extendedProps: {
+            user: {
+              id: 'user-1',
+              summary: 'John Doe',
+              name: 'John Doe',
+              email: 'john@example.com',
+            },
+            duration: 16,
+            weekdayDays: 1,
+            weekendDays: 0,
+            compensation: 50,
+          },
+        },
+      ];
+
+      renderWithTheme(<CalendarView {...defaultProps} events={eventsWithColours} />);
+
+      // Click event to open dialog
+      const eventButton = screen.getByTestId('event-persistent-color-event');
+      fireEvent.click(eventButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      // Close dialog
+      const closeButton = screen.getByRole('button', { name: /close/i });
+      fireEvent.click(closeButton);
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+
+      // Event should still be rendered with colors
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
   });
 });
