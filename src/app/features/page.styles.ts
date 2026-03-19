@@ -6,10 +6,6 @@ export const pageRootSx: SxProps<Theme> = {
   flexDirection: 'column',
 };
 
-export const scrollRevealInitialSx: SxProps<Theme> = {
-  opacity: 0,
-};
-
 export const calendarPaperSx: SxProps<Theme> = {
   p: 2,
   borderRadius: 3,
@@ -274,7 +270,9 @@ export const featureSectionRootSx: SxProps<Theme> = {
   py: { xs: 8, md: 12 },
   opacity: 0,
   transform: 'translateY(40px)',
-  transition: 'opacity 0.7s ease, transform 0.7s ease',
+  '@media (prefers-reduced-motion: no-preference)': {
+    transition: 'opacity 0.7s ease, transform 0.7s ease',
+  },
 };
 
 export function getFeatureSectionContentSx(reverse?: boolean): SxProps<Theme> {
@@ -383,7 +381,9 @@ export const heroContentSx: SxProps<Theme> = {
   textAlign: 'center',
   opacity: 0,
   transform: 'translateY(30px)',
-  transition: 'opacity 0.8s ease, transform 0.8s ease',
+  '@media (prefers-reduced-motion: no-preference)': {
+    transition: 'opacity 0.8s ease, transform 0.8s ease',
+  },
 };
 
 export const heroChipSx: SxProps<Theme> = {
@@ -441,7 +441,9 @@ export const statsContentSx: SxProps<Theme> = {
   gap: 3,
   opacity: 0,
   transform: 'translateY(20px)',
-  transition: 'opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s',
+  '@media (prefers-reduced-motion: no-preference)': {
+    transition: 'opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s',
+  },
 };
 
 export const statsItemSx: SxProps<Theme> = {
@@ -477,7 +479,9 @@ export const ctaSectionSx: SxProps<Theme> = {
 export const ctaContentSx: SxProps<Theme> = {
   opacity: 0,
   transform: 'translateY(30px)',
-  transition: 'opacity 0.7s ease, transform 0.7s ease',
+  '@media (prefers-reduced-motion: no-preference)': {
+    transition: 'opacity 0.7s ease, transform 0.7s ease',
+  },
 };
 
 export const ctaSubtitleSx: SxProps<Theme> = {
