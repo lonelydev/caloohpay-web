@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { AppBar, Box, Container, Toolbar, useScrollTrigger } from '@mui/material';
 import { useSession } from 'next-auth/react';
 import { Logo } from './Logo';
@@ -30,6 +30,14 @@ function ElevationScroll({ children }: ElevationScrollProps) {
 
 export function Header({ elevation }: HeaderProps) {
   const { data: session, status } = useSession();
+  const isMounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false
+  );
+
+  const isAuthenticated = isMounted && status === 'authenticated';
+  const menuStatus = isMounted ? status : 'loading';
 
   return (
     <ElevationScroll>
@@ -41,9 +49,9 @@ export function Header({ elevation }: HeaderProps) {
             <Box sx={spacerStyles} />
 
             <Box sx={navigationStyles}>
-              <NavigationLinks isAuthenticated={status === 'authenticated'} />
+              <NavigationLinks isAuthenticated={isAuthenticated} />
               <ThemeToggle />
-              <UserMenu session={session} status={status} />
+              <UserMenu session={session} status={menuStatus} />
             </Box>
           </Toolbar>
         </Container>
