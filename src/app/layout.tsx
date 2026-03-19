@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/next';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { SessionProvider } from '@/context/SessionProvider';
 import './globals.css';
@@ -19,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SessionProvider>
-          <ThemeProvider>{children}</ThemeProvider>
-        </SessionProvider>
+        <AppRouterCacheProvider>
+          <SessionProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </SessionProvider>
+        </AppRouterCacheProvider>
         <Analytics />
       </body>
     </html>

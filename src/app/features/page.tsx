@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Box, Button, Chip, Container, Paper, Stack, Typography, useTheme } from '@mui/material';
+import { Box, Button, Chip, Container, Paper, Stack, Typography } from '@mui/material';
 import {
   CalendarMonth as CalendarIcon,
   FormatListBulleted as ListIcon,
@@ -12,11 +12,11 @@ import {
   AttachMoney as MoneyIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
+import type { SvgIconComponent } from '@mui/icons-material';
 import Link from 'next/link';
 import { Header, Footer } from '@/components/common';
 import { ROUTES } from '@/lib/constants';
-
-// ─── Scroll-reveal hook ─────────────────────────────────────────────────────
+import * as styles from './page.styles';
 
 function useScrollReveal<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -43,10 +43,7 @@ function useScrollReveal<T extends HTMLElement>() {
   return ref;
 }
 
-// ─── Mock screenshot components ─────────────────────────────────────────────
-
 function CalendarMockup() {
-  const theme = useTheme();
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const weeks = [
     [null, null, 1, 2, 3, 4, 5],
@@ -58,109 +55,47 @@ function CalendarMockup() {
   const highlighted = new Set([8, 9, 10, 14, 15, 16, 17, 22, 23]);
 
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        p: 2,
-        borderRadius: 3,
-        overflow: 'hidden',
-        background: theme.palette.background.paper,
-        maxWidth: 420,
-        width: '100%',
-      }}
-    >
-      {/* Calendar header */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 1.5,
-          px: 0.5,
-        }}
-      >
+    <Paper elevation={3} sx={styles.calendarPaperSx}>
+      <Box sx={styles.calendarHeaderSx}>
         <Typography variant="subtitle1" fontWeight={700}>
           January 2025
         </Typography>
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Box sx={styles.calendarNavSx}>
           {['‹', '›'].map((ch) => (
-            <Box
-              key={ch}
-              sx={{
-                width: 28,
-                height: 28,
-                borderRadius: 1,
-                bgcolor: 'action.hover',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 14,
-                cursor: 'pointer',
-              }}
-            >
+            <Box key={ch} sx={styles.calendarNavButtonSx}>
               {ch}
             </Box>
           ))}
         </Box>
       </Box>
 
-      {/* Day labels */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', mb: 0.5 }}>
+      <Box sx={styles.calendarDayLabelsSx}>
         {days.map((d) => (
-          <Typography
-            key={d}
-            variant="caption"
-            align="center"
-            sx={{ fontWeight: 600, color: 'text.secondary', py: 0.5 }}
-          >
+          <Typography key={d} variant="caption" align="center" sx={styles.calendarDayLabelTextSx}>
             {d}
           </Typography>
         ))}
       </Box>
 
-      {/* Calendar cells */}
       {weeks.map((week, wi) => (
-        <Box key={wi} sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+        <Box key={wi} sx={styles.calendarWeekRowSx}>
           {week.map((day, di) => (
-            <Box
-              key={di}
-              sx={{
-                height: 36,
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 13,
-                fontWeight: day && highlighted.has(day) ? 700 : 400,
-                bgcolor:
-                  day && highlighted.has(day)
-                    ? 'primary.main'
-                    : day === 15
-                      ? 'secondary.main'
-                      : 'transparent',
-                color:
-                  day && (highlighted.has(day) || day === 15)
-                    ? 'primary.contrastText'
-                    : 'text.primary',
-                opacity: day ? 1 : 0,
-              }}
-            >
+            <Box key={di} sx={styles.getCalendarDayCellSx(day, highlighted)}>
               {day ?? ''}
             </Box>
           ))}
         </Box>
       ))}
 
-      {/* Legend */}
-      <Box sx={{ display: 'flex', gap: 2, mt: 1.5, px: 0.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: 'primary.main' }} />
+      <Box sx={styles.calendarLegendSx}>
+        <Box sx={styles.calendarLegendItemSx}>
+          <Box sx={styles.onCallLegendDotSx} />
           <Typography variant="caption" color="text.secondary">
             On-call
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: 'secondary.main' }} />
+        <Box sx={styles.calendarLegendItemSx}>
+          <Box sx={styles.todayLegendDotSx} />
           <Typography variant="caption" color="text.secondary">
             Today
           </Typography>
@@ -171,7 +106,6 @@ function CalendarMockup() {
 }
 
 function ListViewMockup() {
-  const theme = useTheme();
   const entries = [
     { date: 'Mon 6 Jan', from: '17:30', to: '09:00', hours: '15.5h', pay: '£50.00' },
     { date: 'Fri 10 Jan', from: '17:30', to: '09:00', hours: '15.5h', pay: '£75.00' },
@@ -180,26 +114,8 @@ function ListViewMockup() {
   ];
 
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        borderRadius: 3,
-        overflow: 'hidden',
-        maxWidth: 460,
-        width: '100%',
-      }}
-    >
-      {/* Header row */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr 1fr',
-          px: 2,
-          py: 1,
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-        }}
-      >
+    <Paper elevation={3} sx={styles.listPaperSx}>
+      <Box sx={styles.listHeaderRowSx}>
         {['Date', 'OOH Hours', 'Duration', 'Pay'].map((h) => (
           <Typography key={h} variant="caption" fontWeight={700}>
             {h}
@@ -207,20 +123,8 @@ function ListViewMockup() {
         ))}
       </Box>
 
-      {/* Rows */}
       {entries.map((e, i) => (
-        <Box
-          key={i}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr 1fr',
-            px: 2,
-            py: 1.25,
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            '&:last-child': { borderBottom: 'none' },
-            bgcolor: i % 2 === 0 ? 'transparent' : 'action.hover',
-          }}
-        >
+        <Box key={e.date} sx={styles.getListEntryRowSx(i)}>
           <Typography variant="body2" fontWeight={500}>
             {e.date}
           </Typography>
@@ -234,16 +138,7 @@ function ListViewMockup() {
         </Box>
       ))}
 
-      {/* Total row */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          px: 2,
-          py: 1.5,
-          bgcolor: 'action.selected',
-        }}
-      >
+      <Box sx={styles.listTotalRowSx}>
         <Typography variant="body2" fontWeight={700}>
           Total
         </Typography>
@@ -256,7 +151,6 @@ function ListViewMockup() {
 }
 
 function GridReportMockup() {
-  const theme = useTheme();
   const schedules = [
     { name: 'Backend On-Call', oncalls: 8, weekday: '£150', weekend: '£225', total: '£375' },
     { name: 'Platform SRE', oncalls: 5, weekday: '£100', weekend: '£150', total: '£250' },
@@ -265,47 +159,18 @@ function GridReportMockup() {
   ];
 
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        borderRadius: 3,
-        overflow: 'hidden',
-        maxWidth: 520,
-        width: '100%',
-      }}
-    >
-      {/* Toolbar */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          px: 2,
-          py: 1.5,
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-        }}
-      >
+    <Paper elevation={3} sx={styles.gridPaperSx}>
+      <Box sx={styles.gridToolbarSx}>
         <Typography variant="subtitle2" fontWeight={700}>
           January 2025 — Payment Grid
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: 12 }}>
-          <DownloadIcon sx={{ fontSize: 16 }} />
+        <Box sx={styles.gridToolbarExportSx}>
+          <DownloadIcon sx={styles.gridToolbarIconSx} />
           <Typography variant="caption">Export CSV</Typography>
         </Box>
       </Box>
 
-      {/* Column headers */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-          px: 2,
-          py: 0.75,
-          bgcolor: 'action.hover',
-          borderBottom: `1px solid ${theme.palette.divider}`,
-        }}
-      >
+      <Box sx={styles.gridHeaderRowSx}>
         {['Schedule', 'On-Calls', 'Weekday', 'Weekend', 'Total'].map((h) => (
           <Typography key={h} variant="caption" fontWeight={600} color="text.secondary">
             {h}
@@ -313,20 +178,8 @@ function GridReportMockup() {
         ))}
       </Box>
 
-      {/* Schedule rows */}
       {schedules.map((s, i) => (
-        <Box
-          key={i}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-            px: 2,
-            py: 1.25,
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            '&:last-child': { borderBottom: 'none' },
-            bgcolor: i % 2 === 0 ? 'transparent' : 'action.hover',
-          }}
-        >
+        <Box key={s.name} sx={styles.getGridEntryRowSx(i)}>
           <Typography variant="body2" fontWeight={500} noWrap>
             {s.name}
           </Typography>
@@ -345,7 +198,6 @@ function GridReportMockup() {
 }
 
 function AnalyticsMockup() {
-  const theme = useTheme();
   const bars = [
     { month: 'Sep', value: 60, color: 'primary.main' },
     { month: 'Oct', value: 45, color: 'primary.main' },
@@ -355,45 +207,24 @@ function AnalyticsMockup() {
   ];
 
   const donutSegments = [
-    { label: 'Weekday', pct: 42, color: theme.palette.primary.main },
-    { label: 'Weekend', pct: 58, color: theme.palette.secondary.main },
+    { label: 'Weekday', pct: 42, color: 'primary.main' },
+    { label: 'Weekend', pct: 58, color: 'secondary.main' },
   ];
 
   return (
-    <Paper
-      elevation={3}
-      sx={{
-        borderRadius: 3,
-        overflow: 'hidden',
-        maxWidth: 460,
-        width: '100%',
-        p: 2,
-      }}
-    >
+    <Paper elevation={3} sx={styles.analyticsPaperSx}>
       <Typography variant="subtitle2" fontWeight={700} mb={2}>
         Payment Analytics
       </Typography>
 
-      {/* Bar chart */}
-      <Box sx={{ mb: 2 }}>
+      <Box sx={styles.analyticsBarChartWrapSx}>
         <Typography variant="caption" color="text.secondary" mb={1} display="block">
           Monthly OOH Pay (£)
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1.5, height: 80 }}>
+        <Box sx={styles.analyticsBarsRowSx}>
           {bars.map((b) => (
-            <Box
-              key={b.month}
-              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}
-            >
-              <Box
-                sx={{
-                  width: '100%',
-                  height: `${b.value}%`,
-                  bgcolor: b.color,
-                  borderRadius: '4px 4px 0 0',
-                  transition: 'height 0.8s ease',
-                }}
-              />
+            <Box key={b.month} sx={styles.analyticsBarItemSx}>
+              <Box sx={styles.getAnalyticsBarSx(b.color, b.value)} />
               <Typography variant="caption" color="text.secondary" mt={0.5}>
                 {b.month}
               </Typography>
@@ -402,32 +233,29 @@ function AnalyticsMockup() {
         </Box>
       </Box>
 
-      {/* Breakdown */}
-      <Box sx={{ borderTop: `1px solid ${theme.palette.divider}`, pt: 1.5 }}>
+      <Box sx={styles.analyticsBreakdownSx}>
         <Typography variant="caption" color="text.secondary" mb={1} display="block">
           Weekday vs Weekend Split
         </Typography>
-        <Box sx={{ display: 'flex', gap: 3 }}>
+        <Box sx={styles.analyticsLegendRowSx}>
           {donutSegments.map((s) => (
-            <Box key={s.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: s.color }} />
+            <Box key={s.label} sx={styles.analyticsLegendItemSx}>
+              <Box sx={styles.getAnalyticsLegendDotSx(s.color)} />
               <Typography variant="caption" fontWeight={600}>
                 {s.pct}% {s.label}
               </Typography>
             </Box>
           ))}
         </Box>
-        <Box sx={{ mt: 1, height: 8, borderRadius: 4, overflow: 'hidden', display: 'flex' }}>
+        <Box sx={styles.analyticsSplitBarSx}>
           {donutSegments.map((s) => (
-            <Box key={s.label} sx={{ flex: s.pct, bgcolor: s.color }} />
+            <Box key={s.label} sx={styles.getAnalyticsSplitSegmentSx(s.pct, s.color)} />
           ))}
         </Box>
       </Box>
     </Paper>
   );
 }
-
-// ─── Feature section ─────────────────────────────────────────────────────────
 
 interface FeatureSectionProps {
   icon: React.ReactNode;
@@ -451,60 +279,29 @@ function FeatureSection({
   const revealRef = useScrollReveal<HTMLDivElement>();
 
   return (
-    <Box
-      ref={revealRef}
-      sx={{
-        py: { xs: 8, md: 12 },
-        opacity: 0,
-        transform: 'translateY(40px)',
-        transition: 'opacity 0.7s ease, transform 0.7s ease',
-      }}
-    >
+    <Box ref={revealRef} sx={styles.featureSectionRootSx}>
       <Container maxWidth="lg">
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: reverse ? 'row-reverse' : 'row' },
-            alignItems: 'center',
-            gap: { xs: 5, md: 8 },
-          }}
-        >
-          {/* Text column */}
-          <Box sx={{ flex: 1, maxWidth: { md: '44%' } }}>
+        <Box sx={styles.getFeatureSectionContentSx(reverse)}>
+          <Box sx={styles.featureTextColumnSx}>
             <Stack spacing={2.5}>
               <Chip
-                icon={<Box sx={{ '& .MuiSvgIcon-root': { fontSize: 16 } }}>{icon}</Box>}
+                icon={<Box sx={styles.featureChipIconWrapSx}>{icon}</Box>}
                 label={chip}
                 color="primary"
                 size="small"
-                sx={{ alignSelf: 'flex-start', fontWeight: 600 }}
+                sx={styles.featureChipSx}
               />
-              <Typography variant="h4" fontWeight={700} sx={{ lineHeight: 1.2 }}>
+              <Typography variant="h4" fontWeight={700} sx={styles.featureTitleSx}>
                 {title}
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.75 }}>
+              <Typography variant="body1" color="text.secondary" sx={styles.featureDescriptionSx}>
                 {description}
               </Typography>
               <Stack spacing={1}>
                 {bullets.map((b) => (
-                  <Box key={b} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        bgcolor: 'primary.main',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        mt: 0.25,
-                      }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{ color: 'primary.contrastText', fontWeight: 700, fontSize: 10 }}
-                      >
+                  <Box key={b} sx={styles.featureBulletRowSx}>
+                    <Box sx={styles.featureBulletCheckWrapSx}>
+                      <Typography variant="caption" sx={styles.featureBulletCheckSx}>
                         ✓
                       </Typography>
                     </Box>
@@ -517,24 +314,19 @@ function FeatureSection({
             </Stack>
           </Box>
 
-          {/* Mockup column */}
-          <Box
-            sx={{
-              flex: 1,
-              display: 'flex',
-              justifyContent: reverse ? 'flex-start' : 'flex-end',
-              width: '100%',
-            }}
-          >
-            {mockup}
-          </Box>
+          <Box sx={styles.getFeatureMockupColumnSx(reverse)}>{mockup}</Box>
         </Box>
       </Container>
     </Box>
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+interface StatsItem {
+  Icon: SvgIconComponent;
+  color: string;
+  value: string;
+  label: string;
+}
 
 export default function FeaturesPage() {
   const heroRef = useScrollReveal<HTMLDivElement>();
@@ -604,102 +396,67 @@ export default function FeaturesPage() {
     },
   ];
 
+  const stats: StatsItem[] = [
+    {
+      Icon: ClockIcon,
+      color: 'primary.main',
+      value: '< 1 min',
+      label: 'To generate a full month report',
+    },
+    {
+      Icon: MoneyIcon,
+      color: 'success.main',
+      value: '£50 / £75',
+      label: 'Weekday and weekend OOH rates',
+    },
+    {
+      Icon: GridIcon,
+      color: 'secondary.main',
+      value: 'Unlimited',
+      label: 'Schedules in a single grid report',
+    },
+    {
+      Icon: DownloadIcon,
+      color: 'primary.main',
+      value: 'CSV Export',
+      label: 'Payroll-ready in one click',
+    },
+  ];
+
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={styles.pageRootSx}>
       <Header />
 
-      {/* ── Hero ── */}
-      <Box
-        sx={{
-          background: (theme) =>
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)'
-              : 'linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 50%, #e8f0fe 100%)',
-          py: { xs: 10, md: 16 },
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Decorative background circles */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '-10%',
-            right: '-5%',
-            width: 400,
-            height: 400,
-            borderRadius: '50%',
-            background: (theme) =>
-              `radial-gradient(circle, ${theme.palette.primary.main}22 0%, transparent 70%)`,
-            pointerEvents: 'none',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: '-15%',
-            left: '-8%',
-            width: 500,
-            height: 500,
-            borderRadius: '50%',
-            background: (theme) =>
-              `radial-gradient(circle, ${theme.palette.secondary.main}18 0%, transparent 70%)`,
-            pointerEvents: 'none',
-          }}
-        />
+      <Box sx={styles.heroSectionSx}>
+        <Box sx={styles.heroCircleTopSx} />
+        <Box sx={styles.heroCircleBottomSx} />
 
-        <Container maxWidth="lg" sx={{ position: 'relative' }}>
-          <Box
-            ref={heroRef}
-            sx={{
-              textAlign: 'center',
-              opacity: 0,
-              transform: 'translateY(30px)',
-              transition: 'opacity 0.8s ease, transform 0.8s ease',
-            }}
-          >
+        <Container maxWidth="lg" sx={styles.heroContainerSx}>
+          <Box ref={heroRef} sx={styles.heroContentSx}>
             <Chip
               label="Powered by PagerDuty"
               color="primary"
               size="small"
-              sx={{ mb: 3, fontWeight: 600 }}
+              sx={styles.heroChipSx}
             />
-            <Typography
-              variant="h1"
-              fontWeight={800}
-              sx={{
-                fontSize: { xs: '2.4rem', sm: '3.2rem', md: '4rem' },
-                lineHeight: 1.15,
-                mb: 3,
-              }}
-            >
+            <Typography variant="h1" fontWeight={800} sx={styles.heroTitleSx}>
               On-Call Pay,{' '}
-              <Box component="span" sx={{ color: 'primary.main' }}>
+              <Box component="span" sx={styles.heroTitleAccentSx}>
                 Made Simple
               </Box>
             </Typography>
-            <Typography
-              variant="h5"
-              color="text.secondary"
-              sx={{
-                maxWidth: 640,
-                mx: 'auto',
-                mb: 5,
-                lineHeight: 1.7,
-                fontSize: { xs: '1rem', md: '1.2rem' },
-              }}
-            >
+            <Typography variant="h5" color="text.secondary" sx={styles.heroSubtitleSx}>
               CalOohPay automates out-of-hours compensation calculations for engineering teams using
               PagerDuty schedules — saving hours of manual spreadsheet work every month.
             </Typography>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={styles.heroActionsSx}>
               <Button
                 component={Link}
                 href={ROUTES.LOGIN}
                 variant="contained"
                 size="large"
                 endIcon={<ArrowForwardIcon />}
-                sx={{ px: 4, py: 1.5, borderRadius: 3, fontWeight: 700 }}
+                sx={styles.heroPrimaryButtonSx}
               >
                 Get Started Free
               </Button>
@@ -710,7 +467,7 @@ export default function FeaturesPage() {
                 rel="noopener noreferrer"
                 variant="outlined"
                 size="large"
-                sx={{ px: 4, py: 1.5, borderRadius: 3 }}
+                sx={styles.heroSecondaryButtonSx}
               >
                 View CLI Tool
               </Button>
@@ -719,53 +476,14 @@ export default function FeaturesPage() {
         </Container>
       </Box>
 
-      {/* ── Stats bar ── */}
-      <Box
-        sx={{
-          borderTop: '1px solid',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          py: 4,
-          bgcolor: 'background.paper',
-        }}
-      >
+      <Box sx={styles.statsSectionSx}>
         <Container maxWidth="lg">
-          <Box
-            ref={statsRef}
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              justifyContent: 'space-around',
-              gap: 3,
-              opacity: 0,
-              transform: 'translateY(20px)',
-              transition: 'opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s',
-            }}
-          >
-            {[
-              {
-                icon: <ClockIcon sx={{ color: 'primary.main' }} />,
-                value: '< 1 min',
-                label: 'To generate a full month report',
-              },
-              {
-                icon: <MoneyIcon sx={{ color: 'success.main' }} />,
-                value: '£50 / £75',
-                label: 'Weekday and weekend OOH rates',
-              },
-              {
-                icon: <GridIcon sx={{ color: 'secondary.main' }} />,
-                value: 'Unlimited',
-                label: 'Schedules in a single grid report',
-              },
-              {
-                icon: <DownloadIcon sx={{ color: 'primary.main' }} />,
-                value: 'CSV Export',
-                label: 'Payroll-ready in one click',
-              },
-            ].map(({ icon, value, label }) => (
-              <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ flexShrink: 0 }}>{icon}</Box>
+          <Box ref={statsRef} sx={styles.statsContentSx}>
+            {stats.map(({ Icon, color, value, label }) => (
+              <Box key={label} sx={styles.statsItemSx}>
+                <Box sx={styles.statsIconWrapSx}>
+                  <Icon sx={styles.getStatsIconSx(color)} />
+                </Box>
                 <Box>
                   <Typography variant="h6" fontWeight={700}>
                     {value}
@@ -780,41 +498,19 @@ export default function FeaturesPage() {
         </Container>
       </Box>
 
-      {/* ── Feature sections ── */}
       {features.map((f, i) => (
-        <Box
-          key={f.chip}
-          sx={{
-            bgcolor: i % 2 === 0 ? 'background.default' : 'background.paper',
-          }}
-        >
+        <Box key={f.chip} sx={styles.getFeatureStripeSx(i)}>
           <FeatureSection {...f} />
         </Box>
       ))}
 
-      {/* ── CTA ── */}
-      <Box
-        sx={{
-          py: { xs: 10, md: 14 },
-          background: (theme) =>
-            `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-          color: 'primary.contrastText',
-          textAlign: 'center',
-        }}
-      >
+      <Box sx={styles.ctaSectionSx}>
         <Container maxWidth="sm">
-          <Box
-            ref={ctaRef}
-            sx={{
-              opacity: 0,
-              transform: 'translateY(30px)',
-              transition: 'opacity 0.7s ease, transform 0.7s ease',
-            }}
-          >
+          <Box ref={ctaRef} sx={styles.ctaContentSx}>
             <Typography variant="h3" fontWeight={800} mb={2}>
               Ready to save hours every month?
             </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.85, mb: 5, fontWeight: 400 }}>
+            <Typography variant="h6" sx={styles.ctaSubtitleSx}>
               Connect your PagerDuty account and generate your first payment report in under a
               minute.
             </Typography>
@@ -824,16 +520,7 @@ export default function FeaturesPage() {
               variant="contained"
               size="large"
               endIcon={<ArrowForwardIcon />}
-              sx={{
-                bgcolor: 'white',
-                color: 'primary.main',
-                px: 5,
-                py: 1.75,
-                borderRadius: 3,
-                fontWeight: 700,
-                fontSize: '1rem',
-                '&:hover': { bgcolor: 'grey.100' },
-              }}
+              sx={styles.ctaButtonSx}
             >
               Get Started Free
             </Button>

@@ -1,15 +1,13 @@
 'use client';
 
-import React from 'react';
-import { AppBar, Box, Button, Container, Toolbar, useScrollTrigger } from '@mui/material';
+import React, { useSyncExternalStore } from 'react';
+import { AppBar, Box, Container, Toolbar, useScrollTrigger } from '@mui/material';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 import { Logo } from './Logo';
 import { NavigationLinks } from './NavigationLinks';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { spacerStyles, navigationStyles } from './Header.styles';
-import { ROUTES } from '@/lib/constants';
 
 interface HeaderProps {
   elevation?: number;
@@ -32,6 +30,14 @@ function ElevationScroll({ children }: ElevationScrollProps) {
 
 export function Header({ elevation }: HeaderProps) {
   const { data: session, status } = useSession();
+  const isMounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false
+  );
+
+  const isAuthenticated = isMounted && status === 'authenticated';
+  const menuStatus = isMounted ? status : 'loading';
 
   return (
     <ElevationScroll>
@@ -43,9 +49,9 @@ export function Header({ elevation }: HeaderProps) {
             <Box sx={spacerStyles} />
 
             <Box sx={navigationStyles}>
-              <NavigationLinks isAuthenticated={status === 'authenticated'} />
+              <NavigationLinks isAuthenticated={isAuthenticated} />
               <ThemeToggle />
-              <UserMenu session={session} status={status} />
+              <UserMenu session={session} status={menuStatus} />
             </Box>
           </Toolbar>
         </Container>
