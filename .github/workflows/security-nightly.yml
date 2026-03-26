@@ -1,0 +1,44 @@
+name: Nightly Security Scan
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Nightly Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Full audit report (dev + prod)
+        run: npm audit --json > npm-audit.json || true
+
+      - name: Enforce high/critical threshold
+        run: |
+          node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('npm-audit.json','utf8')); const v=r.metadata?.vulnerabilities||{}; if((v.high||0)>0||(v.critical||0)>0){console.error('High/Critical vulnerabilities detected'); process.exit(1);} console.log('No high/critical vulnerabilities in full dependency tree.');"
+
+      - name: Enforce production high threshold
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-nightly
+          path: npm-audit.json
+          retention-days: 14
