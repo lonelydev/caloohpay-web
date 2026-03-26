@@ -22,10 +22,6 @@ test.describe('Analytics Page E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Mock schedule detail API
     await page.route('**/api/schedules/SCHED123*', async (route) => {
-      const url = new URL(route.request().url());
-      const since = url.searchParams.get('since');
-      const until = url.searchParams.get('until');
-
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
