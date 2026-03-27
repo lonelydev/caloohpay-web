@@ -11,7 +11,7 @@ Please do not open public issues for security vulnerabilities.
 Report potential vulnerabilities privately by contacting the maintainers through one of these channels:
 
 - GitHub Security Advisory: use the "Report a vulnerability" flow in the repository Security tab.
-- Email: `security@caloohpay.local` (replace with your real security inbox).
+- Email: `hello@softwarecraftsperson.com`.
 
 Include the following details:
 
