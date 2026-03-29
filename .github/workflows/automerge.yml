@@ -27,8 +27,19 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           # Must match the exact job names in ci-security-gate.yml
           check-name: |
-            Quality Checks
-            Production Dependency Audit
+            CI Security Gate / Dependency Review
+            CI Security Gate / Quality Checks
+            CI Security Gate / Production Dependency Audit
+            Code scanning results / CodeQL
+            CodeQL Analysis / Analyze Code
+            E2E Tests / Seeded E2E (chromium)
+            E2E Tests / Seeded E2E (firefox)
+            E2E Tests / Seeded E2E (webkit)
+            E2E Tests / Unauth E2E (chromium)
+            E2E Tests / Unauth E2E (firefox)
+            E2E Tests / Unauth E2E (webkit)
+            Vercel
+            Vercel Preview Comments
           repo-token: ${{ steps.app-token.outputs.token }}
           wait-interval: 30
           allowed-conclusions: success
