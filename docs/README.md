@@ -32,6 +32,7 @@ Technical architecture and design documentation:
 - **[Search Architecture](./search-architecture.md)** - Progressive search implementation with instant local results and parallel API search
 - **[Styling Architecture](./styling-architecture.md)** - MUI styling patterns, styled components, and layout constants
 - **[Testing Guide](./TESTING.md)** - Comprehensive testing guide with 114 tests covering unit, integration, and E2E tests
+- **[CI/CD Pipeline](./ci-pipeline.md)** - All GitHub Actions workflows, security hardening measures, and the gated deployment model
 
 ## 🚀 Quick Start
 
