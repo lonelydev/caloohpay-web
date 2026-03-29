@@ -1,0 +1,89 @@
+name: Automerge
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  automerge:
+    name: Merge when ready
+    # Only run when the merge-when-ready label is applied
+    if: github.event.label.name == 'merge-when-ready'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Wait for relevant workflows to complete (CI required, E2E optional)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+
+          SHA="${{ github.event.pull_request.head.sha }}"
+          REPO="${{ github.repository }}"
+
+          get_conclusion() {
+            gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=50" \
+              --jq ".workflow_runs[] | select(.name == \"$1\") | .conclusion" \
+              | head -1
+          }
+
+          wait_for() {
+            local name="$1"
+            local optional="${2:-false}"
+
+            echo "Waiting for workflow: $name (optional=$optional)"
+            for i in {1..60}; do
+              c="$(get_conclusion "$name" || true)"
+
+              # not created yet
+              if [[ -z "${c:-}" ]]; then
+                if [[ "$optional" == "true" ]]; then
+                  echo "Workflow '$name' not present for $SHA; treating as OK."
+                  return 0
+                fi
+                echo "Workflow '$name' not present yet; sleeping..."
+                sleep 15
+                continue
+              fi
+
+              if [[ "$c" == "success" ]]; then
+                echo "Workflow '$name' succeeded."
+                return 0
+              fi
+
+              if [[ "$c" == "failure" || "$c" == "cancelled" || "$c" == "timed_out" || "$c" == "action_required" ]]; then
+                echo "Workflow '$name' concluded as '$c'."
+                exit 1
+              fi
+
+              # queued / in_progress / null etc.
+              echo "Workflow '$name' conclusion is '$c' (still running); sleeping..."
+              sleep 15
+            done
+
+            echo "Timed out waiting for '$name'"
+            exit 1
+          }
+
+          wait_for "CI Security Gate" false
+          wait_for "E2E Tests" true   
+
+      - name: Merge pull request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --squash \
+            --delete-branch \
+            --subject "${{ github.event.pull_request.title }}" \
+            --auto

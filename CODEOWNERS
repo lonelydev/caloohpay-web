@@ -1,0 +1,9 @@
+* @lonelydev
+
+/.github/** @lonelydev
+/src/app/api/** @lonelydev
+/src/lib/auth/** @lonelydev
+/src/lib/api/** @lonelydev
+/package.json @lonelydev
+/package-lock.json @lonelydev
+/SECURITY.md @lonelydev

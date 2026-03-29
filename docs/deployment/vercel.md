@@ -183,22 +183,42 @@ Your app is automatically available at:
 
 ## Continuous Deployment
 
-Every push to `main` branch automatically triggers a new deployment:
+Deployments are **gated behind CI**. Vercel's native GitHub integration is disabled (`ignoreCommand: "exit 0"` in `vercel.json`); all deploys go through the `deploy-vercel.yml` GitHub Actions workflow.
 
-```bash
-git add .
-git commit -m "feat: add new feature"
-git push origin main
-# Vercel automatically deploys in 1-2 minutes
+### Deployment pipeline
+
+```
+push / PR
+   │
+   ├─► CI Security Gate  (lint, type-check, unit tests, build, prod audit)
+   │
+   └─► E2E Tests         (Playwright — chromium, firefox, webkit)
+            │
+            ▼  both succeeded?
+       Deploy to Vercel  (production or preview)
 ```
 
-### Preview Deployments
+The `Deploy to Vercel` workflow fires on completion of **either** upstream workflow, but a `gate` job queries the GitHub API to confirm **both** `CI Security Gate` and `E2E Tests` have concluded with `success` for the same commit SHA before any deploy step runs. If E2E was skipped due to path filters, absence is treated as a pass.
 
-Every pull request gets its own preview URL:
+See [docs/ci-pipeline.md](../ci-pipeline.md) for the full pipeline reference.
 
-- Create PR → Vercel comment appears with preview link
-- Test changes before merging
-- Preview URLs: `https://your-project-git-branch.vercel.app`
+### Production deployments
+
+Triggered automatically when a commit lands on `main` and both upstream workflows pass. Uses `vercel build --prod` + `vercel deploy --prebuilt`.
+
+### Preview deployments
+
+Triggered on pull requests after both upstream workflows pass. Deploys to a unique preview URL — check the workflow run summary for the URL output.
+
+### Required GitHub Actions secrets
+
+| Secret              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `VERCEL_TOKEN`      | vercel.com → Account Settings → Tokens   |
+| `VERCEL_ORG_ID`     | `cat .vercel/project.json` → `orgId`     |
+| `VERCEL_PROJECT_ID` | `cat .vercel/project.json` → `projectId` |
+
+Run `npx vercel link` from the project root to generate `.vercel/project.json` if it doesn't exist.
 
 ## Cost Management
 

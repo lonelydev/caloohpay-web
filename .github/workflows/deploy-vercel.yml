@@ -1,0 +1,148 @@
+name: Deploy to Vercel
+
+on:
+  workflow_run:
+    workflows: ["CI Security Gate", "E2E Tests"]
+    types: [completed]
+
+permissions:
+  contents: read
+  deployments: write
+  actions: read
+
+jobs:
+  gate:
+    name: Check all required workflows passed
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+      event: ${{ steps.check.outputs.event }}
+      branch: ${{ steps.check.outputs.branch }}
+    steps:
+      - name: Verify CI Security Gate and E2E Tests both succeeded
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA="${{ github.event.workflow_run.head_sha }}"
+          REPO="${{ github.repository }}"
+          EVENT="${{ github.event.workflow_run.event }}"
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+
+          get_conclusion() {
+            gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=50" \
+              --jq ".workflow_runs[] | select(.name == \"$1\") | .conclusion" \
+              | head -1
+          }
+
+          ci=$(get_conclusion "CI Security Gate")
+          e2e=$(get_conclusion "E2E Tests")
+
+          echo "CI Security Gate: $ci"
+          echo "E2E Tests: $e2e"
+
+          # E2E may be absent if path filters excluded it — treat absence as pass
+          e2e_ok=false
+          [[ "$e2e" == "success" || -z "$e2e" ]] && e2e_ok=true
+
+          if [[ "$ci" == "success" && "$e2e_ok" == "true" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "One or more required workflows have not succeeded — skipping deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "event=$EVENT" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+  deploy-production:
+    name: Deploy to Production
+    needs: [gate]
+    # Only deploy from main push when gate confirms both workflows passed
+    if: |
+      needs.gate.outputs.ready == 'true' &&
+      needs.gate.outputs.branch == 'main' &&
+      needs.gate.outputs.event == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  deploy-preview:
+    name: Deploy Preview
+    needs: [gate]
+    # Deploy preview for PRs when gate confirms both workflows passed
+    if: |
+      needs.gate.outputs.ready == 'true' &&
+      needs.gate.outputs.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build project
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy preview
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
