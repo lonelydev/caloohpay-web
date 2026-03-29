@@ -11,7 +11,6 @@ on:
       - '**.mjs'
       - 'package.json'
       - 'package-lock.json'
-      - '.github/workflows/codeql-analysis.yml'
   pull_request:
     branches: [ main ]
     paths:
