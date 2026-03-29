@@ -1,0 +1,80 @@
+name: Nightly Security Scan
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prod-audit:
+    name: Nightly Production Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --omit=dev --ignore-scripts
+
+      - name: Production audit report
+        run: npm audit --omit=dev --json > npm-audit-prod.json || true
+
+      - name: Enforce production high threshold
+        run: |
+          node -e "
+            const r = JSON.parse(require('fs').readFileSync('npm-audit-prod.json', 'utf8'));
+            const v = r.metadata?.vulnerabilities ?? {};
+            if ((v.high ?? 0) > 0 || (v.critical ?? 0) > 0) {
+              console.error('High/critical vulnerabilities found in production tree:', v);
+              process.exit(1);
+            }
+            console.log('No high/critical vulnerabilities in production dependency tree.');
+          "
+
+      - name: Upload production audit artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-nightly-prod
+          path: npm-audit-prod.json
+          retention-days: 14
+
+  full-audit-report:
+    name: Nightly Full Audit Report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Full audit report (dev + prod)
+        run: npm audit --json > npm-audit-full.json || true
+
+      - name: Summarize full dependency findings
+        run: |
+          node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('npm-audit-full.json','utf8')); const v=r.metadata?.vulnerabilities||{}; console.log('Full dependency audit summary:', JSON.stringify(v));"
+
+      - name: Upload full audit artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-nightly-full
+          path: npm-audit-full.json
+          retention-days: 14
