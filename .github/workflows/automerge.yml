@@ -75,7 +75,7 @@ jobs:
           }
 
           wait_for "CI Security Gate" false
-          wait_for "E2E Tests" true
+          wait_for "E2E Tests" true   
 
       - name: Merge pull request
         env:
@@ -85,4 +85,5 @@ jobs:
             --repo ${{ github.repository }} \
             --squash \
             --delete-branch \
-            --subject "${{ github.event.pull_request.title }}"
+            --subject "${{ github.event.pull_request.title }}" \
+            --auto
