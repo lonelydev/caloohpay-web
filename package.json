@@ -64,7 +64,7 @@
     "recharts": "^3.6.0",
     "swr": "^2.3.6",
     "zod": "^4.1.12",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
