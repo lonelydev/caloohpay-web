@@ -1,0 +1,44 @@
+name: Automerge
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  automerge:
+    name: Merge when ready
+    # Only run when the merge-when-ready label is applied
+    if: github.event.label.name == 'merge-when-ready'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Wait for required checks to pass
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # Must match the exact job names in ci-security-gate.yml
+          check-name: |
+            Quality Checks
+            Production Dependency Audit
+          repo-token: ${{ steps.app-token.outputs.token }}
+          wait-interval: 30
+          allowed-conclusions: success
+
+      - name: Merge pull request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --squash \
+            --delete-branch \
+            --subject "${{ github.event.pull_request.title }}"
