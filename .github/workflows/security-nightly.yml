@@ -41,7 +41,7 @@ jobs:
           "
 
       - name: Upload production audit artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: npm-audit-nightly-prod
@@ -72,7 +72,7 @@ jobs:
           node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('npm-audit-full.json','utf8')); const v=r.metadata?.vulnerabilities||{}; console.log('Full dependency audit summary:', JSON.stringify(v));"
 
       - name: Upload full audit artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: npm-audit-nightly-full

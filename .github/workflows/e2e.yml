@@ -52,7 +52,7 @@ jobs:
         run: ./scripts/e2e-seeded.sh ${{ matrix.browser }}
       - name: Upload Playwright Report (${{ matrix.browser }})
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: seeded-playwright-report-${{ matrix.browser }}
           path: playwright-report
@@ -77,7 +77,7 @@ jobs:
         run: ./scripts/e2e-unauth.sh ${{ matrix.browser }}
       - name: Upload Playwright Report (${{ matrix.browser }})
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unauth-playwright-report-${{ matrix.browser }}
           path: playwright-report
