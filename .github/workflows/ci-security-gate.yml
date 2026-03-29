@@ -63,7 +63,27 @@ jobs:
         run: npm ci --omit=dev --ignore-scripts
 
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --omit=dev --json > npm-audit-ci.json || true
+
+      - name: Enforce production high threshold
+        run: |
+          node -e "
+            const r = JSON.parse(require('fs').readFileSync('npm-audit-ci.json', 'utf8'));
+            const v = r.metadata?.vulnerabilities ?? {};
+            if ((v.high ?? 0) > 0 || (v.critical ?? 0) > 0) {
+              console.error('High/critical vulnerabilities found in production tree:', v);
+              process.exit(1);
+            }
+            console.log('No high/critical vulnerabilities in production dependency tree.');
+          "
+
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-ci
+          path: npm-audit-ci.json
+          retention-days: 7
 
   dependency-review:
     name: Dependency Review
