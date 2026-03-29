@@ -75,6 +75,10 @@ npm audit --omit=dev --json > npm-audit-ci.json || true
 
 **Matrix:** `chromium`, `firefox`, `webkit` across two job groups — `seeded` (authenticated, uses `ci_e2e_seeded` environment secrets) and `unauth` (unauthenticated flows). `fail-fast: false` so all browser results are collected.
 
+The `seeded` job is attached to the `ci_e2e_seeded` GitHub Actions environment. If that environment has protection rules such as `Required reviewers` or a wait timer configured in repository settings, the job will pause with a `Waiting for approval` status before any test steps run. This is expected GitHub environment behavior, not a Playwright or branch protection issue.
+
+To remove the pause for CI runs, update **Repository Settings → Environments → `ci_e2e_seeded`** and either remove `Required reviewers`, remove the wait timer, or move the required test secrets to repository-level secrets and drop the environment binding from the workflow.
+
 Playwright reports are uploaded as artifacts on every run (`if: always()`).
 
 ---
@@ -143,7 +147,14 @@ Generates a CycloneDX Software Bill of Materials for the **production dependency
 
 **Triggers:** `pull_request` labeled with `merge-when-ready`
 
-Generates a short-lived GitHub App installation token, waits for required checks to pass, then merges via the App (which is a branch protection bypass actor). Enables solo-maintainer self-merge without disabling branch protection.
+Generates a short-lived GitHub App installation token, polls GitHub Actions for upstream workflow completion, then merges via the App (which is a branch protection bypass actor). Enables solo-maintainer self-merge without disabling branch protection.
+
+Current merge gating behavior:
+
+- `CI Security Gate` is required and must conclude with `success`
+- `E2E Tests` is optional; if no run exists for the PR head SHA because path filters skipped it, automerge treats that as valid and continues
+- If either tracked workflow concludes with `failure`, `cancelled`, `timed_out`, or `action_required`, automerge exits without merging
+- The workflow polls every 15 seconds for up to 15 minutes before timing out
 
 Requires:
 
