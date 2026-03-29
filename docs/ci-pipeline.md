@@ -147,7 +147,14 @@ Generates a CycloneDX Software Bill of Materials for the **production dependency
 
 **Triggers:** `pull_request` labeled with `merge-when-ready`
 
-Generates a short-lived GitHub App installation token, waits for required checks to pass, then merges via the App (which is a branch protection bypass actor). Enables solo-maintainer self-merge without disabling branch protection.
+Generates a short-lived GitHub App installation token, polls GitHub Actions for upstream workflow completion, then merges via the App (which is a branch protection bypass actor). Enables solo-maintainer self-merge without disabling branch protection.
+
+Current merge gating behavior:
+
+- `CI Security Gate` is required and must conclude with `success`
+- `E2E Tests` is optional; if no run exists for the PR head SHA because path filters skipped it, automerge treats that as valid and continues
+- If either tracked workflow concludes with `failure`, `cancelled`, `timed_out`, or `action_required`, automerge exits without merging
+- The workflow polls every 15 seconds for up to 15 minutes before timing out
 
 Requires:
 
