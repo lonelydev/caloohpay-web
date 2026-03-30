@@ -75,7 +75,7 @@
     "@typescript-eslint/type-utils": "8.57.3-alpha.3"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.1.0",
+    "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
