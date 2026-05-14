@@ -1,11 +1,16 @@
 import { createPagerDutyClient } from '@/lib/api/pagerduty';
 import type { NextRequest } from 'next/server';
 import { ScheduleCompensationReport } from '@/lib/types/multi-schedule';
+import { mockServerSession } from '@/tests/utils';
+import { OnCallPeriod } from 'caloohpay/core';
 
 // Mock dependencies
 jest.mock('@/lib/api/pagerduty');
 jest.mock('next-auth', () => ({
-  getServerSession: jest.fn().mockResolvedValue({ accessToken: 'fake-token' }),
+  getServerSession: jest.fn(),
+}));
+jest.mock('@/lib/auth/options', () => ({
+  authOptions: {},
 }));
 // Mock NextResponse to avoid environment issues in test
 jest.mock('next/server', () => ({
@@ -26,10 +31,11 @@ describe('Multi-Schedule Report API', () => {
   const mockGetMultipleSchedules = jest.fn();
 
   beforeEach(() => {
+    jest.clearAllMocks();
+    mockServerSession();
     (createPagerDutyClient as jest.Mock).mockReturnValue({
       getMultipleSchedules: mockGetMultipleSchedules,
     });
-    mockGetMultipleSchedules.mockClear();
   });
 
   it('should split overlapping hours between schedules', async () => {
@@ -139,5 +145,207 @@ describe('Multi-Schedule Report API', () => {
 
     // Verify split roughly equal
     expect(emp1.weekendHours).toBeCloseTo(emp2.weekendHours, 5);
+  });
+
+  describe('end-of-month overnight shift compensation (bug fix)', () => {
+    it('should query PagerDuty with endDate extended by 1 day', async () => {
+      mockGetMultipleSchedules.mockResolvedValue([
+        {
+          id: 'S1',
+          name: 'S1',
+          html_url: '',
+          time_zone: 'Europe/London',
+          final_schedule: { rendered_schedule_entries: [] },
+        },
+      ]);
+
+      const endDate = '2026-03-31T23:59:59.999Z';
+      const req = {
+        json: async () => ({
+          scheduleIds: ['S1'],
+          startDate: '2026-03-01T00:00:00Z',
+          endDate,
+          rates: { weekdayRate: 50, weekendRate: 75 },
+        }),
+      } as unknown as NextRequest;
+
+      await POST(req);
+
+      expect(mockGetMultipleSchedules).toHaveBeenCalledWith(
+        ['S1'],
+        '2026-03-01T00:00:00Z',
+        // Should be 1 day later than endDate
+        expect.stringMatching(/^2026-04-01/)
+      );
+    });
+
+    it('should correctly compensate an overnight shift at month-end returned with full duration', async () => {
+      // Simulate PagerDuty returning the full shift after query extension:
+      // Fabian on-call Tuesday 2026-03-31 17:00 → Wednesday 2026-04-01 09:00
+      // This is a 16-hour overnight weekday shift and should qualify as OOH.
+      const schedules = [
+        {
+          id: 'S1',
+          name: 'Flex Team 2',
+          html_url: '',
+          time_zone: 'Europe/London',
+          final_schedule: {
+            rendered_schedule_entries: [
+              {
+                start: '2026-03-31T17:00:00+01:00',
+                end: '2026-04-01T09:00:00+01:00',
+                user: { id: 'fabian', name: 'Fabian', summary: 'Fabian' },
+              },
+            ],
+          },
+        },
+      ];
+
+      mockGetMultipleSchedules.mockResolvedValue(schedules);
+
+      const req = {
+        json: async () => ({
+          scheduleIds: ['S1'],
+          startDate: '2026-03-01T00:00:00Z',
+          endDate: '2026-03-31T23:59:59.999Z',
+          rates: { weekdayRate: 50, weekendRate: 75 },
+        }),
+      } as unknown as NextRequest;
+
+      const res = await POST(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      const report = data.reports[0];
+      expect(report.employees).toHaveLength(1);
+
+      const fabian = report.employees[0];
+      // March 31 is a Tuesday → weekday OOH → should get £50
+      expect(fabian.totalCompensation).toBeGreaterThan(0);
+      expect(fabian.weekdayHours).toBeGreaterThan(0);
+    });
+
+    it('should return zero compensation for same-day clipped periods (root cause)', () => {
+      // This test documents the ROOT CAUSE: a clipped entry (same day) gives £0.
+      // OnCallPeriod requires the shift to span multiple calendar days.
+
+      // Clipped entry: March 31 17:00 → March 31 23:59 (same day, no span)
+      const clipped = new OnCallPeriod(
+        new Date('2026-03-31T16:00:00Z'), // 17:00 BST
+        new Date('2026-03-31T22:59:00Z'), // 23:59 BST
+        'Europe/London'
+      );
+      expect(clipped.numberOfOohWeekDays).toBe(0);
+      expect(clipped.numberOfOohWeekends).toBe(0);
+
+      // Full entry: March 31 17:00 → April 1 09:00 (spans days, qualifies)
+      const full = new OnCallPeriod(
+        new Date('2026-03-31T16:00:00Z'), // 17:00 BST
+        new Date('2026-04-01T08:00:00Z'), // 09:00 BST
+        'Europe/London'
+      );
+      expect(full.numberOfOohWeekDays).toBe(1); // March 31 is a Tuesday
+      expect(full.numberOfOohWeekends).toBe(0);
+    });
+
+    it('should exclude entries that start after the original endDate (next-month overflow)', async () => {
+      // Simulate PagerDuty returning both a valid March entry AND an April entry
+      // (the April entry was returned because we extended the query until).
+      // The April entry should be filtered out and not affect March compensation.
+      const schedules = [
+        {
+          id: 'S1',
+          name: 'S1',
+          html_url: '',
+          time_zone: 'UTC',
+          final_schedule: {
+            rendered_schedule_entries: [
+              // Valid March entry
+              {
+                start: '2026-03-31T17:00:00Z',
+                end: '2026-04-01T09:00:00Z',
+                user: { id: 'U1', name: 'User 1', summary: 'User 1' },
+              },
+              // April entry that leaked in due to extended query – must be filtered
+              {
+                start: '2026-04-01T17:00:00Z',
+                end: '2026-04-02T09:00:00Z',
+                user: { id: 'U1', name: 'User 1', summary: 'User 1' },
+              },
+            ],
+          },
+        },
+      ];
+
+      mockGetMultipleSchedules.mockResolvedValue(schedules);
+
+      const endDate = '2026-03-31T23:59:59.999Z';
+      const req = {
+        json: async () => ({
+          scheduleIds: ['S1'],
+          startDate: '2026-03-01T00:00:00Z',
+          endDate,
+          rates: { weekdayRate: 50, weekendRate: 75 },
+        }),
+      } as unknown as NextRequest;
+
+      const res = await POST(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      const report = data.reports[0];
+      // Only 1 OOH day (March 31 Tuesday), NOT 2 (should not count the April entry)
+      expect(report.employees).toHaveLength(1);
+      const user1 = report.employees[0];
+      // Should get exactly 1 weekday (March 31), not 2
+      expect(user1.weekdayHours).toBeCloseTo(1, 5);
+      // April 1 weekday should not be counted
+      expect(user1.weekdayHours).toBeLessThan(2);
+    });
+
+    it('should correctly compensate an April 30 → May 1 overnight shift in the April report', async () => {
+      // baptiste on-call April 30 17:00 → May 1 09:00 (Thursday evening → Friday morning)
+      // April 30 is a Thursday → weekday OOH → should get £50 when April is queried
+      const schedules = [
+        {
+          id: 'S1',
+          name: 'S1',
+          html_url: '',
+          time_zone: 'Europe/London',
+          final_schedule: {
+            rendered_schedule_entries: [
+              {
+                start: '2026-04-30T16:00:00Z', // 17:00 BST
+                end: '2026-05-01T08:00:00Z', // 09:00 BST
+                user: { id: 'baptiste', name: 'Baptiste', summary: 'Baptiste' },
+              },
+            ],
+          },
+        },
+      ];
+
+      mockGetMultipleSchedules.mockResolvedValue(schedules);
+
+      const req = {
+        json: async () => ({
+          scheduleIds: ['S1'],
+          startDate: '2026-04-01T00:00:00Z',
+          endDate: '2026-04-30T23:59:59.999Z',
+          rates: { weekdayRate: 50, weekendRate: 75 },
+        }),
+      } as unknown as NextRequest;
+
+      const res = await POST(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      const report = data.reports[0];
+      expect(report.employees).toHaveLength(1);
+
+      const baptiste = report.employees[0];
+      // April 30 is a Thursday → weekday → £50
+      expect(baptiste.totalCompensation).toBeGreaterThan(0);
+      expect(baptiste.weekdayHours).toBeGreaterThan(0);
+    });
   });
 });
