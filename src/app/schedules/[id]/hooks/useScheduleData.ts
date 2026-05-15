@@ -46,11 +46,26 @@ export const useScheduleData = (
   authMethod: string | undefined,
   dateRange: { since: string; until: string }
 ) => {
-  // Construct API URL with date range
+  // Construct API URL with date range.
+  // Extend `until` by 1 day so PagerDuty returns the full duration of overnight
+  // shifts that start in the requested month but end just after the month boundary
+  // (e.g. March 31 17:00 → April 1 09:00). Without this, PagerDuty clips the
+  // entry to March 31 23:59:59 and the shift fails to qualify as OOH.
   const apiUrl = useMemo(() => {
     const params = new URLSearchParams();
     if (dateRange.since) params.append('since', dateRange.since);
-    if (dateRange.until) params.append('until', dateRange.until);
+    if (dateRange.until) {
+      const untilDT = DateTime.fromISO(dateRange.until);
+      if (!untilDT.isValid) {
+        console.warn(
+          'useScheduleData: invalid dateRange.until, skipping date extension',
+          dateRange.until
+        );
+        params.append('until', dateRange.until);
+      } else {
+        params.append('until', untilDT.plus({ days: 1 }).toISO() ?? dateRange.until);
+      }
+    }
     return `/api/schedules/${scheduleId}?${params.toString()}`;
   }, [scheduleId, dateRange]);
 
@@ -60,15 +75,29 @@ export const useScheduleData = (
     scheduleDetailFetcher
   );
 
-  // Group schedule entries by user and calculate compensation
+  // Group schedule entries by user and calculate compensation.
+  // Only include entries whose start date falls within the originally requested
+  // month (dateRange.since..dateRange.until). Entries from the next month that
+  // were returned solely because we extended `until` for the PagerDuty query
+  // must be excluded from display and compensation attribution.
   const userSchedules = useMemo(() => {
     if (!data?.schedule?.final_schedule?.rendered_schedule_entries) {
       return [];
     }
 
+    const displayUntil = dateRange.until ? DateTime.fromISO(dateRange.until) : null;
+
     const userMap = new Map<string, { user: User; entries: ScheduleEntry[] }>();
 
     data.schedule.final_schedule.rendered_schedule_entries.forEach((entry) => {
+      // Filter out entries that start after the original month boundary
+      if (displayUntil?.isValid) {
+        const entryStart = DateTime.fromISO(
+          typeof entry.start === 'string' ? entry.start : entry.start.toISOString()
+        );
+        if (entryStart.isValid && entryStart > displayUntil) return;
+      }
+
       const userId = entry.user.id;
       if (!userMap.has(userId)) {
         userMap.set(userId, {
@@ -135,7 +164,7 @@ export const useScheduleData = (
         totalCompensation,
       };
     });
-  }, [data]);
+  }, [data, dateRange.until]);
 
   return {
     data,

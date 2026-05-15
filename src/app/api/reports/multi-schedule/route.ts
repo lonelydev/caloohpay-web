@@ -35,13 +35,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid scheduleIds' }, { status: 400 });
     }
 
+    const endDateDT = DateTime.fromISO(endDate, { setZone: true }).toUTC();
+    if (!endDateDT.isValid) {
+      return NextResponse.json({ error: 'Invalid endDate format' }, { status: 400 });
+    }
+
     const pdClient = createPagerDutyClient(token, session.authMethod);
+
+    // Extend endDate by 1 day when querying PagerDuty so that overnight shifts
+    // at the end of the month (e.g. March 31 17:00 → April 1 09:00) are returned
+    // with their full duration rather than being clipped at the month boundary.
+    // Entries from the next month are filtered out below before processing.
+    const queryEndDate = endDateDT.plus({ days: 1 }).toISO()!;
 
     // 1. Fetch all schedules in parallel
     const schedules: PagerDutySchedule[] = await pdClient.getMultipleSchedules(
       scheduleIds,
       startDate,
-      endDate
+      queryEndDate
     );
 
     // 2. Process data for Sweep Line Algorithm
@@ -55,6 +66,12 @@ export async function POST(req: NextRequest) {
       { id: string; name: string; html_url: string; time_zone: string }
     > = {};
 
+    // Parse the original endDate for filtering entries that start after it.
+    // We only want entries that begin within the requested period. Entries from the
+    // next month that were returned because we extended the query end date must be
+    // excluded so they are not double-counted in the following month's report.
+    const displayEndDate = DateTime.fromISO(endDate, { setZone: true }).toUTC();
+
     schedules.forEach((schedule) => {
       scheduleMetadata[schedule.id] = {
         id: schedule.id,
@@ -66,14 +83,20 @@ export async function POST(req: NextRequest) {
       schedule.final_schedule.rendered_schedule_entries.forEach((entry) => {
         if (!entry.user || !entry.user.id) return;
 
+        const entryStart = DateTime.fromISO(
+          typeof entry.start === 'string' ? entry.start : entry.start.toISOString()
+        );
+
+        // Exclude entries with unparseable start dates or entries that start
+        // after the original (non-extended) end date
+        if (!entryStart.isValid || entryStart > displayEndDate) return;
+
         if (!userIntervals[entry.user.id]) {
           userIntervals[entry.user.id] = [];
         }
 
         userIntervals[entry.user.id].push({
-          start: DateTime.fromISO(
-            typeof entry.start === 'string' ? entry.start : entry.start.toISOString()
-          ),
+          start: entryStart,
           end: DateTime.fromISO(
             typeof entry.end === 'string' ? entry.end : entry.end.toISOString()
           ),
