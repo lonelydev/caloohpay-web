@@ -13,6 +13,8 @@ on:
       - 'playwright.config.ts'
       - 'next.config.ts'
       - 'tsconfig.json'
+      - 'jest.config.ts'
+      - 'jest.setup.ts'
       - '.github/workflows/e2e.yml'
   pull_request:
     paths:
@@ -25,6 +27,8 @@ on:
       - 'playwright.config.ts'
       - 'next.config.ts'
       - 'tsconfig.json'
+      - 'jest.config.ts'
+      - 'jest.setup.ts'
       - '.github/workflows/e2e.yml'
 
 jobs:
