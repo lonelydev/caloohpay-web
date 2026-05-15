@@ -27,10 +27,11 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import luxon3Plugin from '@fullcalendar/luxon3';
-import type { EventClickArg } from '@fullcalendar/core';
+import type { EventClickArg, EventContentArg, EventInput } from '@fullcalendar/core';
 import { DateTime } from 'luxon';
 import { PAYMENT_RATES } from '@/lib/constants';
 import type { CalendarEvent } from '@/lib/utils/calendarUtils';
+import { buildCalendarDaySegments } from '@/lib/utils/calendarDaySegments';
 
 interface CalendarViewProps {
   events: CalendarEvent[];
@@ -226,18 +227,18 @@ export default function CalendarView({ events, timezone, initialDate }: Calendar
   const theme = useTheme();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
-  // Handle event click - open detail dialog
+  // Individual bar clicks open the dialog directly; this handles clicks on the
+  // transparent event area outside any bar (e.g. keyboard activation).
   const handleEventClick = useCallback(
     (clickInfo: EventClickArg) => {
-      // Prevent default behavior
       clickInfo.jsEvent.preventDefault();
-
-      // Find the full event data from our events array
-      const eventId = clickInfo.event.id;
-      const fullEvent = events.find((e) => e.id === eventId);
-
-      if (fullEvent) {
-        setSelectedEvent(fullEvent);
+      const segs = clickInfo.event.extendedProps?.segments as
+        | import('@/lib/utils/calendarDaySegments').CalendarDaySegment[]
+        | undefined;
+      const firstSegment = segs?.[0];
+      if (firstSegment) {
+        const fullEvent = events.find((e) => e.id === firstSegment.eventId);
+        if (fullEvent) setSelectedEvent(fullEvent);
       }
     },
     [events]
@@ -247,6 +248,121 @@ export default function CalendarView({ events, timezone, initialDate }: Calendar
   const handleCloseDialog = useCallback(() => {
     setSelectedEvent(null);
   }, []);
+
+  // Open dialog for a specific on-call event (called from bar onClick)
+  const handleBarClick = useCallback(
+    (eventId: string) => {
+      const fullEvent = events.find((e) => e.id === eventId);
+      if (fullEvent) setSelectedEvent(fullEvent);
+    },
+    [events]
+  );
+
+  const daySegmentsByDate = useMemo(
+    () => buildCalendarDaySegments(events, timezone),
+    [events, timezone]
+  );
+
+  // One synthetic FC event per non-overlapping track per day.
+  // Segments sharing the same rowIndex (non-overlapping in time) go into the same
+  // FC event so FullCalendar allocates only one row for them, preventing false stacking.
+  const syntheticFcEvents = useMemo<EventInput[]>(() => {
+    const result: EventInput[] = [];
+    for (const [dateKey, segments] of daySegmentsByDate.entries()) {
+      const endDate = DateTime.fromISO(dateKey).plus({ days: 1 }).toISODate();
+      // Group segments by rowIndex (each row = one non-overlapping track)
+      const trackMap = new Map<number, typeof segments>();
+      for (const segment of segments) {
+        const track = trackMap.get(segment.rowIndex) ?? [];
+        track.push(segment);
+        trackMap.set(segment.rowIndex, track);
+      }
+      for (const [rowIndex, trackSegments] of trackMap.entries()) {
+        result.push({
+          id: `track-${dateKey}-${rowIndex}`,
+          start: dateKey,
+          end: endDate ?? undefined,
+          allDay: true,
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+          extendedProps: { segments: trackSegments },
+        });
+      }
+    }
+    return result;
+  }, [daySegmentsByDate]);
+
+  const renderEventContent = useCallback(
+    (arg: EventContentArg) => {
+      const segments = arg.event.extendedProps?.segments as
+        | import('@/lib/utils/calendarDaySegments').CalendarDaySegment[]
+        | undefined;
+      if (!segments || segments.length === 0) return null;
+
+      return (
+        <div className="cop-segment-outer">
+          {segments.map((segment) => {
+            const r = '7px';
+            const borderRadius = (() => {
+              if (segment.isFirstSegment && segment.isLastSegment) return r;
+              if (segment.isFirstSegment) return `${r} 0 0 ${r}`;
+              if (segment.isLastSegment) return `0 ${r} ${r} 0`;
+              return '0';
+            })();
+
+            const showLabel = segment.widthPercent >= 15;
+            const label = showLabel
+              ? `${segment.title}${
+                  segment.compensation > 0 ? ` £${segment.compensation.toFixed(0)}` : ''
+                }`
+              : '';
+
+            const startH = Math.floor(segment.startMinute / 60)
+              .toString()
+              .padStart(2, '0');
+            const startM = Math.floor(segment.startMinute % 60)
+              .toString()
+              .padStart(2, '0');
+            const endH = Math.floor(segment.endMinute / 60)
+              .toString()
+              .padStart(2, '0');
+            const endM = Math.floor(segment.endMinute % 60)
+              .toString()
+              .padStart(2, '0');
+            const tooltip = `${segment.title} • ${startH}:${startM}–${endH}:${endM} • £${segment.compensation.toFixed(0)}`;
+
+            return (
+              <button
+                key={segment.segmentId}
+                type="button"
+                className="cop-segment-bar"
+                data-testid={`day-segment-${segment.segmentId}`}
+                data-left-percent={segment.leftPercent}
+                data-width-percent={segment.widthPercent}
+                data-row-index={segment.rowIndex}
+                title={tooltip}
+                aria-label={tooltip}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBarClick(segment.eventId);
+                }}
+                style={{
+                  left: `${segment.leftPercent}%`,
+                  width: `${segment.widthPercent}%`,
+                  backgroundColor: segment.backgroundColor,
+                  color: segment.textColor,
+                  borderRadius,
+                }}
+              >
+                {showLabel && <span className="cop-segment-label">{label}</span>}
+              </button>
+            );
+          })}
+        </div>
+      );
+    },
+    [handleBarClick]
+  );
 
   // Memoize calendar styling to prevent unnecessary re-renders
   const calendarStyles = useMemo(() => styles.getCalendarStyles(theme), [theme]);
@@ -264,9 +380,10 @@ export default function CalendarView({ events, timezone, initialDate }: Calendar
           }}
           timeZone={timezone}
           initialDate={initialDate}
-          events={events}
+          events={syntheticFcEvents}
           eventClick={handleEventClick}
-          height="auto"
+          eventContent={renderEventContent}
+          displayEventTime={false}
           validRange={
             initialDate
               ? (() => {
@@ -285,7 +402,6 @@ export default function CalendarView({ events, timezone, initialDate }: Calendar
             minute: '2-digit',
             meridiem: false,
           }}
-          displayEventTime={true}
           eventDisplay="block"
           dayMaxEvents={3}
           moreLinkText="more"
