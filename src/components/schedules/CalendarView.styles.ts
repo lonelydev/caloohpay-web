@@ -93,8 +93,51 @@ export const getCalendarStyles = (theme: Theme): SxProps<Theme> => ({
     },
   },
   '& .fc-daygrid-event': {
-    padding: '2px 4px',
-    fontSize: '0.85rem',
+    // Outer event container is transparent — the bar lives inside eventContent
+    backgroundColor: 'transparent !important',
+    border: 'none !important',
+    boxShadow: 'none !important',
+    padding: '0 !important',
+    marginTop: '2px',
+  },
+  // eventContent renders inside .fc-event-main; make it a positioned container
+  '& .fc-event-main': {
+    padding: 0,
+    overflow: 'visible',
+  },
+  // cop-segment-outer is the positioned reference for the absolute bar
+  '& .cop-segment-outer': {
+    position: 'relative',
+    width: '100%',
+    height: '24px',
+    overflow: 'visible',
+  },
+  // cop-segment-bar is absolutely positioned within cop-segment-outer.
+  // left/width % resolve against cop-segment-outer (= 1 day column width). ✓
+  '& .cop-segment-bar': {
+    position: 'absolute',
+    height: '100%',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    paddingLeft: '5px',
+    paddingRight: '4px',
+    transition: 'opacity 0.15s ease, filter 0.15s ease',
+    '&:hover': {
+      opacity: 0.85,
+      filter: 'brightness(1.1)',
+    },
+  },
+  '& .cop-segment-label': {
+    fontSize: '12px',
+    fontWeight: 600,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    lineHeight: 1,
+    userSelect: 'none',
   },
   '& .fc-event-title': {
     fontWeight: 600,

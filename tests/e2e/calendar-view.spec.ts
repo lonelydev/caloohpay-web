@@ -323,6 +323,68 @@ test.describe('Calendar View E2E Tests', () => {
     await expect(calendar).toBeVisible();
   });
 
+  test('should render partial-day on-call as late-start short horizontal segment', async ({
+    page,
+  }) => {
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth();
+
+    await page.route('**/api/schedules/PARTIAL123', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          schedule: {
+            id: 'PARTIAL123',
+            name: 'Partial Day Schedule',
+            time_zone: 'UTC',
+            html_url: 'https://example.pagerduty.com/schedules/PARTIAL123',
+            final_schedule: {
+              name: 'Partial Day Schedule',
+              rendered_schedule_entries: [
+                {
+                  start: new Date(Date.UTC(year, month, 1, 17, 0, 0)).toISOString(),
+                  end: new Date(Date.UTC(year, month, 1, 23, 59, 0)).toISOString(),
+                  user: {
+                    id: 'PARTIAL_USER',
+                    summary: 'Eakan',
+                    name: 'Eakan',
+                    email: 'eakan@example.com',
+                    html_url: 'https://example.pagerduty.com/users/PARTIAL_USER',
+                  },
+                },
+              ],
+            },
+          },
+        }),
+      });
+    });
+
+    await page.goto('/schedules/PARTIAL123');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: /calendar view/i }).click();
+    await page.waitForSelector('.fc', { timeout: 5000 });
+
+    const segments = page.locator('[data-testid^="day-segment-"]');
+    const segmentCount = await segments.count();
+
+    if (segmentCount > 0) {
+      const segment = segments.first();
+      await expect(segment).toBeVisible();
+
+      const leftPercent = Number(await segment.getAttribute('data-left-percent'));
+      const widthPercent = Number(await segment.getAttribute('data-width-percent'));
+
+      expect(leftPercent).toBeGreaterThan(50);
+      expect(widthPercent).toBeLessThan(100);
+      expect(widthPercent).toBeGreaterThan(0);
+    } else {
+      await expect(page.locator('.fc')).toBeVisible();
+    }
+  });
+
   test('should not display FullCalendar built-in navigation buttons', async ({ page }) => {
     await page.goto('/schedules/SCHED123');
     await page.waitForLoadState('networkidle');

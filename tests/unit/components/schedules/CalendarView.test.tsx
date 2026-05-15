@@ -6,35 +6,29 @@ import type { CalendarEvent } from '@/lib/utils/calendarUtils';
 // Mock all FullCalendar modules to avoid ES module issues in Jest
 jest.mock('@fullcalendar/react', () => {
   return function MockFullCalendar({
-    eventClick,
     events,
+    eventContent,
   }: {
-    eventClick?: (info: { event: { id: string }; jsEvent: { preventDefault: () => void } }) => void;
-    events?: CalendarEvent[];
+    eventClick?: (info: {
+      event: { id: string; extendedProps: Record<string, unknown> };
+      jsEvent: { preventDefault: () => void };
+    }) => void;
+    events?: Array<{ id?: string; extendedProps?: Record<string, unknown> }>;
+    eventContent?: (arg: {
+      event: { id: string; extendedProps: Record<string, unknown> };
+    }) => React.ReactNode;
   }) {
     return (
       <div data-testid="mock-fullcalendar">
-        <div data-testid="calendar-events">
-          {(events || []).map((event: CalendarEvent) => (
-            <button
-              key={event.id}
-              data-testid={`event-${event.id}`}
-              style={{
-                backgroundColor: event.backgroundColor,
-                borderColor: event.borderColor,
-                color: event.textColor,
-              }}
-              onClick={() => {
-                eventClick?.({
-                  event: { id: event.id },
-                  jsEvent: { preventDefault: () => undefined },
-                });
-              }}
-            >
-              {event.title}
-            </button>
-          ))}
-        </div>
+        {(events ?? []).map((event) => {
+          const eventId = event.id ?? '';
+          const extendedProps = (event.extendedProps ?? {}) as Record<string, unknown>;
+          return (
+            <div key={eventId} data-testid={`fc-event-${eventId}`}>
+              {eventContent?.({ event: { id: eventId, extendedProps } })}
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -108,14 +102,14 @@ describe('CalendarView', () => {
   it('should display calendar events', () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    expect(screen.getAllByText(/John Doe/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Jane Smith/).length).toBeGreaterThan(0);
   });
 
   it('should open event detail dialog when event is clicked', async () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
-    const eventButton = screen.getByTestId('event-event-1');
+    const eventButton = screen.getByTestId('day-segment-event-1-2024-01-01');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -129,7 +123,7 @@ describe('CalendarView', () => {
   it('should display correct compensation in dialog', async () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
-    const eventButton = screen.getByTestId('event-event-1');
+    const eventButton = screen.getByTestId('day-segment-event-1-2024-01-01');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -140,7 +134,7 @@ describe('CalendarView', () => {
   it('should display weekday and weekend counts', async () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
-    const eventButton = screen.getByTestId('event-event-1');
+    const eventButton = screen.getByTestId('day-segment-event-1-2024-01-01');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -154,7 +148,7 @@ describe('CalendarView', () => {
   it('should display duration in hours', async () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
-    const eventButton = screen.getByTestId('event-event-1');
+    const eventButton = screen.getByTestId('day-segment-event-1-2024-01-01');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -165,7 +159,7 @@ describe('CalendarView', () => {
   it('should close dialog when close button is clicked', async () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
-    const eventButton = screen.getByTestId('event-event-1');
+    const eventButton = screen.getByTestId('day-segment-event-1-2024-01-01');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -183,7 +177,7 @@ describe('CalendarView', () => {
   it('should display payment breakdown in dialog', async () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
-    const eventButton = screen.getByTestId('event-event-1');
+    const eventButton = screen.getByTestId('day-segment-event-1-2024-01-01');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -214,7 +208,7 @@ describe('CalendarView', () => {
 
     renderWithTheme(<CalendarView {...defaultProps} events={[weekendOnlyEvent]} />);
 
-    const eventButton = screen.getByTestId('event-event-3');
+    const eventButton = screen.getByTestId('day-segment-event-3-2024-01-05');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -245,7 +239,7 @@ describe('CalendarView', () => {
 
     renderWithTheme(<CalendarView {...defaultProps} events={[weekdayOnlyEvent]} />);
 
-    const eventButton = screen.getByTestId('event-event-4');
+    const eventButton = screen.getByTestId('day-segment-event-4-2024-01-08');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -276,7 +270,7 @@ describe('CalendarView', () => {
 
     renderWithTheme(<CalendarView {...defaultProps} events={[noEmailEvent]} />);
 
-    const eventButton = screen.getByTestId('event-event-5');
+    const eventButton = screen.getByTestId('day-segment-event-5-2024-01-01');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -314,7 +308,7 @@ describe('CalendarView', () => {
 
     renderWithTheme(<CalendarView {...defaultProps} events={[singleDayEvent]} />);
 
-    const eventButton = screen.getByTestId('event-event-6');
+    const eventButton = screen.getByTestId('day-segment-event-6-2024-01-01');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -325,7 +319,7 @@ describe('CalendarView', () => {
   it('should use correct timezone for date display', async () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
-    const eventButton = screen.getByTestId('event-event-1');
+    const eventButton = screen.getByTestId('day-segment-event-1-2024-01-01');
     fireEvent.click(eventButton);
 
     await waitFor(() => {
@@ -345,6 +339,79 @@ describe('CalendarView', () => {
     renderWithTheme(<CalendarView {...defaultProps} />);
 
     expect(screen.getByTestId('mock-fullcalendar')).toBeInTheDocument();
+  });
+
+  it('should render fixed-height horizontal day segment with proportional position', () => {
+    const partialDayEvent: CalendarEvent = {
+      id: 'partial-segment',
+      title: 'Partial Segment',
+      start: '2024-01-01T17:00:00.000Z',
+      end: '2024-01-01T23:59:00.000Z',
+      extendedProps: {
+        user: {
+          id: 'partial-user',
+          summary: 'Partial Segment',
+          name: 'Partial Segment',
+        },
+        duration: 6.98,
+        weekdayDays: 1,
+        weekendDays: 0,
+        compensation: 50,
+      },
+    };
+
+    renderWithTheme(<CalendarView events={[partialDayEvent]} timezone="UTC" />);
+
+    const segment = screen.getByTestId('day-segment-partial-segment-2024-01-01');
+    expect(segment).toHaveAttribute('data-left-percent', '70.83');
+    expect(segment).toHaveAttribute('data-width-percent', '29.17');
+  });
+
+  it('should stack multiple day segments in separate rows', () => {
+    const stackedEvents: CalendarEvent[] = [
+      {
+        id: 'stacked-1',
+        title: 'Stacked One',
+        start: '2024-01-01T09:00:00.000Z',
+        end: '2024-01-01T18:00:00.000Z',
+        extendedProps: {
+          user: {
+            id: 'stacked-user-1',
+            summary: 'Stacked One',
+            name: 'Stacked One',
+          },
+          duration: 9,
+          weekdayDays: 1,
+          weekendDays: 0,
+          compensation: 50,
+        },
+      },
+      {
+        id: 'stacked-2',
+        title: 'Stacked Two',
+        start: '2024-01-01T12:00:00.000Z',
+        end: '2024-01-01T22:00:00.000Z',
+        extendedProps: {
+          user: {
+            id: 'stacked-user-2',
+            summary: 'Stacked Two',
+            name: 'Stacked Two',
+          },
+          duration: 10,
+          weekdayDays: 1,
+          weekendDays: 0,
+          compensation: 50,
+        },
+      },
+    ];
+
+    renderWithTheme(<CalendarView events={stackedEvents} timezone="UTC" />);
+
+    const first = screen.getByTestId('day-segment-stacked-1-2024-01-01');
+    const second = screen.getByTestId('day-segment-stacked-2-2024-01-01');
+
+    expect(first).toHaveAttribute('data-row-index', '0');
+    expect(second).toHaveAttribute('data-row-index', '1');
   });
 
   describe('User Color Rendering', () => {
@@ -375,11 +442,11 @@ describe('CalendarView', () => {
 
       renderWithTheme(<CalendarView {...defaultProps} events={eventsWithColours} />);
 
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-      const eventButton = screen.getByTestId('event-colored-event-1');
-      expect(eventButton).toHaveStyle('background-color: rgb(144, 202, 249)');
-      expect(eventButton).toHaveStyle('border-color: rgb(100, 181, 246)');
-      expect(eventButton).toHaveStyle('color: rgb(13, 71, 161)');
+      expect(screen.getAllByText(/John Doe/).length).toBeGreaterThan(0);
+      // Colors are applied to the segment bar, not the click-trigger button
+      const segmentBar = screen.getByTestId('day-segment-colored-event-1-2024-01-01');
+      expect(segmentBar).toHaveStyle('background-color: rgb(144, 202, 249)');
+      expect(segmentBar).toHaveStyle('color: rgb(13, 71, 161)');
     });
 
     it('should handle multiple events with different user colors', () => {
@@ -430,8 +497,8 @@ describe('CalendarView', () => {
 
       renderWithTheme(<CalendarView {...defaultProps} events={eventsWithDifferentColours} />);
 
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+      expect(screen.getAllByText(/John Doe/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Jane Smith/).length).toBeGreaterThan(0);
     });
 
     it('should handle events without color properties gracefully', () => {
@@ -458,7 +525,7 @@ describe('CalendarView', () => {
 
       renderWithTheme(<CalendarView {...defaultProps} events={eventsWithoutColours} />);
 
-      expect(screen.getByText('Test User')).toBeInTheDocument();
+      expect(screen.getAllByText(/Test User/).length).toBeGreaterThan(0);
     });
 
     it('should maintain consistent colors when dialog is opened and closed', async () => {
@@ -489,7 +556,7 @@ describe('CalendarView', () => {
       renderWithTheme(<CalendarView {...defaultProps} events={eventsWithColours} />);
 
       // Click event to open dialog
-      const eventButton = screen.getByTestId('event-persistent-color-event');
+      const eventButton = screen.getByTestId('day-segment-persistent-color-event-2024-01-01');
       fireEvent.click(eventButton);
 
       await waitFor(() => {
@@ -505,7 +572,7 @@ describe('CalendarView', () => {
       });
 
       // Event should still be rendered with colors
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getAllByText(/John Doe/).length).toBeGreaterThan(0);
     });
   });
 });
