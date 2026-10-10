@@ -30,10 +30,11 @@ commitlint.config.js
 .prettierrc
 
 # Environment files (set via Vercel dashboard)
+# .env.example is deliberately NOT ignored: it only holds placeholders, and the
+# prebuilt functions reference it, so excluding it fails the deploy with ENOENT.
 .env
 .env.local
 .env*.local
-.env.example
 
 # Build artifacts
 .next/
