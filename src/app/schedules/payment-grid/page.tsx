@@ -47,7 +47,6 @@ export default function MultiSchedulePaymentPage() {
     initializationRef.current = true;
 
     // Initialize month on client side to avoid hydration mismatch
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedMonth(DateTime.now().startOf('month'));
 
     // Load from local storage
@@ -66,6 +65,8 @@ export default function MultiSchedulePaymentPage() {
                 final_schedule: { name: '', rendered_schedule_entries: [] },
               }) as PagerDutySchedule
           );
+          // localStorage is only readable on the client, so this must run after mount
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setSelectedSchedules(placeholders);
         }
       }
