@@ -107,5 +107,5 @@ Unit tests are colocated in `__tests__/` folders next to the code. Playwright sp
 
 ## Agent tooling in this repo
 
-Skills in [.claude/skills/](.claude/skills/): `add-api-route`, `secret-leak-review`, `docs-sync`.
+Skills in [.claude/skills/](.claude/skills/): `add-api-route`, `add-ui-component`, `calendar-shift-debug`, `multi-schedule-overlap-check`, `auth-change-review`, `secret-leak-review`, `e2e-triage`, `docs-sync`, `prepare-pr`, `handle-dependabot`.
 Subagent in [.claude/agents/](.claude/agents/): `test-writer`. Shared permissions: [.claude/settings.json](.claude/settings.json).
