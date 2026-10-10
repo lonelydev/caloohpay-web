@@ -23,6 +23,7 @@
     "test:e2e:unauth": "./scripts/e2e-unauth.sh all",
     "test:e2e:unauth:ui": "./scripts/e2e-run.sh unauth headed",
     "type-check": "tsc --noEmit",
+    "verify": "npm run lint -- --max-warnings=0 && npm run type-check && npm test -- --ci && npm run build",
     "prepare": "husky",
     "postinstall": "node -e \"if (process.env.VERCEL !== '1') require('child_process').execSync('playwright install --with-deps chromium', {stdio: 'inherit'})\""
   },
