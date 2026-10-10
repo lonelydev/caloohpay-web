@@ -202,17 +202,17 @@ To skip a major that upstream isn't ready for (e.g. a library's plugins have no 
 
 ## Security hardening summary
 
-| Measure                      | Implementation                                                                                        |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Production-only audit scope  | `--omit=dev` on all audit and SBOM jobs                                                               |
-| Single audit invocation      | JSON written once with `\|\| true`; threshold enforced by parsing that file                           |
-| Dependency diff on PRs       | `actions/dependency-review-action` with `fail-on-severity: high`                                      |
-| Nightly prod gate            | Separate blocking job; dev-tree audit is informational only                                           |
-| Static analysis              | CodeQL on every PR and weekly                                                                         |
-| Supply chain visibility      | CycloneDX SBOM on every release                                                                       |
-| Automated dependency updates | Dependabot (npm + Actions, weekly)                                                                    |
-| Secret scanning              | GitHub Secret Scanning + Push Protection (enable in repo Settings → Security)                         |
-| Disclosure policy            | `SECURITY.md` at repo root                                                                            |
-| Ownership                    | `CODEOWNERS` assigns `@lonelydev` to all paths                                                        |
-| Deployment gate              | Vercel auto-deploy disabled; deploy only after CI + E2E both pass                                     |
-| Branch protection            | Required checks: `Quality Checks`, `Production Dependency Audit`, `Dependency Review`, `Analyze Code` |
+| Measure                      | Implementation                                                                                                                                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production-only audit scope  | `--omit=dev` on all audit and SBOM jobs                                                                                                                                                           |
+| Single audit invocation      | JSON written once with `\|\| true`; threshold enforced by parsing that file                                                                                                                       |
+| Dependency diff on PRs       | `actions/dependency-review-action` with `fail-on-severity: high`                                                                                                                                  |
+| Nightly prod gate            | Separate blocking job; dev-tree audit is informational only                                                                                                                                       |
+| Static analysis              | CodeQL on every PR and weekly                                                                                                                                                                     |
+| Supply chain visibility      | CycloneDX SBOM on every release                                                                                                                                                                   |
+| Automated dependency updates | Dependabot (npm + Actions, weekly)                                                                                                                                                                |
+| Secret scanning              | GitHub Secret Scanning + Push Protection (enable in repo Settings → Security)                                                                                                                     |
+| Disclosure policy            | `SECURITY.md` at repo root                                                                                                                                                                        |
+| Ownership                    | `CODEOWNERS` assigns `@lonelydev` to all paths                                                                                                                                                    |
+| Deployment gate              | Vercel auto-deploy disabled; deploy only after CI + E2E both pass                                                                                                                                 |
+| Branch protection            | Ruleset `main-protection`: required checks `Quality Checks`, `Production Dependency Audit`, `Dependency Review` (strict). E2E is enforced by `automerge.yml` and the deploy gate, not the ruleset |
