@@ -171,6 +171,15 @@ Weekly PRs for:
 - `npm` — labelled `dependencies`, `security`
 - `github-actions` — labelled `dependencies`, `ci`
 
+PR titles are pinned to `build(deps): …` (production) and `build(deps-dev): …` (development).
+The `handle-dependabot` and `merge-open-prs` skills rely on this format.
+
+Packages that peer-depend on each other are **grouped** so they're bumped together: `@mui/*`, `ag-grid-*`,
+`@fullcalendar/*`, `@emotion/*`, React, Next, Testing Library, Jest, commitlint and Tailwind. Each family
+group includes major versions, so the family always moves together. Remaining dev-dependency minor and patch
+bumps share one `dev-minor-patch` PR, and all GitHub Actions bumps share one `github-actions` PR. Bumping
+only one member of a family breaks `npm ci` (ERESOLVE) or the type-check.
+
 ---
 
 ## Security hardening summary
