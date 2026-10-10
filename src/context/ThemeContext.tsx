@@ -38,6 +38,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     const initialMode = savedMode || (prefersDark ? 'dark' : 'light');
 
     if (initialMode !== mode) {
+      // Preference is only known on the client; starting light keeps SSR markup identical
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMode(initialMode);
     }
     setIsHydrated(true);
