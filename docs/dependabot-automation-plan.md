@@ -30,10 +30,11 @@ What got merged that day: #105, #106, #111, #112, #113, #115, #116, #121, #122. 
 
 | Item                                       | State                                                                                                                                                            |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| #123 `docs(dependabot): …grouping behaves` | Green; needs a maintainer merge (agents may not merge their own PRs; docs-only, so E2E won't run, see [Facts](#facts-checked-2026-10-10))                        |
+| #123 `docs(dependabot): …grouping behaves` | Green and mergeable; needs a maintainer merge (agents may not merge their own PRs)                                                                               |
 | #114 mui group 7 → 9                       | Needs a code migration (`Typography` `component=` type errors in `features/page.tsx`, `LoginHeader.tsx`). **Next task**                                          |
 | #43 Copilot draft into `feat/data-vis`     | Maintainer's call; probably close                                                                                                                                |
 | E2E jobs have no `timeout-minutes`         | A hung `npm ci` blocked #115 for 9+ min (the default limit is 6 h). Fixed in Layer 1 below                                                                       |
+| E2E as required checks                     | **Removed by the maintainer (2026-10-10).** Docs/config PRs now merge without bypass. E2E still gates automerge and deploys; see 1e                              |
 | Ignored majors                             | `typescript` 7.x, `@fullcalendar/core` 7.x, `@fullcalendar/react` 7.x. Revisit when typescript-eslint supports TS 7 and the fullcalendar plugins ship a stable 7 |
 
 ---
@@ -56,6 +57,13 @@ agent** (`/schedule` routine).
 **Supply-chain risk.** Unattended auto-merge plus auto-deploy means a compromised patch release could reach
 production within hours. Mitigations: Dependabot `cooldown` (wait N days before proposing a new release), the
 existing CI Security Gate (dependency review and audit), and keeping majors behind human review.
+
+**Not requiring Dependabot PRs to be up to date.** The only risk is a _semantic_ merge conflict: two bumps each
+pass CI against an older `main`, merge without a textual conflict, then break together (e.g. lockfile or peer ranges
+end up inconsistent). It's rare, because lockfile changes usually conflict textually, and then Dependabot rebases
+itself. The safety net is already in place: CI and E2E run again on every push to `main`, and production only deploys
+when both pass. Worst case, `main` goes red for a while; production is never affected. Accepted for Dependabot
+patch/minor; see 1b.
 
 **Target split**: Layer 1 (Actions) handles ~90% of PRs with zero human time. Layer 2 (agent) handles the rest
 up to "PR ready for review". Layer 3 (human) spends ~10 min occasionally, only when a major lands.
@@ -98,20 +106,20 @@ Two gotchas that would make a naive version silently do nothing:
 `automerge.yml` then takes over unchanged: it waits for `CI Security Gate` (required) and `E2E Tests` (optional),
 then squash-merges with the App token.
 
-**1b. Keep queued PRs up to date (required: `strict: true`).** Every merge leaves the other labelled PRs behind
-`main`, and Dependabot only rebases on its own when there's a conflict. Options:
+**1b. Let automerged Dependabot PRs merge without being up to date. ✅ DECIDED (2026-10-10).** `strict: true`
+stays for everyone, because rulesets can't scope `strict` by PR author (they target the base branch). Instead,
+`automerge.yml` merges Dependabot PRs with **`--admin`** (the App is already a ruleset bypass actor) instead of
+`--auto`, **after** its existing wait for `CI Security Gate` and `E2E Tests`. This removes the need for any rebase
+mechanism. Rejected alternatives: a rebase-on-push workflow (fiddly: one PR at a time, identity Dependabot accepts,
+re-labelling after each rebase); merge queue (probably unavailable for user-owned repos).
 
-- **Rebase-on-push workflow (likely):** on `push` to `main`, find open `merge-when-ready` Dependabot PRs that are
-  behind, and comment `@dependabot rebase` on **the oldest one only**. One at a time, so they don't race. The
-  comment must be posted by a user/App identity Dependabot accepts. **Verify Dependabot honours commands from the
-  App**; if not, this needs a different approach.
-- **GitHub merge queue:** the cleanest fix, but it's only available for organisation-owned repos. This repo is
-  user-owned. Check before choosing.
-- **Relax `strict` for Dependabot only:** not possible per-actor in rulesets; rejected.
-
-Also check: `automerge.yml` waits for check runs on the head SHA it was labelled at. After a rebase the head SHA
-changes, so the label may need to be re-applied (or `automerge.yml` changed to trigger on `synchronize` for
-labelled PRs).
+- Bypass only applies with an explicit `--admin`: a merge without it was refused as "Head branch is out of date"
+  (seen 2026-10-10). Verify that `--admin` works for the App identity, and that `--admin` can't be combined with
+  `--auto` (it's an immediate merge, which is fine because the workflow has already waited).
+- `--admin` bypasses _all_ ruleset checks, so `automerge.yml`'s own CI wait becomes the real gate and must stay
+  strict: no merge unless `CI Security Gate` is `success` and `E2E Tests` is `success` or absent.
+- Only use `--admin` when the PR author is `dependabot[bot]`. Human PRs keep the normal `--auto` path.
+- Residual risk: the semantic-conflict case in the [Discussion summary](#discussion-summary), caught by `main`'s CI.
 
 **1c. `cooldown` in `dependabot.yml`**, e.g. patch/minor 3 days, major 7 days. Check the current syntax in the
 Dependabot docs when implementing.
@@ -119,11 +127,17 @@ Dependabot docs when implementing.
 **1d. `timeout-minutes` on E2E jobs** (e.g. 20) and on the Quality Checks job, so a hang fails fast instead of
 blocking the queue for up to 6 h.
 
-**1e. Make required checks work for docs/config-only PRs.** All 6 E2E jobs are required, but `e2e.yml` has `paths:`
-filters, so docs/config PRs never get those checks and can only merge with admin bypass (#112, #113, #123). The
-standard fix: run `e2e.yml` on every PR, and inside the job skip the expensive steps when no relevant files changed
-(e.g. `dorny/paths-filter`). The required checks then report success instead of never appearing. Needed before
-Layer 2 can open docs PRs that merge without a human.
+**1e. E2E and docs/config-only PRs. ✅ RESOLVED (2026-10-10).** The six E2E jobs were required, but `e2e.yml` only
+runs on code/package changes (its `paths:` include `package.json` and `package-lock.json`, so **every npm bump
+still gets full E2E**). That meant docs/config PRs could never satisfy the required checks. The maintainer removed
+the six E2E jobs from the ruleset's required checks. E2E is still enforced in two places:
+
+- `automerge.yml` refuses to merge if E2E ran and failed.
+- `deploy-vercel.yml` doesn't deploy a `main` commit whose E2E failed.
+
+Remaining gap: a human _can_ merge a PR with red E2E. If that happens, `main` turns red and deploys pause until it's
+fixed; it can't reach production. If it ever bites, add a single required **"E2E result"** aggregate job (runs on
+every PR; passes immediately when no relevant paths changed, otherwise `needs:` the browser matrix).
 
 ### Layer 2: weekly scheduled cloud agent (judgement calls only)
 
@@ -136,10 +150,20 @@ Instructions:
 3. **Never merge, never label its own PRs, never change workflows/rulesets.**
 4. Report: one summary (issue or PR comment) listing what's waiting on a human, with links.
 
-### Layer 3: human
+### Layer 3: human, with a review cadence
 
-Review and merge Layer 2's PRs (majors/migrations); decide ignore vs migrate. Expected: ~10 min, only in weeks
-when a major lands.
+| When                                                                       | What                                                                                                  | Time    |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------- |
+| **Weekly**, Monday afternoon/Tuesday (after the 06:00 UTC run and Layer 1) | Read the Layer 2 report; merge ready migration PRs or defer them                                      | ~15 min |
+| **Monthly**                                                                | Review the ignore list (TS 7, fullcalendar 7); close or decide anything older than ~4 weeks           | ~15 min |
+| **As they arrive**                                                         | Critical/high **security** alerts that automation can't merge (usually majors): same/next working day | varies  |
+
+Conflicts can wait: Dependabot rebases its own PRs on conflict (unless someone else pushed to the branch). Two
+reasons not to let things sit indefinitely:
+
+- **Stuck PRs use up slots.** `open-pull-requests-limit: 10` caps open version-update PRs. Ten stuck PRs means no
+  new ones arrive, without any warning. That's how this backlog formed unnoticed, so do the monthly sweep.
+- **Majors compound.** MUI went 7 → 9 in one jump. Don't defer a major for more than a month or two.
 
 ---
 
@@ -150,20 +174,21 @@ when a major lands.
    - (b) all patch + minor, dev and production. **Faster.** Relies on CI + E2E to catch UI regressions in minors.
    - GitHub Actions group PRs: always auto-merge? (Proposed: yes for minor/patch, human for majors.)
 2. **Secrets route for 1a**: `pull_request_target` (proposed) vs Dependabot secrets.
-3. **Rebase mechanism for 1b**: rebase-on-push workflow (proposed) vs merge queue (if available).
+3. ~~Rebase mechanism for 1b~~ ✅ Decided: no rebase mechanism; automerge Dependabot PRs with `--admin` (see 1b).
 4. **Cooldown days**: proposed 3 (patch/minor) / 7 (major).
 5. **Layer 2 schedule and notification channel**: GitHub issue vs PR comment vs push notification.
+6. ~~Required E2E vs docs PRs~~ ✅ Resolved: E2E removed from required checks by the maintainer (see 1e).
 
 ## Implementation checklist
 
 Each item is its own PR (Conventional Commits; `ci:`/`build:` scope). Layer 1 PRs change workflows, so they need
 the maintainer's review and are **not** agent-merged.
 
-- [ ] Re-check [Facts](#facts-checked-2026-10-10) (rulesets, secrets, labels, repo-owner type for merge queue)
+- [ ] Re-check [Facts](#facts-checked-2026-10-10) (rulesets, bypass actors, secrets, labels)
 - [ ] 1d `timeout-minutes` on CI/E2E jobs (smallest; do first)
-- [ ] 1e E2E always runs; skips internally when no relevant changes
+- [x] 1e E2E removed from required checks (maintainer, 2026-10-10)
 - [ ] 1a auto-label workflow with the chosen policy; test on a real Dependabot patch PR
-- [ ] 1b rebase mechanism; test with 2+ labelled PRs open at once
+- [ ] 1b `automerge.yml`: `--admin` merge for `dependabot[bot]` PRs after the CI wait; test with 2+ labelled PRs open at once
 - [ ] 1c `cooldown` in `dependabot.yml`
 - [ ] Update `docs/ci-pipeline.md`, `handle-dependabot` and `merge-open-prs` skills (`docs-sync` skill)
 - [ ] Layer 2 `/schedule` routine
@@ -173,14 +198,15 @@ the maintainer's review and are **not** agent-merged.
 
 - Ruleset `main-protection` (id 14392511): squash only, linear history, **`strict_required_status_checks_policy:
 true`**, 0 required approvals, `copilot_code_review` on push. Required checks: `Quality Checks`,
-  `Production Dependency Audit`, `Dependency Review`, and Seeded/Unauth E2E × chromium/firefox/webkit.
+  `Production Dependency Audit`, `Dependency Review`. (The six Seeded/Unauth E2E jobs were required until the
+  maintainer removed them on 2026-10-10.)
 - Bypass actors (mode `pull_request`): repository admin role and two Integrations (one is the automerge App).
   The App can merge despite the checks, which is why `automerge.yml` waits for CI itself.
 - Repo settings: `allow_auto_merge: true`, `allow_squash_merge: true`, `delete_branch_on_merge: false`.
 - Label `merge-when-ready` exists. Actions secrets: `APP_ID`, `APP_PRIVATE_KEY`, `NEXTAUTH_SECRET`, `VERCEL_*`.
   Dependabot secrets: none.
 - `e2e.yml` has `paths:` filters on `pull_request` and `push`.
-- Repo owner `lonelydev` is a user account (merge queue availability to be confirmed).
+- Repo owner `lonelydev` is a user account (merge queue probably unavailable; no longer needed, see 1b).
 
 ## Related
 
