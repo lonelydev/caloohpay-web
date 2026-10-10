@@ -16,12 +16,18 @@ To merge PRs directly instead of labelling (including Actions and production bum
 | Title                                                 | Meaning                                            |
 | ----------------------------------------------------- | -------------------------------------------------- |
 | `build(deps-dev): bump X from A to B`                 | single dev dependency                              |
-| `build(deps-dev): bump the dev-minor-patch group …`   | batched dev minor/patch bumps                      |
+| `build(deps-dev): bump the dev-minor-patch group …`   | all dev minor/patch bumps, incl. dev families      |
 | `build(deps): bump X …` touching only `package*.json` | production dependency                              |
 | `build(deps): bump the <family> group …`              | peer family (`mui`, `ag-grid`, `react`, `next`, …) |
 | `build(deps): …` touching only `.github/workflows/*`  | GitHub Actions (`github-actions` group)            |
 
-The prefix does **not** distinguish Actions from npm production bumps: check `files`.
+The prefix does **not** distinguish Actions from npm production bumps: check `files`. Grouped titles may say `… across 1 directory with N updates`.
+
+How grouping really behaves (`docs/ci-pipeline.md` has the detail):
+
+- Dev families (jest, testing-library, tailwind, commitlint) may open as separate PRs on the first scan, but a rebase or recreate can fold their minor/patch bumps into `dev-minor-patch`. Dependabot then closes the family PRs as "Superseded by #N". That's expected: work on #N.
+- PRs opened before the groups existed may ignore `@dependabot close`. If one is redundant (main already has the version), close it with `gh pr close N --comment "Superseded by #M …"`.
+- Dependabot only reads a command placed **alone** in a comment. Text before it means it's ignored.
 
 ## Rules
 
@@ -52,14 +58,17 @@ The prefix does **not** distinguish Actions from npm production bumps: check `fi
 
 Get the error: `gh run view <run-id> --log-failed | grep -iE "error|ERESOLVE|peer" | head -20`.
 
-| Symptom                                                                                 | Cause                                                                                         | Action                                                                                                            |
-| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `npm ci` fails with `ERESOLVE … peer X@^old from Y`                                     | one family member bumped alone (e.g. #101: `@mui/material` 9 vs `@mui/icons-material` 7)      | **Supersede** (below). If it's a multi-major framework jump (MUI, Next, React), report "needs migration" instead. |
-| `tsc` error like `No overload matches this call` on a component from the bumped package | sibling package left on the old major (e.g. #102: `ag-grid-react` 36, `ag-grid-community` 35) | Check `grep <family> package.json` first; usually fixed by **Supersede** with no code change.                     |
-| Same step fails on `main`                                                               | systemic                                                                                      | Stop; fix `main` first.                                                                                           |
-| Only seeded E2E fails, after `tsc` failed                                               | knock-on of the build failure                                                                 | Ignore until the type error is fixed.                                                                             |
+| Symptom                                                                                                                                                    | Cause                                                                                         | Action                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `npm ci` fails with `ERESOLVE … peer X@^old from Y`                                                                                                        | one family member bumped alone (e.g. #101: `@mui/material` 9 vs `@mui/icons-material` 7)      | **Supersede** (below). If it's a multi-major framework jump (MUI, Next, React), report "needs migration" instead.           |
+| `tsc` error like `No overload matches this call` on a component from the bumped package                                                                    | sibling package left on the old major (e.g. #102: `ag-grid-react` 36, `ag-grid-community` 35) | Check `grep <family> package.json` first; usually fixed by **Supersede** with no code change.                               |
+| Major bump where upstream isn't ready (plugins have only betas for the new major, or `typescript-eslint` can't load the new `typescript`, e.g. #115, #120) | not fixable here                                                                              | Report "needs human: upstream not ready" and suggest **Ignore a major** (below); post the commands only if the user agrees. |
+| Same step fails on `main`                                                                                                                                  | systemic                                                                                      | Stop; fix `main` first.                                                                                                     |
+| Only seeded E2E fails, after `tsc` failed                                                                                                                  | knock-on of the build failure                                                                 | Ignore until the type error is fixed.                                                                                       |
 
-**Supersede** (not dry-run): branch `fix/<family>-<major>` from `origin/main` in a worktree, `npm install --ignore-scripts <pkgA>@^<v> <pkgB>@^<v>` (all family members, same version), `npm run verify`, commit `build(deps): bump <pkgA> and <pkgB> to <v>`, push, `gh pr create` naming the PR it supersedes. Don't close the Dependabot PR: it auto-closes once yours merges. Your PR needs the **user** to merge it. With the groups in `dependabot.yml` this should be rare; if it recurs, add the family to `groups:` (ask first).
+**Supersede** (not dry-run): branch `fix/<family>-<major>` from `origin/main` in a worktree, `npm install --ignore-scripts <pkgA>@^<v> <pkgB>@^<v>` (all family members, same version), `npm run verify`, commit `build(deps): bump <pkgA> and <pkgB> to <v>`, push, `gh pr create` naming the PR it supersedes. Once yours merges, check the Dependabot PR: it may **not** auto-close (#102 didn't). If it's still open and main already has the version, close it with a "Superseded by #M" comment. Your PR needs the **user** to merge it. With the groups in `dependabot.yml` this should be rare; if it recurs, add the family to `groups:` (ask first).
+
+**Ignore a major** (only when the user asks): single-package PR → `@dependabot ignore this major version` (Dependabot closes it). Grouped PR → that command does nothing. Post `@dependabot ignore <package> major version` once per package that jumped a major, each in its own comment, then `@dependabot recreate` and confirm the new diff stays within the current major. Undo later with `@dependabot unignore <package>`.
 
 ## Report
 

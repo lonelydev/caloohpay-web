@@ -32,7 +32,7 @@ The user has authorised this loop: **squash-merging a PR that passes every gate 
    Re-run it after every merge: Dependabot closes PRs that become redundant and opens new ones. With `dry-run`, print the queue and per-PR plan, then stop.
 
 1. **Sync with `main`.** `git fetch origin`; check `gh api repos/{owner}/{repo}/compare/main...<headRefOid> --jq .behind_by`. If `0` and not `DIRTY`, go to step 3.
-   - **Dependabot PR, no conflict**: comment `@dependabot rebase`, poll every 30 s (3 min max) for `headRefOid` to change. A new Dependabot comment means it could not rebase: read it.
+   - **Dependabot PR, no conflict**: comment `@dependabot rebase`, poll every 30 s (3 min max) for `headRefOid` to change. A new Dependabot comment means it could not rebase: read it. A rebase can also make Dependabot re-group: it may **close this PR as "Superseded by #N"** (and other open group PRs too) and open #N instead. Before waiting on CI, check the PR is still `OPEN`. If it isn't, re-list the queue and continue with #N.
    - **Any other PR**: `git switch -c tmp-pr-N origin/<head>` then `git rebase origin/main`, then `git push --force-with-lease origin HEAD:<head>`. In this repo the force-push is normally denied: go straight to the step 2 **fallback** (`git merge origin/main`, normal push). Use a worktree (`git worktree add ../pr-N origin/<head>`) so the main checkout stays on `main`.
 
 2. **Resolve conflicts** (if the rebase stops, or `mergeStateStatus` is `DIRTY`, or Dependabot cannot rebase):
@@ -59,7 +59,7 @@ The user has authorised this loop: **squash-merging a PR that passes every gate 
 4. **Gate for merging.** All of: head is up to date with `main` (`behind_by` is `0`), all checks `pass`, `mergeable` is `MERGEABLE`, no changes requested, title is a Conventional Commit (commitlint runs on the squash commit: fix the PR title with `gh pr edit` if not).
    Major-version bumps of `next`, `next-auth`, `react`, `@mui/*`, `caloohpay`, `typescript` or any `eslint` major are merged **only if** CI is green _and_ `npm run verify` passes locally on the PR head; note them in the report so the user can eyeball them.
 
-5. **Squash-merge.** `gh pr merge N --squash --delete-branch`. If this fails with a policy message, stop and report (see Rules). Confirm `gh pr view N --json state --jq .state` is `MERGED`.
+5. **Squash-merge.** `gh pr merge N --squash --delete-branch`. If this fails with a policy message, stop and report (see Rules). Confirm `gh pr view N --json state --jq .state` is `MERGED`. `Head branch is out of date` followed by state `CLOSED` means Dependabot superseded the PR mid-merge. That's not a failure: re-list and take the replacement. If you script the loop, treat any final state other than `MERGED` as a failure, never as success.
 
 6. **Next.** `git switch main && git pull --ff-only`, then return to step 0's list (re-sorted) and take the oldest remaining PR.
 
