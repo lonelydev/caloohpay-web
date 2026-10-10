@@ -49,7 +49,7 @@
     "@mui/material": "^7.3.9",
     "@mui/material-nextjs": "^7.3.9",
     "@pagerduty/pdjs": "^2.2.4",
-    "@vercel/analytics": "^1.6.1",
+    "@vercel/analytics": "^2.0.1",
     "ag-grid-community": "^36.2.0",
     "ag-grid-react": "^36.2.0",
     "axios": "^1.16.1",
