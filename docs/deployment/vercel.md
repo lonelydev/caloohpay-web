@@ -195,7 +195,9 @@ push / PR
    └─► E2E Tests         (Playwright — chromium, firefox, webkit)
             │
             ▼  both succeeded?
-       Deploy to Vercel  (production or preview)
+       Deploy to Vercel  (production, on push to main)
+
+Preview: manual only. gh workflow run deploy-vercel.yml -f pr=<number>
 ```
 
 The `Deploy to Vercel` workflow fires on completion of **either** upstream workflow, but a `gate` job queries the GitHub API to confirm **both** `CI Security Gate` and `E2E Tests` have concluded with `success` for the same commit SHA before any deploy step runs. If E2E was skipped due to path filters, absence is treated as a pass.
@@ -208,7 +210,16 @@ Triggered automatically when a commit lands on `main` and both upstream workflow
 
 ### Preview deployments
 
-Triggered on pull requests after both upstream workflows pass. Deploys to a unique preview URL — check the workflow run summary for the URL output.
+**Manual only.** Previews used to deploy automatically for every PR. On busy Dependabot days that exhausted the Hobby
+tier's daily deployment limit, which also blocked production deploys. To preview a PR:
+
+```bash
+gh workflow run deploy-vercel.yml -f pr=<number>
+```
+
+or **Actions → Deploy to Vercel → Run workflow** (branch: `main`, enter the PR number). The same gate applies:
+`CI Security Gate` must have passed, and `E2E Tests` passed or not run, on the PR's head commit. The preview URL is
+commented on the PR and shown in the run summary. PRs from forks are refused, and the workflow must run from `main`.
 
 ### Required GitHub Actions secrets
 

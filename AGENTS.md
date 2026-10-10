@@ -28,6 +28,7 @@ Node LTS, npm. Run from the repo root.
 | Full gate             | `npm run verify`                                      | lint (no warnings) + type-check + tests + build — run before declaring done                          |
 | E2E (seeded auth)     | `npm run test:e2e:seeded`                             | Playwright; see [docs/e2e-test-runner.md](docs/e2e-test-runner.md). Slow — only when UI flows change |
 | E2E (unauthenticated) | `npm run test:e2e:unauth`                             |                                                                                                      |
+| Preview deploy        | `gh workflow run deploy-vercel.yml -f pr=<N>`         | Manual only; uses Vercel's daily deploy quota. Agents: only when the user asks                       |
 
 ## Layout
 
@@ -98,6 +99,7 @@ Unit tests are colocated in `__tests__/` folders next to the code. Playwright sp
 - Add dependencies without a reason; don't bump `caloohpay` or major versions unless asked.
 - Weaken CI, security workflows or `.github/dependabot.yml` to make something pass.
 - Push to `main`, force-push, or merge PRs unless explicitly asked. CI is the gate: `.github/workflows/ci-security-gate.yml`.
+- Trigger Vercel preview deploys unless the user asks: they're manual on purpose (deploy quota).
 
 ## Definition of done
 
