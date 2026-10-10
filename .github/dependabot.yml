@@ -19,8 +19,10 @@ updates:
       include: scope
     # Packages that peer-depend on each other must move together: bumping one
     # alone fails npm ci (ERESOLVE) or type-checks (e.g. #101 @mui, #102 ag-grid).
-    # A dependency joins the first group it matches, so families come before the
-    # catch-all. Family groups include majors on purpose.
+    # Families come before the catch-all, and family groups include majors on
+    # purpose. In practice Dependabot can fold a dev family's minor/patch bumps
+    # into dev-minor-patch (seen on a rebase, #117-#119 -> #122). That's fine:
+    # the family still moves together in one PR. Majors stay in the family group.
     groups:
       mui:
         patterns: ['@mui/*']

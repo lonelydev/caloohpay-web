@@ -121,9 +121,9 @@ Both jobs use `vercel build` (local build step) + `vercel deploy --prebuilt` (up
 **Triggers:** Daily at 05:00 UTC; manual (`workflow_dispatch`)
 
 | Job                         | Install scope     | Behaviour                                                                                                                                           |
-| --------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------------------------------------------------------------------------------------------------------------- |
+| --------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Nightly Production Audit`  | `--omit=dev`      | Single audit run → JSON → Node enforcement (high/critical gate) → artifact (14-day retention). **Blocking** — workflow fails if threshold breached. |
-| `Nightly Full Audit Report` | Full (dev + prod) | Audit with `                                                                                                                                        |     | true` → Node summary printed → artifact (14-day retention). **Informational** — never causes a workflow failure. |
+| `Nightly Full Audit Report` | Full (dev + prod) | Audit with `\|\| true` → Node summary printed → artifact (14-day retention). **Informational** — never causes a workflow failure.                   |
 
 The two-job design intentionally separates what must be clean (the production dependency tree) from what is tracked but not enforced (the full dev tree, which contains known moderate advisories in test tooling).
 
@@ -175,10 +175,28 @@ PR titles are pinned to `build(deps): …` (production) and `build(deps-dev): �
 The `handle-dependabot` and `merge-open-prs` skills rely on this format.
 
 Packages that peer-depend on each other are **grouped** so they're bumped together: `@mui/*`, `ag-grid-*`,
-`@fullcalendar/*`, `@emotion/*`, React, Next, Testing Library, Jest, commitlint and Tailwind. Each family
-group includes major versions, so the family always moves together. Remaining dev-dependency minor and patch
-bumps share one `dev-minor-patch` PR, and all GitHub Actions bumps share one `github-actions` PR. Bumping
-only one member of a family breaks `npm ci` (ERESOLVE) or the type-check.
+`@fullcalendar/*`, `@emotion/*`, React, Next, Testing Library, Jest, commitlint and Tailwind. Bumping only one
+member of a family breaks `npm ci` (ERESOLVE) or the type-check. All GitHub Actions bumps share one
+`github-actions` PR.
+
+How the groups behave in practice:
+
+- **Production families** (`mui`, `ag-grid`, `fullcalendar`, `emotion`, `react`, `next`) get their own PR,
+  majors included, e.g. `build(deps): bump the mui group across 1 directory with 3 updates`.
+- **Dev-dependency minor/patch bumps all land in one `dev-minor-patch` PR**, including members of the dev
+  families (Jest, Testing Library, Tailwind, commitlint). The first scan may open separate family PRs, but a
+  rebase or recreate can fold them into `dev-minor-patch` and close the others as "Superseded by #N".
+  Families still move together, so this is expected.
+- **Dev majors** come as their family's group PR, or as a single-package PR when the package isn't in a
+  family (e.g. `typescript`).
+
+To skip a major that upstream isn't ready for (e.g. a library's plugins have no stable release yet):
+
+- Single-package PR: comment `@dependabot ignore this major version`. Dependabot closes it.
+- Grouped PR: that command does nothing. Comment `@dependabot ignore <package> major version` for each
+  package that jumped a major, one comment each, then `@dependabot recreate`. The group comes back with only
+  the in-major bumps (e.g. #115 went from fullcalendar 7 to 6.1.21 patches).
+- Undo with `@dependabot unignore <package>` when upstream is ready.
 
 ---
 
