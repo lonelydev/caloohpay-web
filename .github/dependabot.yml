@@ -1,25 +1,66 @@
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
       day: monday
-      time: "06:00"
-      timezone: "UTC"
+      time: '06:00'
+      timezone: 'UTC'
     open-pull-requests-limit: 10
     labels:
       - dependencies
       - security
+    # Pin the title format: build(deps): for production, build(deps-dev): for
+    # development. The handle-dependabot and merge-open-prs skills rely on it.
+    commit-message:
+      prefix: build
+      prefix-development: build
+      include: scope
+    # Packages that peer-depend on each other must move together: bumping one
+    # alone fails npm ci (ERESOLVE) or type-checks (e.g. #101 @mui, #102 ag-grid).
+    # A dependency joins the first group it matches, so families come before the
+    # catch-all. Family groups include majors on purpose.
+    groups:
+      mui:
+        patterns: ['@mui/*']
+      ag-grid:
+        patterns: ['ag-grid-*']
+      fullcalendar:
+        patterns: ['@fullcalendar/*']
+      emotion:
+        patterns: ['@emotion/*']
+      react:
+        patterns: ['react', 'react-dom', '@types/react', '@types/react-dom']
+      next:
+        patterns: ['next', 'eslint-config-next']
+      testing-library:
+        patterns: ['@testing-library/*']
+      jest:
+        patterns: ['jest', 'jest-environment-jsdom', '@types/jest']
+      commitlint:
+        patterns: ['@commitlint/*']
+      tailwind:
+        patterns: ['tailwindcss', '@tailwindcss/*']
+      dev-minor-patch:
+        dependency-type: development
+        update-types: ['minor', 'patch']
 
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: '/'
     schedule:
       interval: weekly
       day: monday
-      time: "06:30"
-      timezone: "UTC"
+      time: '06:30'
+      timezone: 'UTC'
     open-pull-requests-limit: 10
     labels:
       - dependencies
       - ci
+    commit-message:
+      prefix: build
+      include: scope
+    # One PR per week for all action bumps instead of one per action.
+    groups:
+      github-actions:
+        patterns: ['*']
