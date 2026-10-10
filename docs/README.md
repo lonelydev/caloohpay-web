@@ -33,6 +33,7 @@ Technical architecture and design documentation:
 - **[Styling Architecture](./styling-architecture.md)** - MUI styling patterns, styled components, and layout constants
 - **[Testing Guide](./TESTING.md)** - Comprehensive testing guide with 114 tests covering unit, integration, and E2E tests
 - **[CI/CD Pipeline](./ci-pipeline.md)** - All GitHub Actions workflows, security hardening measures, and the gated deployment model
+- **[Dependabot Automation Plan](./dependabot-automation-plan.md)** - Proposed plan (not started) to auto-merge routine Dependabot PRs and route majors to a scheduled agent
 
 ## 🚀 Quick Start
 
