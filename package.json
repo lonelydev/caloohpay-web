@@ -23,6 +23,7 @@
     "test:e2e:unauth": "./scripts/e2e-unauth.sh all",
     "test:e2e:unauth:ui": "./scripts/e2e-run.sh unauth headed",
     "type-check": "tsc --noEmit",
+    "verify": "npm run lint -- --max-warnings=0 && npm run type-check && npm test -- --ci && npm run build",
     "prepare": "husky",
     "postinstall": "node -e \"if (process.env.VERCEL !== '1') require('child_process').execSync('playwright install --with-deps chromium', {stdio: 'inherit'})\""
   },
@@ -90,7 +91,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "baseline-browser-mapping": "^2.9.14",
-    "eslint": "^9.39.4",
+    "eslint": "^10.4.0",
     "eslint-config-next": "^16.2.1",
     "husky": "^9.1.7",
     "jest": "^30.4.2",

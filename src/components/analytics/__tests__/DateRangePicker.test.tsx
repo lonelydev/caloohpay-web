@@ -166,6 +166,10 @@ describe('DateRangePicker', () => {
   });
 
   it('should call onChange with valid date range', async () => {
+    // Relative to now so the range never ages out of the 2-year validation window
+    const validStart = DateTime.now().minus({ months: 6 }).toFormat('yyyy-MM-dd');
+    const validEnd = DateTime.now().minus({ months: 3 }).toFormat('yyyy-MM-dd');
+
     renderWithTheme(<DateRangePicker {...defaultProps} />);
 
     const button = screen.getByRole('button', { name: /custom date range/i });
@@ -175,8 +179,8 @@ describe('DateRangePicker', () => {
       const startInput = screen.getByLabelText(/start date/i) as HTMLInputElement;
       const endInput = screen.getByLabelText(/end date/i) as HTMLInputElement;
 
-      fireEvent.change(startInput, { target: { value: '2024-06-01' } });
-      fireEvent.change(endInput, { target: { value: '2024-09-01' } });
+      fireEvent.change(startInput, { target: { value: validStart } });
+      fireEvent.change(endInput, { target: { value: validEnd } });
 
       const applyButton = screen.getByRole('button', { name: /apply/i });
       fireEvent.click(applyButton);
@@ -184,8 +188,8 @@ describe('DateRangePicker', () => {
 
     await waitFor(() => {
       expect(mockOnChange).toHaveBeenCalledWith(
-        expect.stringContaining('2024-06-01'),
-        expect.stringContaining('2024-09-01')
+        expect.stringContaining(validStart),
+        expect.stringContaining(validEnd)
       );
     });
   });
