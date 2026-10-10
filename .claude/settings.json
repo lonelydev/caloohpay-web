@@ -14,9 +14,13 @@
       "Bash(npx tsc --noEmit:*)",
       "Bash(gh pr list:*)",
       "Bash(gh pr view:*)",
+      "Bash(gh pr comment:*)",
+      "Bash(gh pr edit:*)",
       "Bash(gh pr checks:*)",
       "Bash(gh run list:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(gh api repos/lonelydev/caloohpay-web/compare/*)",
+      "Bash(gh pr merge * --squash*)"
     ],
     "deny": [
       "Read(./.env)",
