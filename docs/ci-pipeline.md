@@ -201,6 +201,10 @@ How the groups behave in practice:
 - **Dev majors** come as their family's group PR, or as a single-package PR when the package isn't in a
   family (e.g. `typescript`).
 
+To decide what to look at first, run the `triage-dependabot` skill, or the script on its own:
+`.claude/skills/triage-dependabot/triage.sh`. It's read-only. It sorts open Dependabot PRs into
+SECURITY, CLOSE, FAST, REVIEW, FIX and WAIT lanes and estimates the time each lane needs.
+
 To skip a major that upstream isn't ready for (e.g. a library's plugins have no stable release yet):
 
 - Single-package PR: comment `@dependabot ignore this major version`. Dependabot closes it.

@@ -7,7 +7,7 @@ description: Triage open Dependabot PRs for this repo, verify each eligible dev-
 
 Dependabot runs weekly (Mon, UTC) for npm and GitHub Actions (`.github/dependabot.yml`). Merging is done by `.github/workflows/automerge.yml`: applying the **`merge-when-ready`** label makes it wait for the `CI Security Gate` (required) and `E2E Tests` (optional) workflows and then merge. Applying that label is therefore the merge decision — only do it when this skill's criteria pass, and never when the argument is `dry-run`.
 
-To merge PRs directly instead of labelling (including Actions and production bumps that pass every gate), use the `merge-open-prs` skill; this skill's diagnosis section still applies.
+To decide which PRs to handle first, run `triage-dependabot` (read-only). To merge PRs directly instead of labelling (including Actions and production bumps that pass every gate), use the `merge-open-prs` skill; this skill's diagnosis section still applies.
 
 ## Title format and groups
 
