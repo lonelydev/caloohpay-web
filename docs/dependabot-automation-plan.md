@@ -28,14 +28,15 @@ What got merged that day: #105, #106, #111, #112, #113, #115, #116, #121, #122. 
 
 ## Where we are
 
-| Item                                       | State                                                                                                                                                            |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| #123 `docs(dependabot): …grouping behaves` | Green and mergeable; needs a maintainer merge (agents may not merge their own PRs)                                                                               |
-| #114 mui group 7 → 9                       | Needs a code migration (`Typography` `component=` type errors in `features/page.tsx`, `LoginHeader.tsx`). **Next task**                                          |
-| #43 Copilot draft into `feat/data-vis`     | Maintainer's call; probably close                                                                                                                                |
-| E2E jobs have no `timeout-minutes`         | A hung `npm ci` blocked #115 for 9+ min (the default limit is 6 h). Fixed in Layer 1 below                                                                       |
-| E2E as required checks                     | **Removed by the maintainer (2026-10-10).** Docs/config PRs now merge without bypass. E2E still gates automerge and deploys; see 1e                              |
-| Ignored majors                             | `typescript` 7.x, `@fullcalendar/core` 7.x, `@fullcalendar/react` 7.x. Revisit when typescript-eslint supports TS 7 and the fullcalendar plugins ship a stable 7 |
+| Item                                   | State                                                                                                                                                                                                                                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #132 `he` 1 → 2                        | Release verified genuine (npm provenance, see [Lessons](#lessons-from-the-second-wave-2026-10-10)), but v2 is ESM-only and Jest can't load it. Needs a small change: Jest `transformIgnorePatterns` for `he`, or replace `he.encode` in `calendarUtils.ts` with a native escape |
+| #133 manual-only preview deploys       | Open; needs a maintainer merge (workflow change). Implements 1f                                                                                                                                                                                                                 |
+| #114 mui group 7 → 9                   | Needs a code migration (`Typography` `component=` type errors in `features/page.tsx`, `LoginHeader.tsx`). **Next task**                                                                                                                                                         |
+| #43 Copilot draft into `feat/data-vis` | Maintainer's call; probably close                                                                                                                                                                                                                                               |
+| E2E jobs have no `timeout-minutes`     | A hung `npm ci` blocked #115 for 9+ min (the default limit is 6 h). Fixed in Layer 1 below                                                                                                                                                                                      |
+| E2E as required checks                 | **Removed by the maintainer (2026-10-10).** Docs/config PRs now merge without bypass. E2E still gates automerge and deploys; see 1e                                                                                                                                             |
+| Ignored majors                         | `typescript` 7.x, `@fullcalendar/core` 7.x, `@fullcalendar/react` 7.x. Revisit when typescript-eslint supports TS 7 and the fullcalendar plugins ship a stable 7                                                                                                                |
 
 ---
 
@@ -139,6 +140,16 @@ Remaining gap: a human _can_ merge a PR with red E2E. If that happens, `main` tu
 fixed; it can't reach production. If it ever bites, add a single required **"E2E result"** aggregate job (runs on
 every PR; passes immediately when no relevant paths changed, otherwise `needs:` the browser matrix).
 
+**1f. No automatic preview deploys. ✅ DONE in #133.** Every PR CI run (and every Dependabot rebase) triggered a
+Vercel preview deploy. On 2026-10-10 that exhausted the Hobby tier's daily deployment limit, which also blocked
+**production** deploys for 24 h. Previews are now manual (`gh workflow run deploy-vercel.yml -f pr=<N>`), so
+Dependabot volume costs no deploys until a merge reaches `main`.
+
+**1g. Never auto-label a PR with a "Maintainer changes" warning.** Dependabot adds a _Maintainer changes_ section
+when a release was published by a different npm user than the version you're on. That is the classic signature
+of a hijacked package, so these PRs must skip 1a and go to Layer 2 and a human. Detect it in the auto-label job by
+reading the PR body (`github.event.pull_request.body` contains `Maintainer changes`), and skip labelling.
+
 ### Layer 2: weekly scheduled cloud agent (judgement calls only)
 
 A `/schedule` routine, e.g. Monday 10:00 UTC, a few hours after Dependabot's 06:00 run and Layer 1's merges.
@@ -147,8 +158,16 @@ Instructions:
 1. Run the `handle-dependabot` skill over whatever Layer 1 didn't merge (majors, failures, unlabelled PRs).
 2. Peer-family split → open a superseding PR (Supersede flow). Upstream not ready → **recommend** an ignore, don't
    post it. Code migration needed → open a draft migration PR with `npm run verify` passing.
-3. **Never merge, never label its own PRs, never change workflows/rulesets.**
-4. Report: one summary (issue or PR comment) listing what's waiting on a human, with links.
+3. **"Maintainer changes" PRs: verify provenance, report, never label.** Check npm provenance and report the
+   result. The recipe that verified `he@2.0.0` (#132):
+   - `npm view <pkg>@<ver> _npmUser maintainers dist.attestations.provenance.predicateType`
+   - Decode `https://registry.npmjs.org/-/npm/v1/attestations/<pkg>@<ver>`: the SLSA `buildDefinition` must name
+     the package's own repo, a release tag, and a commit that the long-time owner authored or merged.
+   - No provenance, a different repo, or an unknown maintainer → report "needs human: possible supply-chain risk".
+4. **Report how close Dependabot is to its PR limit.** Count open Dependabot PRs against `open-pull-requests-limit`
+   (10 per ecosystem). Near the limit means updates are being held back silently.
+5. **Never merge, never label its own PRs, never change workflows/rulesets.**
+6. Report: one summary (issue or PR comment) listing what's waiting on a human, with links.
 
 ### Layer 3: human, with a review cadence
 
@@ -166,6 +185,24 @@ reasons not to let things sit indefinitely:
 - **Majors compound.** MUI went 7 → 9 in one jump. Don't defer a major for more than a month or two.
 
 ---
+
+## Lessons from the second wave (2026-10-10)
+
+After the first backlog was cleared, merging #123 (which touched `dependabot.yml`) triggered a new Dependabot run,
+and **eight more PRs appeared at once** (#125–#132). Three lessons:
+
+1. **Preview deploys burn deploy quota.** Each PR and rebase cost a Vercel preview deploy until the Hobby-tier daily
+   limit was hit ("Deployment rate limited — retry in 24 hours"). That failed the native `Vercel` check on every PR
+   and blocked production deploys. The maintainer approved treating that rate-limited, non-required check as
+   non-blocking for that batch only. → **1f** (#133).
+2. **"Maintainer changes" must go to a human.** #132 (`he` 1.2.0 → 2.0.0) was the first release in years of a
+   dormant package, published by a new npm user ("GitHub Actions"). That's the hijack pattern. Checked by hand:
+   SLSA provenance showed it was built on a GitHub-hosted runner from `mathiasbynens/he`, tag `v2.0.0`, commit
+   `e5658ec`, which the long-time owner authored and merged. The new releaser was just npm trusted publishing.
+   Genuine, but it needed checking. → **1g** and Layer 2 step 3.
+3. **The 10-PR limit hides backlog.** The second wave wasn't new releases: Dependabot had been **holding them back**
+   because `open-pull-requests-limit: 10` was full. Clearing the queue freed the slots. A stuck queue silently stops
+   updates, including ones you'd want. → monthly sweep in Layer 3, and Layer 2 step 4.
 
 ## Open decisions
 
@@ -187,11 +224,12 @@ the maintainer's review and are **not** agent-merged.
 - [ ] Re-check [Facts](#facts-checked-2026-10-10) (rulesets, bypass actors, secrets, labels)
 - [ ] 1d `timeout-minutes` on CI/E2E jobs (smallest; do first)
 - [x] 1e E2E removed from required checks (maintainer, 2026-10-10)
-- [ ] 1a auto-label workflow with the chosen policy; test on a real Dependabot patch PR
+- [x] 1f manual-only preview deploys (#133)
+- [ ] 1a auto-label workflow with the chosen policy, including the 1g "Maintainer changes" skip; test on a real Dependabot patch PR
 - [ ] 1b `automerge.yml`: `--admin` merge for `dependabot[bot]` PRs after the CI wait; test with 2+ labelled PRs open at once
 - [ ] 1c `cooldown` in `dependabot.yml`
 - [ ] Update `docs/ci-pipeline.md`, `handle-dependabot` and `merge-open-prs` skills (`docs-sync` skill)
-- [ ] Layer 2 `/schedule` routine
+- [ ] Layer 2 `/schedule` routine (incl. the provenance check and the PR-limit count)
 - [ ] One full Monday cycle observed end-to-end; adjust
 
 ## Facts checked (2026-10-10)
