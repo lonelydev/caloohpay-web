@@ -8,6 +8,14 @@ updates:
       time: '06:00'
       timezone: 'UTC'
     open-pull-requests-limit: 10
+    # Don't propose a release until it has been public for a few days: hijacked
+    # releases (e.g. the 2025 chalk/debug compromise) are usually caught and
+    # pulled within that window. Matters because patch/minor bumps auto-merge.
+    # Security updates ignore cooldown and still arrive immediately.
+    cooldown:
+      semver-patch-days: 5
+      semver-minor-days: 5
+      semver-major-days: 7
     labels:
       - dependencies
       - security
@@ -56,6 +64,9 @@ updates:
       time: '06:30'
       timezone: 'UTC'
     open-pull-requests-limit: 10
+    # Same 5-day cooldown as npm (see above). default-days works for every ecosystem.
+    cooldown:
+      default-days: 5
     labels:
       - dependencies
       - ci

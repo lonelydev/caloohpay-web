@@ -190,6 +190,10 @@ Packages that peer-depend on each other are **grouped** so they're bumped togeth
 member of a family breaks `npm ci` (ERESOLVE) or the type-check. All GitHub Actions bumps share one
 `github-actions` PR.
 
+**Cooldown**: Dependabot only proposes a version once it has been public for 5 days (patch/minor, and all
+Actions bumps) or 7 days (majors), so a hijacked release is likely to be caught and pulled first. Security
+updates ignore cooldown and arrive immediately.
+
 How the groups behave in practice:
 
 - **Production families** (`mui`, `ag-grid`, `fullcalendar`, `emotion`, `react`, `next`) get their own PR,
