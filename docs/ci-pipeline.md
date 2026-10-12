@@ -21,8 +21,10 @@ pull_request / push to main
                     ↓ both CI Security Gate AND E2E Tests succeeded
 
          Deploy to Vercel          (.github/workflows/deploy-vercel.yml)
-              ├─ Production        (push to main only)
-              └─ Preview           (pull_request only)
+              └─ Production        (push to main only)
+
+manual (workflow_dispatch, -f pr=<number>)
+     └─► Deploy to Vercel → Preview  (same CI + E2E gate, on the PR's head commit)
 
 nightly (05:00 UTC)
      └─► Nightly Security Scan    (.github/workflows/security-nightly.yml)
@@ -85,13 +87,22 @@ Playwright reports are uploaded as artifacts on every run (`if: always()`).
 
 ### Deploy to Vercel (`deploy-vercel.yml`)
 
-**Triggers:** `workflow_run` completion of `CI Security Gate` **or** `E2E Tests`.
+**Triggers:**
+
+- `workflow_run` completion of `CI Security Gate` **or** `E2E Tests`: **production only** (push to `main`). PR runs skip the workflow's jobs entirely.
+- `workflow_dispatch` with input `pr`: **preview deploy of one PR, on demand.** Previews are manual because automatic per-PR previews used up Vercel's Hobby-tier daily deployment limit on a busy Dependabot day (2026-10-10).
+
+```bash
+gh workflow run deploy-vercel.yml -f pr=123   # or: Actions → Deploy to Vercel → Run workflow
+```
+
+The preview URL is posted as a comment on the PR and in the run summary. Guard rails: the workflow must be run from `main` (so a PR can't change the workflow that holds the Vercel token), PRs from forks are refused, and the PR must be open.
 
 > Vercel's native GitHub integration is disabled via `ignoreCommand: "exit 0"` in `vercel.json`. All deploys are CLI-driven from this workflow.
 
 #### Gate job
 
-Because `workflow_run` fires on completion of **either** upstream workflow (not both simultaneously), a `gate` job runs first on every trigger. It calls the GitHub API to retrieve the conclusion for both `CI Security Gate` and `E2E Tests` for the triggering commit SHA:
+Because `workflow_run` fires on completion of **either** upstream workflow (not both simultaneously), a `gate` job runs first (for pushes to `main` and manual previews). It calls the GitHub API to retrieve the conclusion for both `CI Security Gate` and `E2E Tests` for the commit SHA (the pushed commit, or the PR's head commit for a preview):
 
 - Both `success` → `ready=true`
 - Either failed → `ready=false`, deploy jobs are skipped
@@ -102,7 +113,7 @@ Because `workflow_run` fires on completion of **either** upstream workflow (not 
 | Job                    | Condition                                   |
 | ---------------------- | ------------------------------------------- |
 | `Deploy to Production` | `ready=true` + `branch=main` + `event=push` |
-| `Deploy Preview`       | `ready=true` + `event=pull_request`         |
+| `Deploy Preview`       | `ready=true` + manual `workflow_dispatch`   |
 
 Both jobs use `vercel build` (local build step) + `vercel deploy --prebuilt` (upload only), avoiding a redundant rebuild on Vercel's infrastructure.
 

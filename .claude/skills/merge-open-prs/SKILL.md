@@ -49,7 +49,7 @@ The user has authorised this loop: **squash-merging a PR that passes every gate 
    for i in $(seq 1 40); do gh pr checks N >/dev/null 2>&1; [ $? -ne 8 ] && break; sleep 30; done; gh pr checks N
    ```
 
-   After 20 minutes, mark it "needs human: CI timed out". Only checks started _after_ the sync count; a green run on an older head does not. Then confirm with `gh pr checks N` that every check is `pass`. Vercel's "Canceled by Ignored Build Step" counts as pass (native Vercel builds are disabled on purpose).
+   After 20 minutes, mark it "needs human: CI timed out". Only checks started _after_ the sync count; a green run on an older head does not. Then confirm with `gh pr checks N` that every check is `pass`. Vercel's "Canceled by Ignored Build Step" counts as pass (native Vercel builds are disabled on purpose). If the native `Vercel` check fails with "Deployment rate limited", that's Vercel's daily quota, not the code. It isn't a required check, but **ask the user** before treating it as non-blocking; if they agree, excuse only that check with that message. Preview deploys are manual (`gh workflow run deploy-vercel.yml -f pr=N`): don't trigger them in this loop.
    - On failure, get the failing step: `gh run view <run-id> --json jobs --jq '.jobs[].steps[]|select(.conclusion=="failure")|.name'` (logs older than ~90 days are gone; rerun by pushing, not `gh run rerun`).
    - If the same step fails on `main`'s latest run, it is **systemic**: stop the whole loop and report. Fixing `main` comes first (see how #108 fixed the audit gate).
    - `Deploy to Vercel` runs on `main` after merges and isn't a PR check. If it fails, report it, but it isn't systemic for this loop.

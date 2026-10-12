@@ -1,33 +1,70 @@
 name: Deploy to Vercel
 
 on:
+  # Production: automatic, after CI Security Gate and E2E Tests pass on a push to main.
   workflow_run:
-    workflows: ["CI Security Gate", "E2E Tests"]
+    workflows: ['CI Security Gate', 'E2E Tests']
     types: [completed]
+  # Preview: manual only. Automatic per-PR previews exhausted Vercel's Hobby-tier
+  # daily deployment limit on busy Dependabot days (2026-10-10).
+  #   gh workflow run deploy-vercel.yml -f pr=<number>
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Pull request number to deploy as a preview'
+        required: true
+        type: number
 
 permissions:
   contents: read
   deployments: write
   actions: read
+  pull-requests: write # comment the preview URL on the PR
 
 jobs:
   gate:
     name: Check all required workflows passed
+    # PR workflow_runs no longer deploy anything, so don't spend a runner on them.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     outputs:
       ready: ${{ steps.check.outputs.ready }}
       event: ${{ steps.check.outputs.event }}
       branch: ${{ steps.check.outputs.branch }}
+      sha: ${{ steps.check.outputs.sha }}
     steps:
       - name: Verify CI Security Gate and E2E Tests both succeeded
         id: check
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          SHA="${{ github.event.workflow_run.head_sha }}"
           REPO="${{ github.repository }}"
-          EVENT="${{ github.event.workflow_run.event }}"
-          BRANCH="${{ github.event.workflow_run.head_branch }}"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Run the workflow definition from main only, so a PR can't alter the
+            # workflow that holds the Vercel token.
+            if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
+              echo "::error::Run preview deploys from main: gh workflow run deploy-vercel.yml -f pr=<number>"
+              exit 1
+            fi
+            PR="${{ inputs.pr }}"
+            pr_json=$(gh pr view "$PR" --repo "$REPO" --json headRefOid,headRefName,state,isCrossRepository)
+            if [[ "$(jq -r .isCrossRepository <<<"$pr_json")" == "true" ]]; then
+              echo "::error::PR #$PR is from a fork; preview deploys only build same-repo branches."
+              exit 1
+            fi
+            if [[ "$(jq -r .state <<<"$pr_json")" != "OPEN" ]]; then
+              echo "::error::PR #$PR is not open."
+              exit 1
+            fi
+            SHA=$(jq -r .headRefOid <<<"$pr_json")
+            BRANCH=$(jq -r .headRefName <<<"$pr_json")
+            EVENT="manual_preview"
+          else
+            SHA="${{ github.event.workflow_run.head_sha }}"
+            EVENT="${{ github.event.workflow_run.event }}"
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+          fi
 
           get_conclusion() {
             gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=50" \
@@ -54,6 +91,7 @@ jobs:
 
           echo "event=$EVENT" >> "$GITHUB_OUTPUT"
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
   deploy-production:
     name: Deploy to Production
@@ -106,16 +144,16 @@ jobs:
   deploy-preview:
     name: Deploy Preview
     needs: [gate]
-    # Deploy preview for PRs when gate confirms both workflows passed
+    # Manual only (workflow_dispatch), once the gate confirms both workflows passed for the PR head
     if: |
       needs.gate.outputs.ready == 'true' &&
-      needs.gate.outputs.event == 'pull_request'
+      needs.gate.outputs.event == 'manual_preview'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ needs.gate.outputs.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -146,3 +184,13 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Report preview URL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          URL: ${{ steps.deploy.outputs.url }}
+          SHA: ${{ needs.gate.outputs.sha }}
+        run: |
+          echo "Preview for PR #${{ inputs.pr }} (${SHA:0:7}): $URL" >> "$GITHUB_STEP_SUMMARY"
+          gh pr comment "${{ inputs.pr }}" --repo "${{ github.repository }}" \
+            --body "Preview deployment for ${SHA:0:7}: $URL"
