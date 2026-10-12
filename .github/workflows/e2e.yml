@@ -31,6 +31,9 @@ jobs:
   seeded:
     name: Seeded E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
+    # A run takes ~3-7 min. A hung npm ci once blocked automerge for 9+ min;
+    # the default limit is 6 h. automerge.yml waits up to 30 min for this workflow.
+    timeout-minutes: 20
     environment: ci_e2e_seeded
     strategy:
       matrix:
@@ -60,6 +63,7 @@ jobs:
   unauth:
     name: Unauth E2E (${{ matrix.browser }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         browser: [chromium, firefox, webkit]
