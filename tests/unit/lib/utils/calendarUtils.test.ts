@@ -160,6 +160,26 @@ describe('calendarUtils', () => {
       expect(events[0].extendedProps.user.summary).not.toContain('<script>');
     });
 
+    it('should encode user fields exactly as he.encode 1.2.0 did', () => {
+      // Arrange: markup, quotes, non-ASCII, an astral emoji and control characters
+      const name = 'Tom & "Jerry" <O\'Brien> `x` José 😀 a=b/c\u0001\t\u007F\n';
+      const entries: ScheduleEntry[] = [
+        {
+          start: '2024-01-01T17:00:00Z',
+          end: '2024-01-02T09:00:00Z',
+          user: { id: 'user-4', summary: name, name },
+        },
+      ];
+
+      // Act
+      const events = transformToCalendarEvents(entries, timezone);
+
+      // Assert: hex references with uppercase digits; \n is kept, then trimmed
+      expect(events[0].title).toBe(
+        'Tom &#x26; &#x22;Jerry&#x22; &#x3C;O&#x27;Brien&#x3E; &#x60;x&#x60; Jos&#xE9; &#x1F600; a=b/c&#x1;&#x9;&#x7F;'
+      );
+    });
+
     it('should throw error for invalid timezone', () => {
       const entries: ScheduleEntry[] = [
         {

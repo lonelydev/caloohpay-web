@@ -5,7 +5,6 @@
 import { DateTime } from 'luxon';
 import { OnCallPeriod, OnCallUser, OnCallPaymentsCalculator } from '@/lib/caloohpay';
 import type { ScheduleEntry, User } from '@/lib/types';
-import he from 'he';
 import { sanitizeUrl } from './urlSanitization';
 import { getCurrentRates } from './ratesUtils';
 import { assignUniqueColours, USER_COLOR_PALETTE } from './userColourAssignment';
@@ -43,6 +42,22 @@ function isValidDate(date: string | Date): boolean {
   return date instanceof Date && !isNaN(date.getTime());
 }
 
+// Characters he.encode 1.2.0 escaped by default: HTML-significant ASCII
+// (" & ' < > `) and anything outside printable ASCII except NUL, LF and CR.
+// The `u` flag makes an emoji one match, so it becomes one reference.
+const HTML_UNSAFE = /["&'<>`]|[^\0\n\r\x20-\x7E]/gu;
+
+/**
+ * Encodes HTML-unsafe characters as hex character references (e.g. `<` → `&#x3C;`).
+ * Replaces the `he` package, whose v2 dropped the default export we used.
+ */
+function encodeHtml(input: string): string {
+  return input.replace(
+    HTML_UNSAFE,
+    (char) => `&#x${(char.codePointAt(0) ?? 0).toString(16).toUpperCase()};`
+  );
+}
+
 /**
  * Sanitizes user input to prevent XSS attacks
  * @param input - User input string
@@ -51,7 +66,7 @@ function isValidDate(date: string | Date): boolean {
 function sanitizeUserInput(input: string | undefined): string {
   if (!input || input.trim() === '') return 'Unknown';
   // Encode HTML entities and trim whitespace to prevent HTML injection
-  return he.encode(input).trim();
+  return encodeHtml(input).trim();
 }
 
 /**
