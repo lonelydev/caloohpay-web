@@ -219,12 +219,39 @@ const EventDetailDialog = memo<{
 EventDetailDialog.displayName = 'EventDetailDialog';
 
 /**
+ * The selected month as a range in the schedule's timezone.
+ *
+ * `initialDate` is the start of a month in the viewer's zone (e.g.
+ * 2026-10-01T00:00+01:00). Read as an instant in a zone behind the viewer's,
+ * that's still 30 September, which showed the wrong month. So take the month
+ * as written (setZone keeps the original offset), then build it in `timezone`.
+ */
+function selectedMonthInZone(
+  initialDate: string,
+  timezone: string
+): { start: string; end: string } | undefined {
+  const asWritten = DateTime.fromISO(initialDate, { setZone: true });
+  if (!asWritten.isValid) return undefined;
+  const monthStart = DateTime.fromObject(
+    { year: asWritten.year, month: asWritten.month, day: 1 },
+    { zone: timezone }
+  );
+  const start = monthStart.toISO();
+  const end = monthStart.endOf('month').toISO();
+  return start && end ? { start, end } : undefined;
+}
+
+/**
  * Main calendar view component
  * Renders on-call schedules in a monthly calendar with FullCalendar
  * Navigation is handled externally via the parent component
  */
 export default function CalendarView({ events, timezone, initialDate }: CalendarViewProps) {
   const theme = useTheme();
+  const monthRange = useMemo(
+    () => (initialDate ? selectedMonthInZone(initialDate, timezone) : undefined),
+    [initialDate, timezone]
+  );
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   // Individual bar clicks open the dialog directly; this handles clicks on the
@@ -233,8 +260,7 @@ export default function CalendarView({ events, timezone, initialDate }: Calendar
     (clickInfo: EventClickArg) => {
       clickInfo.jsEvent.preventDefault();
       const segs = clickInfo.event.extendedProps?.segments as
-        | import('@/lib/utils/calendarDaySegments').CalendarDaySegment[]
-        | undefined;
+        import('@/lib/utils/calendarDaySegments').CalendarDaySegment[] | undefined;
       const firstSegment = segs?.[0];
       if (firstSegment) {
         const fullEvent = events.find((e) => e.id === firstSegment.eventId);
@@ -295,8 +321,7 @@ export default function CalendarView({ events, timezone, initialDate }: Calendar
   const renderEventContent = useCallback(
     (arg: EventContentArg) => {
       const segments = arg.event.extendedProps?.segments as
-        | import('@/lib/utils/calendarDaySegments').CalendarDaySegment[]
-        | undefined;
+        import('@/lib/utils/calendarDaySegments').CalendarDaySegment[] | undefined;
       if (!segments || segments.length === 0) return null;
 
       return (
@@ -379,24 +404,12 @@ export default function CalendarView({ events, timezone, initialDate }: Calendar
             right: '',
           }}
           timeZone={timezone}
-          initialDate={initialDate}
+          initialDate={monthRange?.start}
           events={syntheticFcEvents}
           eventClick={handleEventClick}
           eventContent={renderEventContent}
           displayEventTime={false}
-          validRange={
-            initialDate
-              ? (() => {
-                  const start = DateTime.fromISO(initialDate, { zone: timezone })
-                    .startOf('month')
-                    .toISO();
-                  const end = DateTime.fromISO(initialDate, { zone: timezone })
-                    .endOf('month')
-                    .toISO();
-                  return start && end ? { start, end } : undefined;
-                })()
-              : undefined
-          }
+          validRange={monthRange}
           eventTimeFormat={{
             hour: '2-digit',
             minute: '2-digit',
