@@ -42,31 +42,23 @@ function isValidDate(date: string | Date): boolean {
   return date instanceof Date && !isNaN(date.getTime());
 }
 
-// Characters he.encode 1.2.0 escaped by default: HTML-significant ASCII
-// (" & ' < > `) and anything outside printable ASCII except NUL, LF and CR.
-// The `u` flag makes an emoji one match, so it becomes one reference.
-const HTML_UNSAFE = /["&'<>`]|[^\0\n\r\x20-\x7E]/gu;
+// Control characters (C0, DEL, C1) never belong in a name and can't be seen.
+const CONTROL_CHARS = /\p{Cc}/gu;
 
 /**
- * Encodes HTML-unsafe characters as hex character references (e.g. `<` → `&#x3C;`).
- * Replaces the `he` package, whose v2 dropped the default export we used.
- */
-function encodeHtml(input: string): string {
-  return input.replace(
-    HTML_UNSAFE,
-    (char) => `&#x${(char.codePointAt(0) ?? 0).toString(16).toUpperCase()};`
-  );
-}
-
-/**
- * Sanitizes user input to prevent XSS attacks
- * @param input - User input string
- * @returns Sanitized string
+ * Cleans a user-supplied display value without changing how it reads.
+ *
+ * It does not HTML-encode. Every place these values render is React text or a
+ * React-managed attribute, which React escapes itself, so encoding here showed
+ * names like "João" as "Jo&#xE3;o". Escape at the output, for the output's
+ * format (React for the DOM, `escapeCsvValue` for CSV), never in stored data.
+ *
+ * NFC turns a decomposed accent ("e" + U+0301) into the single "é", so the
+ * same name typed two ways displays and compares the same.
  */
 function sanitizeUserInput(input: string | undefined): string {
-  if (!input || input.trim() === '') return 'Unknown';
-  // Encode HTML entities and trim whitespace to prevent HTML injection
-  return encodeHtml(input).trim();
+  const cleaned = (input ?? '').normalize('NFC').replace(CONTROL_CHARS, '').trim();
+  return cleaned === '' ? 'Unknown' : cleaned;
 }
 
 /**
@@ -156,7 +148,7 @@ export function transformToCalendarEvents(
       const userIdentifier = entry.user.email || entry.user.id;
       const userColor = userColorMap.get(userIdentifier) || USER_COLOR_PALETTE[0];
 
-      // Sanitize user data to prevent XSS
+      // Clean user data for display; React escapes it at render time
       const userName = sanitizeUserInput(entry.user.name || entry.user.summary);
       const userSummary = sanitizeUserInput(entry.user.summary);
       const userEmail = sanitizeUserInput(entry.user.email);
