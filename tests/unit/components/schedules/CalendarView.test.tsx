@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import type { CalendarEvent } from '@/lib/utils/calendarUtils';
+import { transformToCalendarEvents, type CalendarEvent } from '@/lib/utils/calendarUtils';
 
 // Mock all FullCalendar modules to avoid ES module issues in Jest
 jest.mock('@fullcalendar/react', () => {
@@ -412,6 +412,66 @@ describe('CalendarView', () => {
 
     expect(first).toHaveAttribute('data-row-index', '0');
     expect(second).toHaveAttribute('data-row-index', '1');
+  });
+
+  describe('Names with accents and special characters', () => {
+    const eventsFor = (...names: string[]) =>
+      transformToCalendarEvents(
+        names.map((name, i) => ({
+          start: `2024-01-0${1 + i * 3}T17:00:00Z`,
+          end: `2024-01-0${2 + i * 3}T09:00:00Z`,
+          user: { id: `user-${i}`, summary: name, name },
+        })),
+        'Europe/London'
+      );
+
+    it('should show accented names as written on the calendar and in the dialog', async () => {
+      // Arrange
+      const events = eventsFor('João Silva', 'José García');
+      renderWithTheme(<CalendarView events={events} timezone="Europe/London" />);
+
+      // Assert: the bars' accessible names read naturally (an overnight shift has two bars)
+      const [joaoBar] = screen.getAllByRole('button', { name: /^João Silva •/ });
+      expect(screen.getAllByRole('button', { name: /^José García •/ })).toHaveLength(2);
+      expect(document.body.textContent).not.toMatch(/&#x/);
+
+      // Act
+      fireEvent.click(joaoBar);
+
+      // Assert
+      const dialog = await screen.findByRole('dialog', { name: 'João Silva' });
+      expect(dialog).toBeInTheDocument();
+    });
+
+    it("should show an apostrophe in a name like O'Brien", () => {
+      // Arrange
+      const events = eventsFor("Siobhán O'Brien");
+
+      // Act
+      renderWithTheme(<CalendarView events={events} timezone="Europe/London" />);
+
+      // Assert
+      expect(screen.getAllByRole('button', { name: /^Siobhán O'Brien •/ })).toHaveLength(2);
+    });
+
+    it('should render markup in a name as inert text', async () => {
+      // Arrange
+      const events = eventsFor('<img src=x onerror=alert(1)>');
+      const { container } = renderWithTheme(
+        <CalendarView events={events} timezone="Europe/London" />
+      );
+
+      // Act
+      fireEvent.click(
+        screen.getAllByRole('button', { name: /^<img src=x onerror=alert\(1\)> •/ })[0]
+      );
+
+      // Assert: shown as text, never parsed into an element
+      const dialog = await screen.findByRole('dialog');
+      expect(dialog).toHaveTextContent('<img src=x onerror=alert(1)>');
+      expect(container.querySelector('img')).toBeNull();
+      expect(document.querySelector('img[src="x"]')).toBeNull();
+    });
   });
 
   describe('User Color Rendering', () => {

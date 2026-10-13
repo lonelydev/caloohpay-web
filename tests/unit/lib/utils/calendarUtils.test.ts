@@ -137,47 +137,63 @@ describe('calendarUtils', () => {
       expect(events[0].id).not.toBe(events[1].id);
     });
 
-    it('should sanitize user names to prevent XSS', () => {
-      const maliciousUser: User = {
-        id: 'user-3',
-        summary: '<script>alert("xss")</script>Malicious User',
-        name: '<script>alert("xss")</script>Malicious User',
-      };
+    describe('user names', () => {
+      const transformName = (name: string) =>
+        transformToCalendarEvents(
+          [
+            {
+              start: '2024-01-01T17:00:00Z',
+              end: '2024-01-02T09:00:00Z',
+              user: { id: 'user-4', summary: name, name },
+            },
+          ],
+          timezone
+        )[0];
 
-      const entries: ScheduleEntry[] = [
-        {
-          start: '2024-01-01T17:00:00Z',
-          end: '2024-01-02T09:00:00Z',
-          user: maliciousUser,
-        },
-      ];
+      it.each(['João Silva', 'José García', "Siobhán O'Brien", 'Zoë Ðurić-Łukasz', '李小龍'])(
+        'should keep %s exactly as written',
+        (name) => {
+          // Act
+          const event = transformName(name);
 
-      const events = transformToCalendarEvents(entries, timezone);
-
-      expect(events[0].title).not.toContain('<script>');
-      expect(events[0].title).not.toContain('</script>');
-      expect(events[0].title).not.toContain('&lt;script&gt;');
-      expect(events[0].extendedProps.user.summary).not.toContain('<script>');
-    });
-
-    it('should encode user fields exactly as he.encode 1.2.0 did', () => {
-      // Arrange: markup, quotes, non-ASCII, an astral emoji and control characters
-      const name = 'Tom & "Jerry" <O\'Brien> `x` José 😀 a=b/c\u0001\t\u007F\n';
-      const entries: ScheduleEntry[] = [
-        {
-          start: '2024-01-01T17:00:00Z',
-          end: '2024-01-02T09:00:00Z',
-          user: { id: 'user-4', summary: name, name },
-        },
-      ];
-
-      // Act
-      const events = transformToCalendarEvents(entries, timezone);
-
-      // Assert: hex references with uppercase digits; \n is kept, then trimmed
-      expect(events[0].title).toBe(
-        'Tom &#x26; &#x22;Jerry&#x22; &#x3C;O&#x27;Brien&#x3E; &#x60;x&#x60; Jos&#xE9; &#x1F600; a=b/c&#x1;&#x9;&#x7F;'
+          // Assert
+          expect(event.title).toBe(name);
+          expect(event.extendedProps.user.name).toBe(name);
+          expect(event.extendedProps.user.summary).toBe(name);
+        }
       );
+
+      it('should compose decomposed accents so the same name always matches (NFC)', () => {
+        // Arrange: "José" typed as "e" + combining acute accent (U+0301)
+        const decomposed = 'Jose\u0301';
+
+        // Act
+        const event = transformName(decomposed);
+
+        // Assert
+        expect(event.title).toBe('Jos\u00e9');
+        expect(event.title).toHaveLength(4);
+      });
+
+      it('should trim whitespace and drop invisible control characters', () => {
+        // Act
+        const event = transformName('  Jo\u0000ão\u0007 \t');
+
+        // Assert
+        expect(event.title).toBe('João');
+      });
+
+      it('should keep markup as plain text, leaving escaping to React at render time', () => {
+        // Arrange
+        const name = '<img src=x onerror=alert(1)>';
+
+        // Act
+        const event = transformName(name);
+
+        // Assert: no HTML entity codes; the component test proves it renders inertly
+        expect(event.title).toBe(name);
+        expect(event.title).not.toMatch(/&#x/);
+      });
     });
 
     it('should throw error for invalid timezone', () => {
