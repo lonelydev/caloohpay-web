@@ -1,8 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { DateTime } from 'luxon';
 
 /**
- * SKIPPED: These tests require authenticated state and proper API mocking for /schedules/[id]
- * To enable these tests, implement proper authentication mocking consistent with other E2E tests
+ * Runs in the seeded-auth projects with /api/schedules mocked in the browser.
+ * Tests that look at entries must fail when none render (see
+ * openCalendarWithEntries), so a broken mock can't turn them silently green.
  *
  * These tests verify:
  * - Calendar view toggle functionality
@@ -11,12 +13,30 @@ import { test, expect } from '@playwright/test';
  * - Month navigation with external controls
  * - FullCalendar built-in navigation is disabled
  * - Timezone handling
- *
- * Current workaround: Unit tests in CalendarView.test.tsx verify component behavior
- * TODO: Enable once auth mocking pattern from schedules.spec.ts is extracted to a test helper
  */
 
 const SEEDED = process.env.ENABLE_TEST_SESSION_SEED === 'true';
+
+/**
+ * Switches to calendar view and waits for a mocked person's day bar. Fails the
+ * test if no entry renders, so every check below runs against real entries.
+ * Bars are named "<person> • <hh:mm>–<hh:mm> • £<amount>".
+ */
+async function openCalendarWithEntries(page: Page) {
+  await page.getByRole('button', { name: /calendar view/i }).click();
+  const johnBars = page.getByRole('button', { name: /^John Doe •/ });
+  await expect(johnBars.first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Jane Smith •/ }).first()).toBeVisible();
+  return johnBars;
+}
+
+async function openJohnDoeDialog(page: Page) {
+  const johnBars = await openCalendarWithEntries(page);
+  await johnBars.first().click();
+  const dialog = page.getByRole('dialog', { name: 'John Doe' });
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
 
 test.describe('Calendar View E2E Tests', () => {
   // Skip when session is not seeded, since protected routes will redirect
@@ -132,79 +152,39 @@ test.describe('Calendar View E2E Tests', () => {
 
   test('should display events in calendar view', async ({ page }) => {
     await page.goto('/schedules/SCHED123');
-    await page.waitForLoadState('networkidle');
 
-    // Switch to calendar view
-    await page.getByRole('button', { name: /calendar view/i }).click();
+    await openCalendarWithEntries(page);
 
-    // Wait for calendar to render
-    await page.waitForSelector('.fc', { timeout: 5000 });
-
-    // If no events render (e.g., due to date mismatch), don't fail the suite
-    const events = page.locator('.fc-event');
-    const eventCount = await events.count();
-    expect(eventCount).toBeGreaterThanOrEqual(0);
+    // Plain names render as written, with no HTML entity codes
+    await expect(page.locator('.fc')).not.toContainText('&#x');
   });
 
   test('should open event detail dialog when clicking an event', async ({ page }) => {
     await page.goto('/schedules/SCHED123');
-    await page.waitForLoadState('networkidle');
 
-    // Switch to calendar view
-    await page.getByRole('button', { name: /calendar view/i }).click();
+    const dialog = await openJohnDoeDialog(page);
 
-    // Attempt to click first event if present; otherwise, verify calendar visible
-    const events = page.locator('.fc-event');
-    const count = await events.count();
-    if (count > 0) {
-      await events.first().click();
-      await page.waitForSelector('[role="dialog"]', { timeout: 3000 });
-      const dialog = page.locator('[role="dialog"]');
-      await expect(dialog).toBeVisible();
-      await expect(dialog.getByText(/John Doe|Jane Smith/)).toBeVisible();
-    } else {
-      await expect(page.locator('.fc')).toBeVisible();
-    }
+    await expect(dialog).toContainText('john@example.com');
   });
 
   test('should display compensation details in event dialog', async ({ page }) => {
     await page.goto('/schedules/SCHED123');
-    await page.waitForLoadState('networkidle');
 
-    // Switch to calendar view
-    await page.getByRole('button', { name: /calendar view/i }).click();
+    const dialog = await openJohnDoeDialog(page);
 
-    const events = page.locator('.fc-event');
-    const count = await events.count();
-    if (count > 0) {
-      await events.first().click();
-      await page.waitForSelector('[role="dialog"]', { timeout: 3000 });
-      const dialog = page.locator('[role="dialog"]');
-      await expect(dialog.getByText(/PAYMENT CALCULATION/i)).toBeVisible();
-      await expect(dialog.getByText(/Total Compensation/i)).toBeVisible();
-      await expect(dialog.getByText(/weekday|weekend/i)).toBeVisible();
-    } else {
-      await expect(page.locator('.fc')).toBeVisible();
-    }
+    await expect(dialog.getByText(/PAYMENT CALCULATION/i)).toBeVisible();
+    await expect(dialog.getByText(/Total Compensation/i)).toBeVisible();
+    await expect(dialog.getByText(/weekday|weekend/i).first()).toBeVisible();
   });
 
   test('should close event dialog when clicking close button', async ({ page }) => {
     await page.goto('/schedules/SCHED123');
-    await page.waitForLoadState('networkidle');
+    const dialog = await openJohnDoeDialog(page);
 
-    // Switch to calendar view and open event
-    await page.getByRole('button', { name: /calendar view/i }).click();
-    const events = page.locator('.fc-event');
-    const count = await events.count();
-    if (count > 0) {
-      await events.first().click();
-      await page.waitForSelector('[role="dialog"]', { timeout: 3000 });
-      const closeButton = page.getByRole('button', { name: /close/i });
-      await closeButton.click();
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible();
-    } else {
-      await expect(page.locator('.fc')).toBeVisible();
-    }
+    await dialog.getByRole('button', { name: /close/i }).click();
+
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('.fc')).toBeVisible();
   });
 
   test('should switch back to list view from calendar view', async ({ page }) => {
@@ -250,25 +230,22 @@ test.describe('Calendar View E2E Tests', () => {
 
   test('should display correct timezone in event details', async ({ page }) => {
     await page.goto('/schedules/SCHED123');
-    await page.waitForLoadState('networkidle');
 
-    // Switch to calendar view
-    await page.getByRole('button', { name: /calendar view/i }).click();
-    const events = page.locator('.fc-event');
-    const count = await events.count();
-    if (count > 0) {
-      await events.first().click();
-      await page.waitForSelector('[role="dialog"]', { timeout: 3000 });
-      const dialog = page.locator('[role="dialog"]');
-      await expect(dialog.getByText(/EST|EDT/)).toBeVisible();
-    } else {
-      await expect(page.locator('.fc')).toBeVisible();
-    }
+    const dialog = await openJohnDoeDialog(page);
+
+    // John Doe's shift starts on the 5th at 17:00 UTC; the dialog shows it in
+    // the schedule's zone, America/New_York, with its UTC offset (e.g. -0400)
+    const now = new Date();
+    const start = DateTime.fromJSDate(
+      new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 5, 17, 0, 0))
+    ).setZone('America/New_York');
+    await expect(dialog).toContainText(`From: ${start.toFormat('EEE yyyy/MM/dd, HH:mm ZZZ')}`);
   });
 
   test('should handle empty schedule gracefully in calendar view', async ({ page }) => {
     // Mock empty schedule
-    await page.route('**/api/schedules/EMPTY123', async (route) => {
+    // The page adds ?since=…&until=…, so match the path with or without a query
+    await page.route(/\/api\/schedules\/EMPTY123(\?|$)/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -298,9 +275,10 @@ test.describe('Calendar View E2E Tests', () => {
     const calendar = page.locator('.fc');
     await expect(calendar).toBeVisible();
 
-    // Should show no events
-    const events = page.locator('.fc-event');
-    await expect(events).toHaveCount(0);
+    // Prove the empty schedule loaded before asserting there's nothing on it;
+    // otherwise "no entries" would also pass when the data never arrived.
+    await expect(page.getByText('Empty Schedule').first()).toBeVisible();
+    await expect(page.locator('[data-testid^="day-segment-"]')).toHaveCount(0);
   });
 
   test('should maintain view mode when navigating months', async ({ page }) => {
@@ -330,7 +308,7 @@ test.describe('Calendar View E2E Tests', () => {
     const year = now.getUTCFullYear();
     const month = now.getUTCMonth();
 
-    await page.route('**/api/schedules/PARTIAL123', async (route) => {
+    await page.route(/\/api\/schedules\/PARTIAL123(\?|$)/, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -367,22 +345,19 @@ test.describe('Calendar View E2E Tests', () => {
     await page.getByRole('button', { name: /calendar view/i }).click();
     await page.waitForSelector('.fc', { timeout: 5000 });
 
+    // Exactly one bar, and it must be this schedule's person (not another mock's)
     const segments = page.locator('[data-testid^="day-segment-"]');
-    const segmentCount = await segments.count();
+    await expect(segments).toHaveCount(1);
+    const segment = segments.first();
+    await expect(segment).toBeVisible();
+    await expect(segment).toHaveAccessibleName(/^Eakan •/);
 
-    if (segmentCount > 0) {
-      const segment = segments.first();
-      await expect(segment).toBeVisible();
+    const leftPercent = Number(await segment.getAttribute('data-left-percent'));
+    const widthPercent = Number(await segment.getAttribute('data-width-percent'));
 
-      const leftPercent = Number(await segment.getAttribute('data-left-percent'));
-      const widthPercent = Number(await segment.getAttribute('data-width-percent'));
-
-      expect(leftPercent).toBeGreaterThan(50);
-      expect(widthPercent).toBeLessThan(100);
-      expect(widthPercent).toBeGreaterThan(0);
-    } else {
-      await expect(page.locator('.fc')).toBeVisible();
-    }
+    expect(leftPercent).toBeGreaterThan(50);
+    expect(widthPercent).toBeLessThan(100);
+    expect(widthPercent).toBeGreaterThan(0);
   });
 
   test('should not display FullCalendar built-in navigation buttons', async ({ page }) => {

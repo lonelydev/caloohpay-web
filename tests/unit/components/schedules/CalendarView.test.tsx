@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { DateTime } from 'luxon';
 import { transformToCalendarEvents, type CalendarEvent } from '@/lib/utils/calendarUtils';
 
 // Mock all FullCalendar modules to avoid ES module issues in Jest
@@ -8,7 +9,11 @@ jest.mock('@fullcalendar/react', () => {
   return function MockFullCalendar({
     events,
     eventContent,
+    initialDate,
+    validRange,
   }: {
+    initialDate?: string;
+    validRange?: { start: string; end: string };
     eventClick?: (info: {
       event: { id: string; extendedProps: Record<string, unknown> };
       jsEvent: { preventDefault: () => void };
@@ -19,7 +24,12 @@ jest.mock('@fullcalendar/react', () => {
     }) => React.ReactNode;
   }) {
     return (
-      <div data-testid="mock-fullcalendar">
+      <div
+        data-testid="mock-fullcalendar"
+        data-initial-date={initialDate}
+        data-valid-start={validRange?.start}
+        data-valid-end={validRange?.end}
+      >
         {(events ?? []).map((event) => {
           const eventId = event.id ?? '';
           const extendedProps = (event.extendedProps ?? {}) as Record<string, unknown>;
@@ -412,6 +422,28 @@ describe('CalendarView', () => {
 
     expect(first).toHaveAttribute('data-row-index', '0');
     expect(second).toHaveAttribute('data-row-index', '1');
+  });
+
+  describe('Displayed month', () => {
+    // The page passes the start of the selected month in the viewer's zone. The
+    // calendar must show that same month, whatever the schedule's timezone.
+    it.each([
+      ['a UK viewer, New York schedule', '2026-10-01T00:00:00.000+01:00', 'America/New_York'],
+      ['a UTC viewer, New York schedule', '2026-10-01T00:00:00.000Z', 'America/New_York'],
+      ['a New York viewer, Tokyo schedule', '2026-10-01T00:00:00.000-04:00', 'Asia/Tokyo'],
+      ['a UK viewer, UTC schedule', '2026-10-01T00:00:00.000+01:00', 'UTC'],
+    ])('should show the selected month for %s', (_case, initialDate, timezone) => {
+      // Act
+      renderWithTheme(<CalendarView events={[]} timezone={timezone} initialDate={initialDate} />);
+
+      // Assert: October 1st to 31st in the schedule's zone
+      const calendar = screen.getByTestId('mock-fullcalendar');
+      const inZone = (attr: string) =>
+        DateTime.fromISO(calendar.getAttribute(attr) ?? '', { zone: timezone });
+      expect(inZone('data-initial-date').toISODate()).toBe('2026-10-01');
+      expect(inZone('data-valid-start').toISODate()).toBe('2026-10-01');
+      expect(inZone('data-valid-end').toISODate()).toBe('2026-10-31');
+    });
   });
 
   describe('Names with accents and special characters', () => {
