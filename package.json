@@ -53,7 +53,7 @@
     "ag-grid-community": "^36.2.0",
     "ag-grid-react": "^36.2.0",
     "axios": "^1.16.1",
-    "caloohpay": "^2.1.0",
+    "caloohpay": "^2.1.1",
     "date-fns": "^4.4.0",
     "luxon": "^3.7.2",
     "next": "^16.2.6",
